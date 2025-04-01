@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thesis Repository Portal</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header class="repository-header">
+            <h1>CSThesisHub</h1>
+            <p class="tagline">Advancing Knowledge: Explore Computer Science Theses from Cavite State University - Imus Campus</p>
+        </header>
+
+        <main class="repository-content">
+            <!-- Search Section -->
+            <section class="search-section">
+                <h2>Search Theses</h2>
+                <form action="{{ url_for('index') }}" method="POST" class="search-form">
+                    <input type="text" name="search" placeholder="Enter keywords, title, or author..." required>
+                    <button type="submit" class="search-btn">Search</button>
+                </form>
+                <p class="search-note">You need to be logged in to view search results</p>
+            </section>
+
+            <!-- Flash messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="flash-messages">
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            <!-- Auth Buttons -->
+            <div class="auth-actions">
+                <a href="{{ url_for('login') }}" class="btn btn-primary">Login</a>
+                <a href="{{ url_for('signup') }}" class="btn btn-secondary">Register</a>
+            </div>
+
+            <!-- Repository Info -->
+            <section class="repository-info">
+                <h3>About the Repository</h3>
+                <p>Our digital repository contains thousands of thesis works from various academic departments. 
+                Registered users can search, view, and download research materials.</p>
+            </section>
+        </main>
+
+        <footer class="repository-footer">
+            <p>© 2023 University Thesis Repository. All rights reserved.</p>
+        </footer>
+    </div>
+</body>
+</html>

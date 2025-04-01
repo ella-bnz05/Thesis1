@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <!-- Added header with back button -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Review Thesis Submission</h2>
+        <a href="{{ url_for('admin_submissions') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Back to List
+        </a>
+    </div>
+    
+    <div class="card mb-4">
+        <div class="card-header">
+            Original File: {{ submission.original_filename }}
+        </div>
+        <div class="card-body">
+            <h5>Extracted Information</h5>
+            
+            <form method="POST">
+                <div class="form-group">
+                    <label>Title</label>
+                    <input type="text" name="title" class="form-control" value="{{ submission.title }}">
+                </div>
+                
+                <div class="form-group">
+                    <label>Authors</label>
+                    <textarea name="authors" class="form-control">{{ submission.authors }}</textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label>School</label>
+                    <input type="text" name="school" class="form-control" value="{{ submission.school }}">
+                </div>
+                
+                <div class="form-group">
+                    <label>Year</label>
+                    <input type="text" name="year_made" class="form-control" value="{{ submission.year_made }}">
+                </div>
+                
+                <div class="form-group">
+                    <label>Keywords</label>
+                    <textarea name="keywords" class="form-control">{{ submission.keywords }}</textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea name="notes" class="form-control" placeholder="Any corrections or comments..."></textarea>
+                </div>
+                
+                <div class="btn-group">
+                    <button type="submit" name="action" value="approve" class="btn btn-success">
+                        Approve and Publish
+                    </button>
+                    <button type="submit" name="action" value="reject" class="btn btn-danger">
+                        Reject Submission
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">
+            Extracted Text Preview
+        </div>
+        <div class="card-body">
+            <pre class="extracted-text">{{ submission.extracted_text[:2000] }}...</pre>
+        </div>
+    </div>
+</div>
+{% endblock %}

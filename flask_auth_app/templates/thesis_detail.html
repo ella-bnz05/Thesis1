@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="card my-4">
+        <div class="card-header">
+            <h2>{{ thesis.title }}</h2>
+            <a href="{{ url_for('browse_theses') }}" class="btn btn-sm btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Theses
+            </a>
+        </div>
+        <div class="card-body">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <p><strong>Authors:</strong> {{ thesis.authors }}</p>
+                    <p><strong>School:</strong> {{ thesis.school }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Year:</strong> {{ thesis.year_made }}</p>
+                    <p><strong>Published:</strong> {{ thesis.published_at.strftime('%Y-%m-%d') }}</p>
+                    <p><strong>Published by:</strong> {{ thesis.publisher_username }}</p>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <h5>Keywords</h5>
+                <div class="d-flex flex-wrap gap-2">
+                    {% for keyword in thesis.keywords.split(',') %}
+                        <span class="badge bg-primary">{{ keyword.strip() }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="alert alert-info mt-4">
+                <i class="fas fa-info-circle"></i> Thesis documents are available for in-library viewing only.
+            </div>
+
+            <!-- Embedded PDF (view-only) -->
+            <div class="pdf-viewer mt-4">
+                <iframe 
+                    src="{{ url_for('serve_thesis_file', thesis_id=thesis.id) }}" 
+                    width="100%" 
+                    height="600px"
+                    style="border: 1px solid #ccc;">
+                    Your browser does not support PDFs.
+                </iframe>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

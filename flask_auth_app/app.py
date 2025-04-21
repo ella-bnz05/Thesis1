@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, session, jsonify, flash, url_for, abort
+from flask import Flask, render_template, request, redirect, session, jsonify, flash, url_for, abort, send_file, make_response
 from flask_mysqldb import MySQL
 import MySQLdb.cursors
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
@@ -143,6 +143,7 @@ class User(UserMixin):
         
     def is_admin(self):
         return self.role == 'admin'
+    
 @login_manager.user_loader
 def load_user(user_id):
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
@@ -163,14 +164,42 @@ def index():
     return render_template('index.html')
 
 @app.route('/search')
+@login_required
 def search():
-    if not current_user.is_authenticated:  # Requires Flask-Login
-        return redirect(url_for('login'))
+    query = request.args.get('q', '') or session.get('search_query', '')
     
-    query = session.get('search_query', '')
-    # Add your search logic here (query database, etc.)
-    # results = Thesis.query.filter(Thesis.title.contains(query)).all()
-    return render_template('search_results.html', query=query)  # You'll need to create this template
+    if not query:
+        return redirect(url_for('browse_theses'))
+
+    # Store query in session so it's available after login if needed
+    session['search_query'] = query
+
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+
+    # Search metadata
+    cursor.execute("""
+        SELECT pt.* 
+        FROM published_theses pt
+        WHERE pt.title LIKE %s OR pt.authors LIKE %s OR pt.keywords LIKE %s
+        ORDER BY pt.published_at DESC
+    """, (f'%{query}%', f'%{query}%', f'%{query}%'))
+    metadata_results = cursor.fetchall()
+
+    # Search in full text
+    cursor.execute("""
+        SELECT pt.*, tp.page_number,
+               MATCH(tp.page_text) AGAINST(%s IN NATURAL LANGUAGE MODE) as relevance
+        FROM thesis_pages tp
+        JOIN published_theses pt ON tp.thesis_id = pt.id
+        WHERE MATCH(tp.page_text) AGAINST(%s IN NATURAL LANGUAGE MODE)
+        ORDER BY relevance DESC
+    """, (query, query))
+    page_results = cursor.fetchall()
+
+    return render_template('search_results.html',
+                           query=query,
+                           metadata_results=metadata_results,
+                           page_results=page_results)
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
@@ -221,13 +250,15 @@ def signup():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    next_url = request.args.get('next')  # Save any ?next= parameter from the login redirect
+
     if request.method == 'POST':
         username = request.form.get('username', '').strip()
         password = request.form.get('password', '').strip()
 
         if not username or not password:
             flash('Both fields are required', 'danger')
-            return redirect(url_for('login'))
+            return redirect(url_for('login', next=next_url))
 
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         try:
@@ -249,17 +280,20 @@ def login():
                 
                 login_user(user_obj)
                 flash('Login successful', 'success')
-                return redirect(url_for('verify_role'))
-            
+
+                # Redirect to next if available, otherwise to role verifier
+                return redirect(next_url or url_for('verify_role'))
+
             flash('Invalid credentials', 'danger')
-            
+
         except Exception as e:
             print(f"Login error: {e}")
             flash('Login error occurred', 'danger')
         finally:
             cursor.close()
 
-    return render_template('login.html')
+    return render_template('login.html', next=next_url)
+
 
 @app.route('/verify-role')
 @login_required
@@ -322,21 +356,42 @@ def browse_theses():
     
     # Get search query if exists
     search_query = request.args.get('q', '')
+    page = request.args.get('page', 1, type=int)
+    per_page = 10  # Items per page
     
     if search_query:
         cursor.execute("""
             SELECT * FROM published_theses
             WHERE title LIKE %s OR authors LIKE %s OR keywords LIKE %s
             ORDER BY published_at DESC
-        """, (f'%{search_query}%', f'%{search_query}%', f'%{search_query}%'))
+            LIMIT %s OFFSET %s
+        """, (f'%{search_query}%', f'%{search_query}%', f'%{search_query}%', per_page, (page-1)*per_page))
     else:
         cursor.execute("""
             SELECT * FROM published_theses
             ORDER BY published_at DESC
-        """)
+            LIMIT %s OFFSET %s
+        """, (per_page, (page-1)*per_page))
     
     theses = cursor.fetchall()
-    return render_template('browse_theses.html', theses=theses, search_query=search_query)
+    
+    # Get total count for pagination
+    if search_query:
+        cursor.execute("""
+            SELECT COUNT(*) as total FROM published_theses
+            WHERE title LIKE %s OR authors LIKE %s OR keywords LIKE %s
+        """, (f'%{search_query}%', f'%{search_query}%', f'%{search_query}%'))
+    else:
+        cursor.execute("SELECT COUNT(*) as total FROM published_theses")
+    
+    total = cursor.fetchone()['total']
+    
+    return render_template('browse_theses.html', 
+                         theses=theses, 
+                         search_query=search_query,
+                         page=page,
+                         per_page=per_page,
+                         total=total)
 
 @app.route('/thesis/<int:thesis_id>')
 @login_required
@@ -352,11 +407,40 @@ def view_thesis(thesis_id):
     
     if not thesis:
         abort(404)
+    if not os.path.exists(thesis['file_path']):
+        flash('Thesis document not available for viewing', 'danger')
+        return redirect(url_for('browse_theses'))
     
     return render_template('thesis_detail.html', thesis=thesis)
 
+@app.route('/thesis-file/<int:thesis_id>')
+@login_required
+def serve_thesis_file(thesis_id):
+    # Get the file path from the database based on thesis_id
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute("SELECT file_path FROM published_theses WHERE id = %s", (thesis_id,))
+    result = cursor.fetchone()
+    cursor.close()
+
+    if not result:
+        abort(404)
+
+    file_path = result['file_path']
+
+    response = make_response(send_file(file_path))
+    
+    # Prevent download via Content-Disposition
+    response.headers["Content-Disposition"] = "inline; filename=view.pdf"
+    
+    # Additional headers to discourage saving/downloading
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["Cache-Control"] = "no-store"
+    response.headers["Pragma"] = "no-cache"
+
+    return response
 @app.route('/admin/upload', methods=['POST'])
 @login_required
+
 def admin_upload():
     if not current_user.is_admin():
         abort(403)
@@ -421,6 +505,14 @@ def admin_upload():
             os.remove(filepath)
         flash(f'Error processing file: {str(e)}', 'danger')
         return redirect(url_for('admin_dashboard'))
+    
+def extract_page_count(filepath):
+    if filepath.lower().endswith('.pdf'):
+        with open(filepath, 'rb') as f:
+            reader = PyPDF2.PdfReader(f)
+            return len(reader.pages)
+    return 1  # For images, consider each as one page
+
 @app.route('/admin/submissions')
 @login_required
 def admin_submissions():
@@ -444,11 +536,10 @@ def admin_submissions():
 def review_submission(submission_id):
     if not current_user.is_admin():
         abort(403)
-    
+
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    
+
     if request.method == 'POST':
-        # Handle form submission (approval/rejection with edits)
         action = request.form.get('action')
         edited_title = request.form.get('title')
         edited_authors = request.form.get('authors')
@@ -456,9 +547,49 @@ def review_submission(submission_id):
         edited_year = request.form.get('year_made')
         edited_keywords = request.form.get('keywords')
         notes = request.form.get('notes')
-        
+        revised_file = request.files.get('revised_file')
+
+        revised_filepath = None
+        num_pages = None
+        page_texts = []
+
         try:
-            # Save the edited version
+            # --- (1) Save revised PDF (if provided) ---
+            if revised_file and revised_file.filename.lower().endswith('.pdf'):
+                filename = secure_filename(revised_file.filename)
+                revised_dir = os.path.join(app.config['UPLOAD_FOLDER'], 'revised')
+                os.makedirs(revised_dir, exist_ok=True)
+                revised_filepath = os.path.join(revised_dir, f"{submission_id}_{filename}")
+                revised_file.save(revised_filepath)
+
+                with open(revised_filepath, 'rb') as f:
+                    reader = PyPDF2.PdfReader(f)
+                    num_pages = len(reader.pages)
+                    for i, page in enumerate(reader.pages):
+                        page_text = page.extract_text()
+                        if page_text:
+                            page_texts.append({
+                                'page_number': i + 1,
+                                'text': page_text
+                            })
+            # --- (2) If no revised file, extract from original ---
+            elif not revised_file:
+                cursor.execute("SELECT file_path FROM thesis_submissions WHERE id = %s", (submission_id,))
+                submission_data = cursor.fetchone()
+
+                if submission_data and submission_data['file_path'].lower().endswith('.pdf'):
+                    with open(submission_data['file_path'], 'rb') as f:
+                        reader = PyPDF2.PdfReader(f)
+                        num_pages = len(reader.pages)
+                        for i, page in enumerate(reader.pages):
+                            page_text = page.extract_text()
+                            if page_text:
+                                page_texts.append({
+                                    'page_number': i + 1,
+                                    'text': page_text
+                                })
+
+            # --- (3) Save revision history ---
             cursor.execute("""
                 INSERT INTO thesis_versions
                 (thesis_id, edited_title, edited_authors, edited_school, edited_year_made, edited_keywords, notes, edited_by)
@@ -473,12 +604,13 @@ def review_submission(submission_id):
                 notes,
                 current_user.id
             ))
-            
-            # Update submission status
+
+            # --- (4) Update submission status ---
             new_status = 'approved' if action == 'approve' else 'rejected'
             cursor.execute("""
                 UPDATE thesis_submissions
-                SET title = %s, authors = %s, school = %s, year_made = %s, keywords = %s, status = %s
+                SET title = %s, authors = %s, school = %s, year_made = %s, keywords = %s,
+                    status = %s, revised_file_path = %s, num_pages = %s
                 WHERE id = %s
             """, (
                 edited_title,
@@ -487,21 +619,71 @@ def review_submission(submission_id):
                 edited_year,
                 edited_keywords,
                 new_status,
+                revised_filepath,
+                num_pages,
                 submission_id
             ))
-            
-            mysql.connection.commit()
-            flash('Submission updated successfully', 'success')
-            
+
+            # --- (5) If approved, publish the thesis first ---
+            published_thesis_id = None
             if action == 'approve':
-                return redirect(url_for('publish_thesis', submission_id=submission_id))
+                cursor.execute("SELECT file_path FROM thesis_submissions WHERE id = %s", (submission_id,))
+                submission_data = cursor.fetchone()
+
+                if not submission_data or not submission_data['file_path']:
+                    raise Exception("Original thesis file path not found in database")
+
+                original_path = revised_filepath or submission_data['file_path']
+                filename = os.path.basename(original_path)
+                publish_path = os.path.join(app.config['UPLOAD_FOLDER'], 'published', filename)
+                os.makedirs(os.path.dirname(publish_path), exist_ok=True)
+
+                if os.path.exists(original_path):
+                    os.rename(original_path, publish_path)
+                else:
+                    raise Exception("Original thesis file not found on server")
+
+                cursor.execute("""
+                    INSERT INTO published_theses
+                    (submission_id, file_path, title, authors, school, year_made, keywords, published_by, num_pages)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """, (
+                    submission_id,
+                    publish_path,
+                    edited_title,
+                    edited_authors,
+                    edited_school,
+                    edited_year,
+                    edited_keywords,
+                    current_user.id,
+                    num_pages
+                ))
+                published_thesis_id = cursor.lastrowid
+
+            # --- (6) Store page texts if we have them ---
+            if page_texts and published_thesis_id:
+                for page in page_texts:
+                    cursor.execute("""
+                        INSERT INTO thesis_pages 
+                        (thesis_id, page_number, page_text)
+                        VALUES (%s, %s, %s)
+                    """, (
+                        published_thesis_id,
+                        page['page_number'],
+                        page['text']
+                    ))
+
+            # --- (7) Commit ---
+            mysql.connection.commit()
+            flash('Thesis published successfully!' if action == 'approve' else 'Submission Rejected Successfully', 'success')
             return redirect(url_for('admin_submissions'))
-            
+
         except Exception as e:
             mysql.connection.rollback()
-            flash(f'Error updating submission: {str(e)}', 'danger')
-    
-    # Get submission details
+            flash(f'Error processing submission: {str(e)}', 'danger')
+            return redirect(url_for('admin_submissions'))
+
+    # GET request handling
     cursor.execute("""
         SELECT ts.*, u.username as admin_username 
         FROM thesis_submissions ts
@@ -509,77 +691,84 @@ def review_submission(submission_id):
         WHERE ts.id = %s
     """, (submission_id,))
     submission = cursor.fetchone()
-    
+
     if not submission:
         abort(404)
-    
-    return render_template('review_submission.html', submission=submission)
 
-@app.route('/admin/publish/<int:submission_id>', methods=['GET', 'POST'])
+    cursor.execute("""
+        SELECT page_number, page_text 
+        FROM thesis_pages 
+        WHERE thesis_id = %s
+        ORDER BY page_number
+    """, (submission_id,))
+    page_texts = cursor.fetchall()
+
+    return render_template('review_submission.html', 
+                         submission=submission,
+                         page_texts=page_texts)
+
+
+@app.route('/admin/publish/<int:submission_id>', methods=['POST'])
 @login_required
 def publish_thesis(submission_id):
     if not current_user.is_admin():
         abort(403)
-    
+
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    
-    if request.method == 'POST':
-        try:
-            # Get the approved submission
-            cursor.execute("""
-                SELECT * FROM thesis_submissions 
-                WHERE id = %s AND status = 'approved'
-            """, (submission_id,))
-            submission = cursor.fetchone()
-            
-            if not submission:
-                flash('Submission not found or not approved', 'danger')
-                return redirect(url_for('admin_submissions'))
-            
-            # Move file to published directory
-            original_path = submission['file_path']
-            filename = os.path.basename(original_path)
-            publish_path = os.path.join(app.config['UPLOAD_FOLDER'], 'published', filename)
-            os.makedirs(os.path.dirname(publish_path), exist_ok=True)
-            
-            if os.path.exists(original_path):
-                os.rename(original_path, publish_path)
-            
-            # Add to published theses
-            cursor.execute("""
-                INSERT INTO published_theses
-                (submission_id, file_path, title, authors, school, year_made, keywords, published_by)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-            """, (
-                submission_id,
-                publish_path,
-                submission['title'],
-                submission['authors'],
-                submission['school'],
-                submission['year_made'],
-                submission['keywords'],
-                current_user.id
-            ))
-            
-            mysql.connection.commit()
-            flash('Thesis published successfully!', 'success')
-            return redirect(url_for('admin_dashboard'))
-            
-        except Exception as e:
-            mysql.connection.rollback()
-            flash(f'Error publishing thesis: {str(e)}', 'danger')
-    
-    # GET request - show confirmation page
-    cursor.execute("""
-        SELECT ts.* FROM thesis_submissions ts
-        WHERE ts.id = %s AND ts.status = 'approved'
-    """, (submission_id,))
-    submission = cursor.fetchone()
-    
-    if not submission:
-        abort(404)
-    
-    return render_template('publish_confirmation.html', submission=submission)
+
+    try:
+        # Get the approved submission
+        cursor.execute("""
+            SELECT * FROM thesis_submissions 
+            WHERE id = %s AND status = 'approved'
+        """, (submission_id,))
+        submission = cursor.fetchone()
+
+        if not submission:
+            flash('Submission not found or not approved', 'danger')
+            return redirect(url_for('admin_submissions'))  # Make sure to redirect here
+
+        # Move file to published directory
+        original_path = submission['revised_file_path'] or submission['file_path']
+        if not original_path:  # Check if path exists
+            flash('No file path found for this submission', 'danger')
+            return redirect(url_for('admin_submissions'))
+
+        filename = os.path.basename(original_path)
+        publish_path = os.path.join(app.config['UPLOAD_FOLDER'], 'published', filename)
+        os.makedirs(os.path.dirname(publish_path), exist_ok=True)
+
+        if os.path.exists(original_path):
+            os.rename(original_path, publish_path)
+        else:
+            flash('Original file not found', 'danger')
+            return redirect(url_for('admin_submissions'))
+
+        # Add to published theses
+        cursor.execute("""
+            INSERT INTO published_theses
+            (submission_id, file_path, title, authors, school, year_made, keywords, published_by)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """, (
+            submission_id,
+            publish_path,
+            submission['title'],
+            submission['authors'],
+            submission['school'],
+            submission['year_made'],
+            submission['keywords'],
+            current_user.id
+        ))
+
+        mysql.connection.commit()
+        flash('Thesis published successfully!', 'success')
+        return render_template("publish_confirmation.html")
+
+    except Exception as e:
+        mysql.connection.rollback()
+        flash(f'Error publishing thesis: {str(e)}', 'danger')
+        return redirect(url_for('admin_submissions'))
+
 @app.route('/logout')
 @login_required
 def logout():

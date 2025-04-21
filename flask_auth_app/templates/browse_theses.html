@@ -1,452 +1,75 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Browse Theses</title>
-    <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --primary-color: #4e73df;
-            --secondary-color: #f8f9fc;
-        }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f8f9fc;
-        }
-        .sidebar {
-            background: linear-gradient(180deg, var(--primary-color) 0%, #224abe 100%);
-            min-height: 100vh;
-            color: white;
-        }
-        .sidebar .nav-link {
-            color: rgba(255, 255, 255, 0.8);
-            margin-bottom: 5px;
-        }
-        .sidebar .nav-link:hover {
-            color: white;
-            background-color: rgba(255, 255, 255, 0.1);
-        }
-        .sidebar .nav-link.active {
-            color: white;
-            font-weight: bold;
-        }
-        .card {
-            border: none;
-            border-radius: 10px;
-            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
-            margin-bottom: 20px;
-        }
-        .card-header {
-            background-color: white;
-            border-bottom: 1px solid #e3e6f0;
-            font-weight: 600;
-        }
-        .document-card {
-            transition: transform 0.2s;
-            border-left: 4px solid var(--primary-color);
-        }
-        .document-card:hover {
-            transform: translateY(-3px);
-        }
-        .search-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-            width: 100%;
-        }
-        .search-bar {
-            width: 600px;
-        }
-        .filter-btn {
-            background-color: white;
-            border: 1px solid #d1d3e2;
-            color: #6e707e;
-            height: 38px; /* Match search bar height */
-        }
-        .filter-btn:hover {
-            background-color: #f8f9fc;
-            border-color: #bac8f3;
-        }
-        .filter-btn.active {
-            background-color: var(--primary-color);
-            color: white;
-            border-color: var(--primary-color);
-        }
-        .filter-panel {
-            background-color: white;
-            border-radius: 10px;
-            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-        .badge-category {
-            background-color: #e74a3b;
-        }
-        .badge-year {
-            background-color: #36b9cc;
-        }
-        .badge-month {
-            background-color: #1cc88a;
-        }
-        .pagination .page-item.active .page-link {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-        }
-        .pagination .page-link {
-            color: var(--primary-color);
-        }
-        .header-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 100%;
-        }
-        .header-top-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-            margin-bottom: 1rem;
-        }
-    </style>
-</head>
-<body>
-    <div class="container-fluid">
-        <div class="row">
-            <!-- Sidebar -->
-            <div class="col-md-3 col-lg-2 d-md-block sidebar collapse p-0">
-                <div class="position-sticky pt-3">
-                    <div class="text-center py-4">
-                        <h4 class="text-white"><i class="fas fa-user-shield me-2"></i>Admin Panel</h4>
-                    </div>
-                    <ul class="nav flex-column px-3">
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('admin_dashboard') }}">
-                                <i class="fas fa-fw fa-tachometer-alt me-2"></i>Dashboard
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('admin_submissions') }}">
-                                <i class="fas fa-fw fa-file-alt me-2"></i>Thesis Submissions
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link active" href="{{ url_for('browse_theses') }}">
-                                <i class="fas fa-fw fa-book me-2"></i>Published Theses
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#">
-                                <i class="fas fa-fw fa-users me-2"></i>Users
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
+{% extends "base.html" %}
 
-            <!-- Main Content -->
-            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
-                <!-- Header with Search -->
-                <div class="header-container pt-3 pb-2 mb-3 border-bottom">
-                    <div class="header-top-row">
-                        <h1 class="h2">Browse Thesis Submissions</h1>
-                        <div class="dropdown">
-                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown">
-                                <i class="fas fa-user-circle me-1"></i> {{ current_user.username }}
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i>Profile</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item text-danger" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
-                            </ul>
-                        </div>
-                    </div>
-                    
-                    <div class="search-container">
-                        <div class="input-group search-bar">
-                            <input type="text" class="form-control" placeholder="Search by title, author, or keywords...">
-                            <button class="btn btn-primary" type="button">
-                                <i class="fas fa-search"></i> Search
-                            </button>
-                        </div>
-                        <button class="btn filter-btn" type="button" data-bs-toggle="collapse" data-bs-target="#filterPanel">
-                            <i class="fas fa-filter me-2"></i> Filter Options
-                        </button>
-                    </div>
+{% block content %}
+<div class="container">
+    <h2 class="my-4">Approved Theses</h2>
+    
+    <!-- Search Form -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" action="{{ url_for('browse_theses') }}">
+                <div class="input-group">
+                    <input type="text" class="form-control" name="q" value="{{ search_query }}" placeholder="Search theses...">
+                    <button class="btn btn-primary" type="submit">Search</button>
                 </div>
-
-                <!-- Filter Panel -->
-                <div class="collapse mb-4" id="filterPanel">
-                    <div class="filter-panel">
-                        <form id="filterForm">
-                            <div class="row">
-                                <!-- Category Filter -->
-                                <div class="col-md-3">
-                                    <label for="category" class="form-label">Computer Science Categories</label>
-                                    <select class="form-select" id="category" name="category">
-                                        <option value="" selected>All Categories</option>
-                                        <option value="Artificial Intelligence">Artificial Intelligence</option>
-                                        <option value="Machine Learning">Machine Learning</option>
-                                        <option value="Data Science">Data Science</option>
-                                        <option value="Cybersecurity">Cybersecurity</option>
-                                        <option value="Networking">Networking</option>
-                                        <option value="Software Engineering">Software Engineering</option>
-                                        <option value="Database Systems">Database Systems</option>
-                                        <option value="Human-Computer Interaction">Human-Computer Interaction</option>
-                                        <option value="Computer Vision">Computer Vision</option>
-                                        <option value="Natural Language Processing">Natural Language Processing</option>
-                                    </select>
-                                </div>
-                                
-                                <!-- Year Filter -->
-                                <div class="col-md-2">
-                                    <label for="year" class="form-label">Year</label>
-                                    <select class="form-select" id="year" name="year">
-                                        <option value="" selected>All Years</option>
-                                        <option>2023</option>
-                                        <option>2022</option>
-                                        <option>2021</option>
-                                        <option>2020</option>
-                                        <option>2019</option>
-                                        <option>2018</option>
-                                    </select>
-                                </div>
-                                
-                                <!-- Month Filter -->
-                                <div class="col-md-2">
-                                    <label for="month" class="form-label">Month</label>
-                                    <select class="form-select" id="month" name="month">
-                                        <option value="" selected>All Months</option>
-                                        <option value="1">January</option>
-                                        <option value="2">February</option>
-                                        <option value="3">March</option>
-                                        <option value="4">April</option>
-                                        <option value="5">May</option>
-                                        <option value="6">June</option>
-                                        <option value="7">July</option>
-                                        <option value="8">August</option>
-                                        <option value="9">September</option>
-                                        <option value="10">October</option>
-                                        <option value="11">November</option>
-                                        <option value="12">December</option>
-                                    </select>
-                                </div>
-                                
-                                <!-- Sort By -->
-                                <div class="col-md-3">
-                                    <label for="sort" class="form-label">Sort By</label>
-                                    <select class="form-select" id="sort" name="sort">
-                                        <option value="date_desc" selected>Newest First</option>
-                                        <option value="date_asc">Oldest First</option>
-                                        <option value="title_asc">Title (A-Z)</option>
-                                        <option value="title_desc">Title (Z-A)</option>
-                                        <option value="author_asc">Author (A-Z)</option>
-                                        <option value="views_desc">Most Viewed</option>
-                                        <option value="downloads_desc">Most Downloaded</option>
-                                    </select>
-                                </div>
-                                
-                                <!-- Apply Button -->
-                                <div class="col-md-2 d-flex align-items-end">
-                                    <button type="submit" class="btn btn-primary w-100">
-                                        <i class="fas fa-check me-2"></i> Apply
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-
-                <!-- Thesis Listing -->
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h6 class="m-0 font-weight-bold">Showing {{ theses|length }} of {{ total_theses }} Theses</h6>
-                        <div>
-                            <span class="me-2">Items per page:</span>
-                            <select class="form-select form-select-sm d-inline-block w-auto" id="itemsPerPage">
-                                <option value="10" selected>10</option>
-                                <option value="25">25</option>
-                                <option value="50">50</option>
-                                <option value="100">100</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        {% if theses %}
-                        <div class="row">
-                            {% for thesis in theses %}
-                            <div class="col-md-6 col-lg-4 mb-4">
-                                <div class="card document-card h-100">
-                                    <div class="card-body">
-                                        <div class="d-flex align-items-start mb-3">
-                                            <i class="fas fa-file-pdf text-danger fa-2x me-3"></i>
-                                            <div>
-                                                <h6 class="mb-1">{{ thesis.title }}</h6>
-                                                <small class="text-muted">By: {{ thesis.author }} | {{ thesis.submission_date.strftime('%Y-%m-%d') }}</small>
-                                                <div class="mt-2">
-                                                    {% if thesis.category %}
-                                                    <span class="badge badge-category me-1">{{ thesis.category }}</span>
-                                                    {% endif %}
-                                                    <span class="badge badge-year me-1">{{ thesis.year }}</span>
-                                                    <span class="badge badge-month">{{ thesis.submission_date.strftime('%B') }}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <small class="text-muted">{{ thesis.pages }} pages | {{ thesis.views }} views</small>
-                                            <div>
-                                                <button class="btn btn-sm btn-outline-primary me-1" title="View" onclick="viewThesis({{ thesis.id }})">
-                                                    <i class="fas fa-eye"></i>
-                                                </button>
-                                                <button class="btn btn-sm btn-outline-secondary me-1" title="Download" onclick="downloadThesis({{ thesis.id }})">
-                                                    <i class="fas fa-download"></i>
-                                                </button>
-                                                <button class="btn btn-sm btn-outline-success" title="Bookmark" onclick="bookmarkThesis({{ thesis.id }})">
-                                                    <i class="far fa-bookmark"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>
-                        
-                        <!-- Pagination -->
-                        <nav aria-label="Thesis pagination">
-                            <ul class="pagination justify-content-center">
-                                {% if page > 1 %}
-                                <li class="page-item">
-                                    <a class="page-link" href="?page={{ page-1 }}" tabindex="-1">Previous</a>
-                                </li>
-                                {% else %}
-                                <li class="page-item disabled">
-                                    <a class="page-link" href="#" tabindex="-1">Previous</a>
-                                </li>
-                                {% endif %}
-                                
-                                {% for p in range(1, total_pages + 1) %}
-                                <li class="page-item {% if p == page %}active{% endif %}">
-                                    <a class="page-link" href="?page={{ p }}">{{ p }}</a>
-                                </li>
-                                {% endfor %}
-                                
-                                {% if page < total_pages %}
-                                <li class="page-item">
-                                    <a class="page-link" href="?page={{ page+1 }}">Next</a>
-                                </li>
-                                {% else %}
-                                <li class="page-item disabled">
-                                    <a class="page-link" href="#">Next</a>
-                                </li>
-                                {% endif %}
-                            </ul>
-                        </nav>
-                        {% else %}
-                        <div class="text-center py-5">
-                            <i class="fas fa-file-alt fa-4x text-muted mb-3"></i>
-                            <h5>No theses found matching your criteria</h5>
-                            <p class="text-muted">Try adjusting your filters or search terms</p>
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
-            </main>
+            </form>
         </div>
     </div>
 
-    <!-- Bootstrap & jQuery JS -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <script>
-        // Initialize filter panel state
-        $(document).ready(function() {
-            // Check if any filters are active
-            const urlParams = new URLSearchParams(window.location.search);
-            const hasFilters = urlParams.has('category') || urlParams.has('year') || 
-                              urlParams.has('month') || urlParams.has('sort');
-            
-            if (hasFilters) {
-                $('#filterPanel').addClass('show');
-                $('.filter-btn').addClass('active');
+    <!-- Thesis List -->
+    {% if theses %}
+        <div class="list-group mb-4">
+            {% for thesis in theses %}
+            <div class="list-group-item">
+                <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1">
+                        <a href="{{ url_for('view_thesis', thesis_id=thesis.id) }}">{{ thesis.title }}</a>
+                    </h5>
+                    <small class="text-muted">{{ thesis.year_made }}</small>
+                </div>
+                <p class="mb-1"><strong>Authors:</strong> {{ thesis.authors }}</p>
+                <p class="mb-1"><strong>School:</strong> {{ thesis.school }}</p>
+                <p class="mb-1"><strong>Keywords:</strong> {{ thesis.keywords }}</p>
+                <small class="text-muted">Published on {{ thesis.published_at.strftime('%Y-%m-%d') }}</small>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        <nav aria-label="Page navigation">
+            <ul class="pagination">
+                {% if page > 1 %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('browse_theses', page=page-1, q=search_query) }}">Previous</a>
+                </li>
+                {% endif %}
                 
-                // Set the current filter values
-                if (urlParams.has('category')) {
-                    $('#category').val(urlParams.get('category'));
-                }
-                if (urlParams.has('year')) {
-                    $('#year').val(urlParams.get('year'));
-                }
-                if (urlParams.has('month')) {
-                    $('#month').val(urlParams.get('month'));
-                }
-                if (urlParams.has('sort')) {
-                    $('#sort').val(urlParams.get('sort'));
-                }
-                if (urlParams.has('per_page')) {
-                    $('#itemsPerPage').val(urlParams.get('per_page'));
-                }
-            }
-            
-            // Handle filter form submission
-            $('#filterForm').on('submit', function(e) {
-                e.preventDefault();
-                applyFilters();
-            });
-            
-            // Handle items per page change
-            $('#itemsPerPage').on('change', function() {
-                applyFilters();
-            });
-        });
-        
-        function applyFilters() {
-            const params = new URLSearchParams();
-            
-            // Add filter values
-            const category = $('#category').val();
-            const year = $('#year').val();
-            const month = $('#month').val();
-            const sort = $('#sort').val();
-            const perPage = $('#itemsPerPage').val();
-            
-            if (category) params.append('category', category);
-            if (year) params.append('year', year);
-            if (month) params.append('month', month);
-            if (sort) params.append('sort', sort);
-            if (perPage && perPage !== '10') params.append('per_page', perPage);
-            
-            // Redirect with new filters
-            window.location.href = window.location.pathname + '?' + params.toString();
-        }
-        
-        function viewThesis(thesisId) {
-            window.location.href = `/thesis/${thesisId}`;
-        }
-        
-        function downloadThesis(thesisId) {
-            window.location.href = `/thesis/${thesisId}/download`;
-        }
-        
-        function bookmarkThesis(thesisId) {
-            // AJAX call to bookmark thesis
-            $.ajax({
-                url: `/thesis/${thesisId}/bookmark`,
-                method: 'POST',
-                success: function(response) {
-                    alert('Thesis bookmarked successfully!');
-                },
-                error: function() {
-                    alert('Error bookmarking thesis');
-                }
-            });
-        }
-    </script>
-</body>
-</html>
+                {% for p in range(1, (total//per_page)+2) %}
+                    {% if p == page %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ p }}</span>
+                    </li>
+                    {% else %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('browse_theses', page=p, q=search_query) }}">{{ p }}</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if page*per_page < total %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('browse_theses', page=page+1, q=search_query) }}">Next</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% else %}
+        <div class="alert alert-info">
+            No theses found. {% if search_query %}Try a different search term.{% endif %}
+        </div>
+        <!-- <div class="alert alert-info mb-4">
+            <i class="fas fa-info-circle"></i> These theses are available for reference only. Documents can be viewed in the library.
+        </div> -->
+    {% endif %}
+</div>
+{% endblock %}

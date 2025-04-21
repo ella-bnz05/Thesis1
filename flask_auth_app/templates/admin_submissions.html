@@ -1,101 +1,8 @@
+{% extends "base.html" %}
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Submitted Papers</title>
-    <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --primary-color: #4e73df;
-            --secondary-color: #f8f9fc;
-        }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f8f9fc;
-        }
-        .sidebar {
-            background: linear-gradient(180deg, var(--primary-color) 0%, #224abe 100%);
-            min-height: 100vh;
-            color: white;
-        }
-        .sidebar .nav-link {
-            color: rgba(255, 255, 255, 0.8);
-            margin-bottom: 5px;
-        }
-        .sidebar .nav-link:hover {
-            color: white;
-            background-color: rgba(255, 255, 255, 0.1);
-        }
-        .sidebar .nav-link.active {
-            color: white;
-            font-weight: bold;
-        }
-        .card {
-            border: none;
-            border-radius: 10px;
-            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
-            margin-bottom: 20px;
-        }
-        .card-header {
-            background-color: white;
-            border-bottom: 1px solid #e3e6f0;
-            font-weight: 600;
-        }
-        .document-card {
-            transition: transform 0.2s;
-            border-left: 4px solid var(--primary-color);
-        }
-        .document-card:hover {
-            transform: translateY(-3px);
-        }
-        .search-bar {
-            width: 600px;
-        }
-        .filter-btn {
-            background-color: white;
-            border: 1px solid #d1d3e2;
-            color: #6e707e;
-        }
-        .filter-btn:hover {
-            background-color: #f8f9fc;
-            border-color: #bac8f3;
-        }
-        .filter-btn.active {
-            background-color: var(--primary-color);
-            color: white;
-            border-color: var(--primary-color);
-        }
-        .filter-panel {
-            background-color: white;
-            border-radius: 10px;
-            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-        .badge-category {
-            background-color: #e74a3b;
-        }
-        .badge-year {
-            background-color: #36b9cc;
-        }
-        .badge-month {
-            background-color: #1cc88a;
-        }
-        .pagination .page-item.active .page-link {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-        }
-        .pagination .page-link {
-            color: var(--primary-color);
-        }
-    </style>
-</head>
-<body>
+{% block title %}Thesis Submissions{% endblock %}
+
+{% block content %}
 <div class="container-fluid">
     <div class="row">
         <!-- Sidebar -->
@@ -121,8 +28,8 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#">
-                            <i class="fas fa-fw fa-users me-2"></i>Users
+                        <a class="nav-link" href="{{ url_for('admin_dashboard') }}" style="color: white;">
+                            <i class="fas fa-fw fa-upload me-2"></i>Upload New
                         </a>
                     </li>
                 </ul>
@@ -325,7 +232,9 @@
         </div>
     </div>
 </div>
+{% endblock %}
 
+{% block extra_js %}
 <script>
 // Preview modal handler
 $('#previewModal').on('show.bs.modal', function (event) {
@@ -366,5 +275,4 @@ $('#filterModal .btn-primary').click(function() {
     $('#filterModal').modal('hide');
 });
 </script>
-</body>
-</html>
+{% endblock %}

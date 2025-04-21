@@ -2,53 +2,61 @@
 
 {% block content %}
 <div class="container">
-    <!-- Added header with back button -->
+    <!-- Header with back button -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Review Thesis Submission</h2>
         <a href="{{ url_for('admin_submissions') }}" class="btn btn-secondary">
             <i class="fas fa-arrow-left me-1"></i> Back to List
         </a>
     </div>
-    
+
+    <!-- Review Form -->
     <div class="card mb-4">
         <div class="card-header">
             Original File: {{ submission.original_filename }}
         </div>
         <div class="card-body">
             <h5>Extracted Information</h5>
-            
-            <form method="POST">
-                <div class="form-group">
-                    <label>Title</label>
-                    <input type="text" name="title" class="form-control" value="{{ submission.title }}">
+
+            <!-- Form submits to review_submission route first -->
+            <form method="POST" enctype="multipart/form-data" action="{{ url_for('review_submission', submission_id=submission.id) }}">
+                <div class="form-group mb-3">
+                    <label for="title">Title</label>
+                    <input type="text" name="title" class="form-control" value="{{ submission.title }}" required>
                 </div>
-                
-                <div class="form-group">
-                    <label>Authors</label>
-                    <textarea name="authors" class="form-control">{{ submission.authors }}</textarea>
+
+                <div class="form-group mb-3">
+                    <label for="authors">Authors</label>
+                    <textarea name="authors" class="form-control" rows="2" required>{{ submission.authors }}</textarea>
                 </div>
-                
-                <div class="form-group">
-                    <label>School</label>
+
+                <div class="form-group mb-3">
+                    <label for="school">School</label>
                     <input type="text" name="school" class="form-control" value="{{ submission.school }}">
                 </div>
-                
-                <div class="form-group">
-                    <label>Year</label>
+
+                <div class="form-group mb-3">
+                    <label for="year_made">Year</label>
                     <input type="text" name="year_made" class="form-control" value="{{ submission.year_made }}">
                 </div>
-                
-                <div class="form-group">
-                    <label>Keywords</label>
-                    <textarea name="keywords" class="form-control">{{ submission.keywords }}</textarea>
+
+                <div class="form-group mb-3">
+                    <label for="keywords">Keywords</label>
+                    <textarea name="keywords" class="form-control" rows="2">{{ submission.keywords }}</textarea>
                 </div>
-                
-                <div class="form-group">
-                    <label>Notes</label>
-                    <textarea name="notes" class="form-control" placeholder="Any corrections or comments..."></textarea>
+
+                <div class="form-group mb-3">
+                    <label for="revised_file">Upload Thesis PDF (Optional)</label>
+                    <input type="file" name="revised_file" class="form-control" accept=".pdf">
+                    <small class="form-text text-muted">Uploading a revised PDF will replace the original for publishing.</small>
                 </div>
-                
-                <div class="btn-group">
+
+                <div class="form-group mb-3">
+                    <label for="notes">Notes</label>
+                    <textarea name="notes" class="form-control" rows="2" placeholder="Any corrections or comments..."></textarea>
+                </div>
+
+                <div class="btn-group mt-3" role="group">
                     <button type="submit" name="action" value="approve" class="btn btn-success">
                         Approve and Publish
                     </button>
@@ -59,7 +67,8 @@
             </form>
         </div>
     </div>
-    
+
+    <!-- Text Preview -->
     <div class="card">
         <div class="card-header">
             Extracted Text Preview

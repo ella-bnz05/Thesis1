@@ -1,0 +1,22 @@
+<!-- templates/publish_confirmation.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Publish Confirmation</title>
+</head>
+<body>
+    <h1>Confirm Publish</h1>
+
+    <p><strong>Title:</strong> {{ submission.title }}</p>
+    <p><strong>Authors:</strong> {{ submission.authors }}</p>
+    <p><strong>School:</strong> {{ submission.school }}</p>
+    <p><strong>Year:</strong> {{ submission.year_made }}</p>
+    <p><strong>Keywords:</strong> {{ submission.keywords }}</p>
+
+    <form method="post">
+        <button type="submit" class="btn btn-success">Publish Thesis</button>
+        <a href="{{ url_for('admin_submissions') }}">Cancel</a>
+    </form>
+</body>
+</html>

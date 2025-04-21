@@ -20,8 +20,11 @@
             {% endif %}
         {% endwith %}
 
-        <form action="{{ url_for('login') }}" method="post">
+        <form action="{{ url_for('login', next=request.args.get('next')) }}" method="post">
             <h3>Login Now</h3>
+            <!-- Hidden field to keep 'next' parameter -->
+            <input type="hidden" name="next" value="{{ request.args.get('next', '') }}">
+
             <input type="text" name="username" required placeholder="Username">
             <input type="password" name="password" required placeholder="Password">
             <input type="submit" value="Login Now" class="form-btn">

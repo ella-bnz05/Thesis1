@@ -1,0 +1,7 @@
+{"label":"PAPER_TYPE","pattern":[{"TEXT":{"REGEX":"UNDERGRADUATE[_\\s]THESIS|DISSERTATION|RESEARCH[_\\s]PROPOSAL|THESIS[_\\s]PROPOSAL"}}]}
+{"label":"METHOD","pattern":[{"TEXT":{"REGEX":"DEEP[_\\s]LEARNING|MACHINE[_\\s]LEARNING"}}]}
+{"label":"AUTHOR","pattern":[{"TEXT":{"REGEX":"^[A-Z]+$"},"OP":"+"},{"TEXT":"ET"},{"TEXT":"AL"}]}
+{"label":"DATE","pattern":[{"TEXT":{"REGEX":"(?i)(January|February|March|April|May|June|July|August|September|October|November|December)"}},{"SHAPE":"dddd"}]}
+{"label":"DATE","pattern":[{"SHAPE":"dddd"}]}
+{"label":"DEPARTMENT","pattern":[{"TEXT":{"REGEX":"DEPARTMENT OF [A-Z]+"}}]}
+{"label":"CAMPUS","pattern":[{"TEXT":{"REGEX":"CAMPUS|COLLEGE|SCHOOL OF [A-Z]+"}}]}

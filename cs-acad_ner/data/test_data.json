@@ -1,0 +1,77 @@
+[
+  {
+      "text": "DEVELOPMENT OF A VIRTUAL NURSE SYSTEM WITH BASIC HEALTH DETECTION USING GEOLOCATION BASED TECHNOLOGY",
+      "entities": [
+          {
+              "start": 72,
+              "end": 100,
+              "label": "TOOL"
+          },
+          {
+              "start": 0,
+              "end": 65,
+              "label": "SOLUTION"
+          }
+      ]
+  },
+  {
+      "text": "Department of Computer Studies",
+      "entities": [
+          {
+              "start": 0,
+              "end": 30,
+              "label": "DEPARTMENT"
+          }
+      ]
+  },
+  {
+      "text": "RODNIE G. GELLA",
+      "entities": [
+          {
+              "start": 0,
+              "end": 15,
+              "label": "AUTHOR"
+          }
+      ]
+  },
+  {
+      "text": "DEVELOPMENT OF A WIFI SECURITY APPLICATION FOR DETECTING AND MITIGATING EVIL TWIN ATTACKS",
+      "entities": [
+          {
+              "start": 47,
+              "end": 89,
+              "label": "RESEARCH_PROBLEM"
+          },
+          {
+              "start": 0,
+              "end": 43,
+              "label": "SOLUTION"
+          }
+      ]
+  },
+  {
+      "text": "2024",
+      "entities": [
+          {
+              "start": 0,
+              "end": 4,
+              "label": "DATE"
+          }
+      ]
+  },
+  {
+      "text": "VISLIGHT: LEVERAGING INTELLIGENT TRAFFIC LIGHT SENSORS TO MITIGATE URBAN CONGESTION DURING RUSH HOURS",
+      "entities": [
+          {
+              "start": 67,
+              "end": 101,
+              "label": "RESEARCH_PROBLEM"
+          },
+          {
+              "start": 0,
+              "end": 54,
+              "label": "SOLUTION"
+          }
+      ]
+  }
+]

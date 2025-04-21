@@ -1,0 +1,2646 @@
+{
+    "bio": [
+        {
+            "tokens": [
+                "[CLS]",
+                "designing",
+                "a",
+                "machine",
+                "learning",
+                "-",
+                "based",
+                "system",
+                "to",
+                "predict",
+                "monthly",
+                "electricity",
+                "and",
+                "water",
+                "bills",
+                "for",
+                "household",
+                "budget",
+                "##ing",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-SOLUTION",
+                "I-SOLUTION",
+                "B-METHOD",
+                "I-METHOD",
+                "I-METHOD",
+                "I-METHOD",
+                "I-METHOD",
+                "O",
+                "O",
+                "B-RESEARCH_PROBLEM",
+                "I-RESEARCH_PROBLEM",
+                "I-RESEARCH_PROBLEM",
+                "I-RESEARCH_PROBLEM",
+                "I-RESEARCH_PROBLEM",
+                "I-RESEARCH_PROBLEM",
+                "I-RESEARCH_PROBLEM",
+                "I-RESEARCH_PROBLEM",
+                "I-RESEARCH_PROBLEM",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "undergraduate",
+                "thesis",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-PAPER_TYPE",
+                "I-PAPER_TYPE",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "department",
+                "of",
+                "computer",
+                "studies",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-DEPARTMENT",
+                "I-DEPARTMENT",
+                "I-DEPARTMENT",
+                "I-DEPARTMENT",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "ca",
+                "##vite",
+                "state",
+                "university",
+                "-",
+                "im",
+                "##us",
+                "campus",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-CAMPUS",
+                "I-CAMPUS",
+                "I-CAMPUS",
+                "I-CAMPUS",
+                "I-CAMPUS",
+                "I-CAMPUS",
+                "I-CAMPUS",
+                "I-CAMPUS",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "ag",
+                "##uin",
+                "##aldo",
+                ",",
+                "carl",
+                "##ea",
+                "maria",
+                "g",
+                ".",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "chavez",
+                ",",
+                "leonardo",
+                "lu",
+                "##iz",
+                "b",
+                ".",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "ravi",
+                "##s",
+                ",",
+                "jordan",
+                "angelo",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "january",
+                "202",
+                "##5",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-DATE",
+                "I-DATE",
+                "I-DATE",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "development",
+                "of",
+                "a",
+                "virtual",
+                "nurse",
+                "system",
+                "with",
+                "basic",
+                "health",
+                "detection",
+                "using",
+                "geo",
+                "##lo",
+                "##cation",
+                "based",
+                "technology",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "O",
+                "B-TOOL",
+                "I-TOOL",
+                "I-TOOL",
+                "I-TOOL",
+                "I-TOOL",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "undergraduate",
+                "thesis",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-PAPER_TYPE",
+                "I-PAPER_TYPE",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "department",
+                "of",
+                "computer",
+                "studies",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-DEPARTMENT",
+                "I-DEPARTMENT",
+                "I-DEPARTMENT",
+                "I-DEPARTMENT",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "ca",
+                "##vite",
+                "state",
+                "university",
+                "-",
+                "im",
+                "##us",
+                "campus",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-CAMPUS",
+                "I-CAMPUS",
+                "I-CAMPUS",
+                "I-CAMPUS",
+                "I-CAMPUS",
+                "I-CAMPUS",
+                "I-CAMPUS",
+                "I-CAMPUS",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "virgil",
+                "##io",
+                "jr",
+                ".",
+                "c",
+                ".",
+                "diaz",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "rod",
+                "##nie",
+                "g",
+                ".",
+                "gel",
+                "##la",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "sha",
+                "##rina",
+                "ace",
+                "##l",
+                "v",
+                ".",
+                "macro",
+                "##hon",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "january",
+                "202",
+                "##5",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-DATE",
+                "I-DATE",
+                "I-DATE",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "an",
+                "undergraduate",
+                "thesis",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "O",
+                "B-PAPER_TYPE",
+                "I-PAPER_TYPE",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "department",
+                "of",
+                "computer",
+                "studies",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-DEPARTMENT",
+                "I-DEPARTMENT",
+                "I-DEPARTMENT",
+                "I-DEPARTMENT",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "ca",
+                "##vite",
+                "state",
+                "university",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-CAMPUS",
+                "I-CAMPUS",
+                "I-CAMPUS",
+                "I-CAMPUS",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "john",
+                "al",
+                "##christ",
+                "##ian",
+                "m",
+                ".",
+                "bela",
+                "##rmin",
+                "##o",
+                ".",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "ed",
+                "##il",
+                "##berto",
+                "p",
+                ".",
+                "lust",
+                "##eri",
+                "##o",
+                "jr",
+                ".",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "ri",
+                "##no",
+                "##a",
+                "jayne",
+                "m",
+                ".",
+                "cat",
+                "##ana",
+                "##oa",
+                "##n",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "january",
+                "202",
+                "##5",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-DATE",
+                "I-DATE",
+                "I-DATE",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "smart",
+                "##land",
+                ":",
+                "development",
+                "of",
+                "a",
+                "gi",
+                "##s",
+                "-",
+                "based",
+                "agricultural",
+                "land",
+                "analysis",
+                "and",
+                "mapping",
+                "system",
+                "for",
+                "e",
+                "-",
+                "commerce",
+                "marketplace",
+                "integration",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "O",
+                "B-RESEARCH_PROBLEM",
+                "I-RESEARCH_PROBLEM",
+                "I-RESEARCH_PROBLEM",
+                "I-RESEARCH_PROBLEM",
+                "I-RESEARCH_PROBLEM",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "undergraduate",
+                "thesis",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-PAPER_TYPE",
+                "I-PAPER_TYPE",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "of",
+                "the",
+                "department",
+                "of",
+                "computer",
+                "studies",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "O",
+                "O",
+                "B-DEPARTMENT",
+                "I-DEPARTMENT",
+                "I-DEPARTMENT",
+                "I-DEPARTMENT",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "ca",
+                "##vite",
+                "state",
+                "university",
+                "-",
+                "im",
+                "##us",
+                "campus",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-CAMPUS",
+                "I-CAMPUS",
+                "I-CAMPUS",
+                "I-CAMPUS",
+                "I-CAMPUS",
+                "I-CAMPUS",
+                "I-CAMPUS",
+                "I-CAMPUS",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "ivan",
+                "gabriel",
+                "a",
+                ".",
+                "pena",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "carlo",
+                "p",
+                ".",
+                "ge",
+                "##rb",
+                "##es",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "franco",
+                "le",
+                "##mu",
+                "##el",
+                "a",
+                ".",
+                "garcia",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "202",
+                "##5",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-DATE",
+                "I-DATE",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "simulation",
+                "of",
+                "an",
+                "io",
+                "##t",
+                "-",
+                "based",
+                "smart",
+                "traffic",
+                "system",
+                "to",
+                "reduce",
+                "emergency",
+                "response",
+                "delays",
+                "for",
+                "ambulance",
+                "##s",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "O",
+                "O",
+                "B-RESEARCH_PROBLEM",
+                "I-RESEARCH_PROBLEM",
+                "I-RESEARCH_PROBLEM",
+                "I-RESEARCH_PROBLEM",
+                "I-RESEARCH_PROBLEM",
+                "I-RESEARCH_PROBLEM",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "undergraduate",
+                "thesis",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-PAPER_TYPE",
+                "I-PAPER_TYPE",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "of",
+                "the",
+                "department",
+                "of",
+                "computer",
+                "studies",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "O",
+                "O",
+                "B-DEPARTMENT",
+                "I-DEPARTMENT",
+                "I-DEPARTMENT",
+                "I-DEPARTMENT",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "ca",
+                "##vite",
+                "state",
+                "university",
+                "-",
+                "im",
+                "##us",
+                "campus",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-CAMPUS",
+                "I-CAMPUS",
+                "I-CAMPUS",
+                "I-CAMPUS",
+                "I-CAMPUS",
+                "I-CAMPUS",
+                "I-CAMPUS",
+                "I-CAMPUS",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "sentiment",
+                "analysis",
+                "of",
+                "the",
+                "sw",
+                "##ot",
+                "##ify",
+                "platform",
+                "of",
+                "central",
+                "student",
+                "government",
+                "in",
+                "ca",
+                "##vite",
+                "state",
+                "university",
+                "-",
+                "im",
+                "##us",
+                "campus",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "research",
+                "project",
+                ",",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-PAPER_TYPE",
+                "I-PAPER_TYPE",
+                "O",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "department",
+                "of",
+                "computer",
+                "studies",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-DEPARTMENT",
+                "I-DEPARTMENT",
+                "I-DEPARTMENT",
+                "I-DEPARTMENT",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "ca",
+                "##vite",
+                "state",
+                "university",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-CAMPUS",
+                "I-CAMPUS",
+                "I-CAMPUS",
+                "I-CAMPUS",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "sv",
+                "##et",
+                "ja",
+                "##z",
+                "##mine",
+                "di",
+                "##o",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "tri",
+                "##sha",
+                "grace",
+                "c",
+                ".",
+                "garcia",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "van",
+                "ellis",
+                "v",
+                ".",
+                "mer",
+                "##ca",
+                "##do",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "202",
+                "##4",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-DATE",
+                "I-DATE",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "development",
+                "of",
+                "a",
+                "wi",
+                "##fi",
+                "security",
+                "application",
+                "for",
+                "detecting",
+                "and",
+                "mit",
+                "##iga",
+                "##ting",
+                "evil",
+                "twin",
+                "attacks",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "O",
+                "B-RESEARCH_PROBLEM",
+                "I-RESEARCH_PROBLEM",
+                "I-RESEARCH_PROBLEM",
+                "I-RESEARCH_PROBLEM",
+                "I-RESEARCH_PROBLEM",
+                "I-RESEARCH_PROBLEM",
+                "I-RESEARCH_PROBLEM",
+                "I-RESEARCH_PROBLEM",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "undergraduate",
+                "thesis",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-PAPER_TYPE",
+                "I-PAPER_TYPE",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "department",
+                "of",
+                "computer",
+                "studies",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-DEPARTMENT",
+                "I-DEPARTMENT",
+                "I-DEPARTMENT",
+                "I-DEPARTMENT",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "ca",
+                "##vite",
+                "state",
+                "university",
+                "-",
+                "im",
+                "##us",
+                "campus",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-CAMPUS",
+                "I-CAMPUS",
+                "I-CAMPUS",
+                "I-CAMPUS",
+                "I-CAMPUS",
+                "I-CAMPUS",
+                "I-CAMPUS",
+                "I-CAMPUS",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "c",
+                "##zar",
+                "john",
+                "villa",
+                "##real",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "louise",
+                "mark",
+                "band",
+                "##oja",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "von",
+                "philippe",
+                "ace",
+                "##ro",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "january",
+                "202",
+                "##5",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-DATE",
+                "I-DATE",
+                "I-DATE",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "development",
+                "of",
+                "an",
+                "internet",
+                "of",
+                "things",
+                "-",
+                "based",
+                "waste",
+                "detection",
+                "system",
+                "for",
+                "drainage",
+                "canals",
+                ":",
+                "classification",
+                "and",
+                "monitoring",
+                "of",
+                "waste",
+                "types",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "B-TOOL",
+                "I-TOOL",
+                "I-TOOL",
+                "I-TOOL",
+                "I-TOOL",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "O",
+                "B-RESEARCH_PROBLEM",
+                "I-RESEARCH_PROBLEM",
+                "I-RESEARCH_PROBLEM",
+                "I-RESEARCH_PROBLEM",
+                "I-RESEARCH_PROBLEM",
+                "I-RESEARCH_PROBLEM",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "undergraduate",
+                "thesis",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-PAPER_TYPE",
+                "I-PAPER_TYPE",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "department",
+                "of",
+                "computer",
+                "studies",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-DEPARTMENT",
+                "I-DEPARTMENT",
+                "I-DEPARTMENT",
+                "I-DEPARTMENT",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "virgil",
+                "##io",
+                "jr",
+                ".",
+                "c",
+                ".",
+                "diaz",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "rod",
+                "##nie",
+                "g",
+                ".",
+                "gel",
+                "##la",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "sha",
+                "##rina",
+                "ace",
+                "##l",
+                "v",
+                ".",
+                "macro",
+                "##hon",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "january",
+                "202",
+                "##5",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-DATE",
+                "I-DATE",
+                "I-DATE",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "vis",
+                "##light",
+                ":",
+                "lever",
+                "##aging",
+                "intelligent",
+                "traffic",
+                "light",
+                "sensors",
+                "to",
+                "mit",
+                "##igate",
+                "urban",
+                "congestion",
+                "during",
+                "rush",
+                "hours",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "B-TOOL",
+                "I-TOOL",
+                "I-TOOL",
+                "I-TOOL",
+                "O",
+                "O",
+                "O",
+                "O",
+                "I-RESEARCH_PROBLEM",
+                "I-RESEARCH_PROBLEM",
+                "I-RESEARCH_PROBLEM",
+                "I-RESEARCH_PROBLEM",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "a",
+                "thesis",
+                "proposal",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "O",
+                "B-PAPER_TYPE",
+                "I-PAPER_TYPE",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "department",
+                "of",
+                "computer",
+                "studies",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-DEPARTMENT",
+                "I-DEPARTMENT",
+                "I-DEPARTMENT",
+                "I-DEPARTMENT",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "ca",
+                "##vite",
+                "state",
+                "university",
+                "-",
+                "im",
+                "##us",
+                "campus",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-CAMPUS",
+                "I-CAMPUS",
+                "I-CAMPUS",
+                "I-CAMPUS",
+                "I-CAMPUS",
+                "I-CAMPUS",
+                "I-CAMPUS",
+                "I-CAMPUS",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "jose",
+                "angelo",
+                "b",
+                ".",
+                "bit",
+                "##anga",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "john",
+                "robert",
+                "l",
+                ".",
+                "ol",
+                "##ano",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "gwen",
+                "marin",
+                "##ie",
+                "c",
+                ".",
+                "pac",
+                "##iente",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "january",
+                "202",
+                "##4",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-DATE",
+                "I-DATE",
+                "I-DATE",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "syntax",
+                "recall",
+                ":",
+                "enhancing",
+                "coding",
+                "skills",
+                "through",
+                "2d",
+                "text",
+                "-",
+                "based",
+                "interactive",
+                "combat",
+                "game",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "B-METHOD",
+                "I-METHOD",
+                "I-METHOD",
+                "I-METHOD",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "I-SOLUTION",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "undergraduate",
+                "thesis",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-PAPER_TYPE",
+                "I-PAPER_TYPE",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "department",
+                "of",
+                "computer",
+                "studies",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-DEPARTMENT",
+                "I-DEPARTMENT",
+                "I-DEPARTMENT",
+                "I-DEPARTMENT",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "ca",
+                "##vite",
+                "state",
+                "university",
+                "-",
+                "im",
+                "##us",
+                "campus",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-CAMPUS",
+                "I-CAMPUS",
+                "I-CAMPUS",
+                "I-CAMPUS",
+                "I-CAMPUS",
+                "I-CAMPUS",
+                "I-CAMPUS",
+                "I-CAMPUS",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "rafael",
+                "##la",
+                "r",
+                ".",
+                "bane",
+                "##z",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "aa",
+                "##li",
+                "##hya",
+                "m",
+                ".",
+                "river",
+                "##o",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "ryan",
+                "christian",
+                "m",
+                ".",
+                "rob",
+                "##les",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "I-AUTHOR",
+                "O"
+            ]
+        },
+        {
+            "tokens": [
+                "[CLS]",
+                "january",
+                "202",
+                "##5",
+                "[SEP]"
+            ],
+            "labels": [
+                "O",
+                "B-DATE",
+                "I-DATE",
+                "I-DATE",
+                "O"
+            ]
+        }
+    ],
+    "spans": [
+        {
+            "text": "DESIGNING A MACHINE LEARNING-BASED SYSTEM TO PREDICT MONTHLY ELECTRICITY AND WATER BILLS FOR HOUSEHOLD BUDGETING",
+            "spans": [
+                {
+                    "start": 53,
+                    "end": 112,
+                    "label": "RESEARCH_PROBLEM",
+                    "text": "MONTHLY ELECTRICITY AND WATER BILLS FOR HOUSEHOLD BUDGETING"
+                },
+                {
+                    "start": 0,
+                    "end": 41,
+                    "label": "SOLUTION",
+                    "text": "DESIGNING A MACHINE LEARNING-BASED SYSTEM"
+                },
+                {
+                    "start": 12,
+                    "end": 41,
+                    "label": "METHOD",
+                    "text": "MACHINE LEARNING-BASED SYSTEM"
+                }
+            ]
+        },
+        {
+            "text": "Undergraduate Thesis",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 20,
+                    "label": "PAPER_TYPE",
+                    "text": "Undergraduate Thesis"
+                }
+            ]
+        },
+        {
+            "text": "Department of Computer Studies",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 30,
+                    "label": "DEPARTMENT",
+                    "text": "Department of Computer Studies"
+                }
+            ]
+        },
+        {
+            "text": "Cavite State University - Imus Campus",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 37,
+                    "label": "CAMPUS",
+                    "text": "Cavite State University - Imus Campus"
+                }
+            ]
+        },
+        {
+            "text": "AGUINALDO, CARLEA MARIA G.",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 26,
+                    "label": "AUTHOR",
+                    "text": "AGUINALDO, CARLEA MARIA G."
+                }
+            ]
+        },
+        {
+            "text": "CHAVEZ, LEONARDO LUIZ B.",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 24,
+                    "label": "AUTHOR",
+                    "text": "CHAVEZ, LEONARDO LUIZ B."
+                }
+            ]
+        },
+        {
+            "text": "RAVIS, JORDAN ANGELO",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 20,
+                    "label": "AUTHOR",
+                    "text": "RAVIS, JORDAN ANGELO"
+                }
+            ]
+        },
+        {
+            "text": "January 2025",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 12,
+                    "label": "DATE",
+                    "text": "January 2025"
+                }
+            ]
+        },
+        {
+            "text": "DEVELOPMENT OF A VIRTUAL NURSE SYSTEM WITH BASIC HEALTH DETECTION USING GEOLOCATION BASED TECHNOLOGY",
+            "spans": [
+                {
+                    "start": 72,
+                    "end": 100,
+                    "label": "TOOL",
+                    "text": "GEOLOCATION BASED TECHNOLOGY"
+                },
+                {
+                    "start": 0,
+                    "end": 65,
+                    "label": "SOLUTION",
+                    "text": "DEVELOPMENT OF A VIRTUAL NURSE SYSTEM WITH BASIC HEALTH DETECTION"
+                }
+            ]
+        },
+        {
+            "text": "Undergraduate Thesis",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 20,
+                    "label": "PAPER_TYPE",
+                    "text": "Undergraduate Thesis"
+                }
+            ]
+        },
+        {
+            "text": "Department of Computer Studies",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 30,
+                    "label": "DEPARTMENT",
+                    "text": "Department of Computer Studies"
+                }
+            ]
+        },
+        {
+            "text": "Cavite State University - Imus Campus",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 37,
+                    "label": "CAMPUS",
+                    "text": "Cavite State University - Imus Campus"
+                }
+            ]
+        },
+        {
+            "text": "VIRGILIO JR. C. DIAZ",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 20,
+                    "label": "AUTHOR",
+                    "text": "VIRGILIO JR. C. DIAZ"
+                }
+            ]
+        },
+        {
+            "text": "RODNIE G. GELLA",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 15,
+                    "label": "AUTHOR",
+                    "text": "RODNIE G. GELLA"
+                }
+            ]
+        },
+        {
+            "text": "SHARINA ACEL V. MACROHON",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 24,
+                    "label": "AUTHOR",
+                    "text": "SHARINA ACEL V. MACROHON"
+                }
+            ]
+        },
+        {
+            "text": "JANUARY 2025",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 12,
+                    "label": "DATE",
+                    "text": "JANUARY 2025"
+                }
+            ]
+        },
+        {
+            "text": "An Undergraduate Thesis",
+            "spans": [
+                {
+                    "start": 3,
+                    "end": 23,
+                    "label": "PAPER_TYPE",
+                    "text": "Undergraduate Thesis"
+                }
+            ]
+        },
+        {
+            "text": "Department of Computer Studies",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 30,
+                    "label": "DEPARTMENT",
+                    "text": "Department of Computer Studies"
+                }
+            ]
+        },
+        {
+            "text": "Cavite State University",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 23,
+                    "label": "CAMPUS",
+                    "text": "Cavite State University"
+                }
+            ]
+        },
+        {
+            "text": "JOHN ALCHRISTIAN M. BELARMINO.",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 30,
+                    "label": "AUTHOR",
+                    "text": "JOHN ALCHRISTIAN M. BELARMINO."
+                }
+            ]
+        },
+        {
+            "text": "EDILBERTO P. LUSTERIO JR.",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 25,
+                    "label": "AUTHOR",
+                    "text": "EDILBERTO P. LUSTERIO JR."
+                }
+            ]
+        },
+        {
+            "text": "RINOA JAYNE M. CATANAOAN",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 24,
+                    "label": "AUTHOR",
+                    "text": "RINOA JAYNE M. CATANAOAN"
+                }
+            ]
+        },
+        {
+            "text": "JANUARY 2025",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 12,
+                    "label": "DATE",
+                    "text": "JANUARY 2025"
+                }
+            ]
+        },
+        {
+            "text": "SMARTLAND: DEVELOPMENT OF A GIS-BASED AGRICULTURAL LAND ANALYSIS AND MAPPING SYSTEM FOR E-COMMERCE MARKETPLACE INTEGRATION",
+            "spans": [
+                {
+                    "start": 88,
+                    "end": 122,
+                    "label": "RESEARCH_PROBLEM",
+                    "text": "E-COMMERCE MARKETPLACE INTEGRATION"
+                },
+                {
+                    "start": 28,
+                    "end": 37,
+                    "label": "TOOL",
+                    "text": "GIS-BASED"
+                },
+                {
+                    "start": 0,
+                    "end": 83,
+                    "label": "SOLUTION",
+                    "text": "SMARTLAND: DEVELOPMENT OF A GIS-BASED AGRICULTURAL LAND ANALYSIS AND MAPPING SYSTEM"
+                }
+            ]
+        },
+        {
+            "text": "Undergraduate Thesis",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 20,
+                    "label": "PAPER_TYPE",
+                    "text": "Undergraduate Thesis"
+                }
+            ]
+        },
+        {
+            "text": "of the Department of Computer Studies",
+            "spans": [
+                {
+                    "start": 7,
+                    "end": 37,
+                    "label": "DEPARTMENT",
+                    "text": "Department of Computer Studies"
+                }
+            ]
+        },
+        {
+            "text": "Cavite State University - Imus Campus",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 37,
+                    "label": "CAMPUS",
+                    "text": "Cavite State University - Imus Campus"
+                }
+            ]
+        },
+        {
+            "text": "IVAN GABRIEL A. PENA",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 20,
+                    "label": "AUTHOR",
+                    "text": "IVAN GABRIEL A. PENA"
+                }
+            ]
+        },
+        {
+            "text": "CARLO P. GERBES",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 20,
+                    "label": "AUTHOR",
+                    "text": "CARLO P. GERBES"
+                }
+            ]
+        },
+        {
+            "text": "FRANCO LEMUEL A. GARCIA",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 23,
+                    "label": "AUTHOR",
+                    "text": "FRANCO LEMUEL A. GARCIA"
+                }
+            ]
+        },
+        {
+            "text": "2025",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 4,
+                    "label": "DATE",
+                    "text": "2025"
+                }
+            ]
+        },
+        {
+            "text": "SIMULATION OF AN IOT-BASED SMART TRAFFIC SYSTEM TO REDUCE EMERGENCY RESPONSE DELAYS FOR AMBULANCES",
+            "spans": [
+                {
+                    "start": 17,
+                    "end": 26,
+                    "label": "TOOL",
+                    "text": "IOT-BASED"
+                },
+                {
+                    "start": 58,
+                    "end": 98,
+                    "label": "RESEARCH_PROBLEM",
+                    "text": "EMERGENCY RESPONSE DELAYS FOR AMBULANCES"
+                },
+                {
+                    "start": 0,
+                    "end": 47,
+                    "label": "SOLUTION",
+                    "text": "SIMULATION OF AN IOT-BASED SMART TRAFFIC SYSTEM"
+                }
+            ]
+        },
+        {
+            "text": "Undergraduate Thesis",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 20,
+                    "label": "PAPER_TYPE",
+                    "text": "Undergraduate Thesis"
+                }
+            ]
+        },
+        {
+            "text": "of the Department of Computer Studies",
+            "spans": [
+                {
+                    "start": 7,
+                    "end": 37,
+                    "label": "DEPARTMENT",
+                    "text": "Department of Computer Studies"
+                }
+            ]
+        },
+        {
+            "text": "Cavite State University - Imus Campus",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 37,
+                    "label": "CAMPUS",
+                    "text": "Cavite State University - Imus Campus"
+                }
+            ]
+        },
+        {
+            "text": "SENTIMENT ANALYSIS OF THE SWOTIFY PLATFORM OF CENTRAL STUDENT GOVERNMENT IN CAVITE STATE UNIVERSITY- IMUS CAMPUS",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 18,
+                    "label": "METHOD",
+                    "text": "SENTIMENT ANALYSIS"
+                },
+                {
+                    "start": 0,
+                    "end": 112,
+                    "label": "SOLUTION",
+                    "text": "SENTIMENT ANALYSIS OF THE SWOTIFY PLATFORM OF CENTRAL STUDENT GOVERNMENT IN CAVITE STATE UNIVERSITY- IMUS CAMPUS"
+                }
+            ]
+        },
+        {
+            "text": "Research Project,",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 16,
+                    "label": "PAPER_TYPE",
+                    "text": "Research Project"
+                }
+            ]
+        },
+        {
+            "text": "Department of Computer Studies",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 30,
+                    "label": "DEPARTMENT",
+                    "text": "Department of Computer Studies"
+                }
+            ]
+        },
+        {
+            "text": "Cavite State University",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 23,
+                    "label": "CAMPUS",
+                    "text": "Cavite State University"
+                }
+            ]
+        },
+        {
+            "text": "SVET JAZMINE DIO",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 16,
+                    "label": "AUTHOR",
+                    "text": "SVET JAZMINE DIO"
+                }
+            ]
+        },
+        {
+            "text": "TRISHA GRACE C. GARCIA",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 22,
+                    "label": "AUTHOR",
+                    "text": "TRISHA GRACE C. GARCIA"
+                }
+            ]
+        },
+        {
+            "text": "VAN ELLIS V. MERCADO",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 20,
+                    "label": "AUTHOR",
+                    "text": "VAN ELLIS V. MERCADO"
+                }
+            ]
+        },
+        {
+            "text": "2024",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 4,
+                    "label": "DATE",
+                    "text": "2024"
+                }
+            ]
+        },
+        {
+            "text": "DEVELOPMENT OF A WIFI SECURITY APPLICATION FOR DETECTING AND MITIGATING EVIL TWIN ATTACKS",
+            "spans": [
+                {
+                    "start": 47,
+                    "end": 89,
+                    "label": "RESEARCH_PROBLEM",
+                    "text": "DETECTING AND MITIGATING EVIL TWIN ATTACKS"
+                },
+                {
+                    "start": 0,
+                    "end": 43,
+                    "label": "SOLUTION",
+                    "text": "DEVELOPMENT OF A WIFI SECURITY APPLICATION "
+                }
+            ]
+        },
+        {
+            "text": "Undergraduate Thesis",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 20,
+                    "label": "PAPER_TYPE",
+                    "text": "Undergraduate Thesis"
+                }
+            ]
+        },
+        {
+            "text": "Department of Computer Studies",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 30,
+                    "label": "DEPARTMENT",
+                    "text": "Department of Computer Studies"
+                }
+            ]
+        },
+        {
+            "text": "Cavite State University - Imus Campus",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 37,
+                    "label": "CAMPUS",
+                    "text": "Cavite State University - Imus Campus"
+                }
+            ]
+        },
+        {
+            "text": "CZAR JOHN VILLAREAL",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 19,
+                    "label": "AUTHOR",
+                    "text": "CZAR JOHN VILLAREAL"
+                }
+            ]
+        },
+        {
+            "text": "LOUISE MARK BANDOJA",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 19,
+                    "label": "AUTHOR",
+                    "text": "LOUISE MARK BANDOJA"
+                }
+            ]
+        },
+        {
+            "text": "VON PHILIPPE ACERO",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 18,
+                    "label": "AUTHOR",
+                    "text": "VON PHILIPPE ACERO"
+                }
+            ]
+        },
+        {
+            "text": "January 2025",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 12,
+                    "label": "DATE",
+                    "text": "January 2025"
+                }
+            ]
+        },
+        {
+            "text": "DEVELOPMENT OF AN INTERNET OF THINGS-BASED WASTE DETECTION SYSTEM FOR DRAINAGE CANALS: CLASSIFICATION AND MONITORING OF WASTE TYPES",
+            "spans": [
+                {
+                    "start": 87,
+                    "end": 131,
+                    "label": "RESEARCH_PROBLEM",
+                    "text": "CLASSIFICATION AND MONITORING OF WASTE TYPES"
+                },
+                {
+                    "start": 0,
+                    "end": 85,
+                    "label": "SOLUTION",
+                    "text": "DEVELOPMENT OF AN INTERNET OF THINGS-BASED WASTE DETECTION SYSTEM FOR DRAINAGE CANALS"
+                },
+                {
+                    "start": 18,
+                    "end": 42,
+                    "label": "TOOL",
+                    "text": "INTERNET OF THINGS-BASED"
+                }
+            ]
+        },
+        {
+            "text": "Undergraduate Thesis",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 20,
+                    "label": "PAPER_TYPE",
+                    "text": "Undergraduate Thesis"
+                }
+            ]
+        },
+        {
+            "text": "Department of Computer Studies",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 30,
+                    "label": "DEPARTMENT",
+                    "text": "Department of Computer Studies"
+                }
+            ]
+        },
+        {
+            "text": "VIRGILIO JR. C. DIAZ",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 20,
+                    "label": "AUTHOR",
+                    "text": "VIRGILIO JR. C. DIAZ"
+                }
+            ]
+        },
+        {
+            "text": "RODNIE G. GELLA",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 15,
+                    "label": "AUTHOR",
+                    "text": "RODNIE G. GELLA"
+                }
+            ]
+        },
+        {
+            "text": "SHARINA ACEL V. MACROHON",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 24,
+                    "label": "AUTHOR",
+                    "text": "SHARINA ACEL V. MACROHON"
+                }
+            ]
+        },
+        {
+            "text": "JANUARY 2025",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 12,
+                    "label": "DATE",
+                    "text": "JANUARY 2025"
+                }
+            ]
+        },
+        {
+            "text": "VISLIGHT: LEVERAGING INTELLIGENT TRAFFIC LIGHT SENSORS TO MITIGATE URBAN CONGESTION DURING RUSH HOURS",
+            "spans": [
+                {
+                    "start": 68,
+                    "end": 101,
+                    "label": "RESEARCH_PROBLEM",
+                    "text": "RBAN CONGESTION DURING RUSH HOURS"
+                },
+                {
+                    "start": 0,
+                    "end": 54,
+                    "label": "SOLUTION",
+                    "text": "VISLIGHT: LEVERAGING INTELLIGENT TRAFFIC LIGHT SENSORS"
+                },
+                {
+                    "start": 21,
+                    "end": 54,
+                    "label": "TOOL",
+                    "text": "INTELLIGENT TRAFFIC LIGHT SENSORS"
+                }
+            ]
+        },
+        {
+            "text": "A Thesis Proposal",
+            "spans": [
+                {
+                    "start": 2,
+                    "end": 17,
+                    "label": "PAPER_TYPE",
+                    "text": "Thesis Proposal"
+                }
+            ]
+        },
+        {
+            "text": "Department of Computer Studies",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 30,
+                    "label": "DEPARTMENT",
+                    "text": "Department of Computer Studies"
+                }
+            ]
+        },
+        {
+            "text": "Cavite State University - Imus Campus",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 37,
+                    "label": "CAMPUS",
+                    "text": "Cavite State University - Imus Campus"
+                }
+            ]
+        },
+        {
+            "text": "JOSE ANGELO B. BITANGA",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 22,
+                    "label": "AUTHOR",
+                    "text": "JOSE ANGELO B. BITANGA"
+                }
+            ]
+        },
+        {
+            "text": "JOHN ROBERT L. OLANO",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 20,
+                    "label": "AUTHOR",
+                    "text": "JOHN ROBERT L. OLANO"
+                }
+            ]
+        },
+        {
+            "text": "GWEN MARINIE C. PACIENTE",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 24,
+                    "label": "AUTHOR",
+                    "text": "GWEN MARINIE C. PACIENTE"
+                }
+            ]
+        },
+        {
+            "text": "JANUARY 2024",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 12,
+                    "label": "DATE",
+                    "text": "JANUARY 2024"
+                }
+            ]
+        },
+        {
+            "text": "SYNTAX RECALL: ENHANCING CODING SKILLS THROUGH 2D TEXT-BASED INTERACTIVE COMBAT GAME",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 84,
+                    "label": "SOLUTION",
+                    "text": "SYNTAX RECALL: ENHANCING CODING SKILLS THROUGH 2D TEXT-BASED INTERACTIVE COMBAT GAME"
+                },
+                {
+                    "start": 47,
+                    "end": 60,
+                    "label": "METHOD",
+                    "text": "2D TEXT-BASED"
+                }
+            ]
+        },
+        {
+            "text": "Undergraduate Thesis",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 20,
+                    "label": "PAPER_TYPE",
+                    "text": "Undergraduate Thesis"
+                }
+            ]
+        },
+        {
+            "text": "Department of Computer Studies",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 30,
+                    "label": "DEPARTMENT",
+                    "text": "Department of Computer Studies"
+                }
+            ]
+        },
+        {
+            "text": "Cavite State University - Imus Campus",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 37,
+                    "label": "CAMPUS",
+                    "text": "Cavite State University - Imus Campus"
+                }
+            ]
+        },
+        {
+            "text": "RAFAELLA R. BANEZ",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 17,
+                    "label": "AUTHOR",
+                    "text": "RAFAELLA R. BANEZ"
+                }
+            ]
+        },
+        {
+            "text": "AALIHYA M. RIVERO",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 17,
+                    "label": "AUTHOR",
+                    "text": "AALIHYA M. RIVERO"
+                }
+            ]
+        },
+        {
+            "text": "RYAN CHRISTIAN M. ROBLES",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 24,
+                    "label": "AUTHOR",
+                    "text": "RYAN CHRISTIAN M. ROBLES"
+                }
+            ]
+        },
+        {
+            "text": "January 2025",
+            "spans": [
+                {
+                    "start": 0,
+                    "end": 12,
+                    "label": "DATE",
+                    "text": "January 2025"
+                }
+            ]
+        }
+    ]
+}

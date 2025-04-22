@@ -520,35 +520,44 @@ def admin_submissions():
     if not current_user.is_admin():
         abort(403)
 
+    status_filter = request.args.get('status', 'all')
+
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
 
-    # Example query to get stats
-    cursor.execute("SELECT COUNT(*) as total FROM thesis_submissions")
-    total_theses = cursor.fetchone()['total']
+    # Base query
+    query = """
+        SELECT ts.*, u.username as admin_username 
+        FROM thesis_submissions ts
+        JOIN users u ON ts.admin_id = u.id
+    """
+    
+    # Add status filter if specified
+    if status_filter in ['pending', 'approved', 'rejected']:
+        query += " WHERE ts.status = %s"
+        params = (status_filter,)
+    else:
+        params = ()
 
-    cursor.execute("SELECT COUNT(*) as total FROM users WHERE role = 'admin'")
-    total_admins = cursor.fetchone()['total']
-
-    cursor.execute("SELECT COUNT(*) as total FROM users WHERE role = 'user'")
-    total_users = cursor.fetchone()['total']
-
-    cursor.execute("SELECT COUNT(*) as total FROM published_theses")
-    total_published = cursor.fetchone()['total']
-
-    stats = {
-        'total_theses': total_theses,
-        'total_admins': total_admins,
-        'total_users': total_users,
-        'total_published': total_published
-    }
-
-    # Your existing logic to fetch submissions
-    cursor.execute("SELECT * FROM thesis_submissions")
+    query += " ORDER BY ts.created_at DESC"
+    
+    cursor.execute(query, params)
     submissions = cursor.fetchall()
 
+    # Get stats
+    cursor.execute("""
+        SELECT 
+            COUNT(*) as total_theses,
+            SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) as published,
+            SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending,
+            SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) as rejected
+        FROM thesis_submissions
+    """)
+    stats = cursor.fetchone()
+
     return render_template('admin_submissions.html',
-                           submissions=submissions,
-                           stats=stats)
+                         submissions=submissions,
+                         stats=stats,
+                         current_filter=status_filter)
 # Add a new route for managing trash/rejected items
 @app.route('/admin/trash', methods=['GET', 'POST'])
 @login_required

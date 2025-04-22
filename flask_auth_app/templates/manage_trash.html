@@ -1,61 +1,119 @@
-<!-- templates/manage_trash.html -->
-{% extends "admin_dashboard.html" %}
+{% extends "base.html" %}
+
+{% block title %}Manage Trash{% endblock %}
 
 {% block content %}
-<div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h6 class="m-0 font-weight-bold">Rejected Theses (Trash)</h6>
-        <div>
-            <span class="badge bg-danger me-2">Auto-deletes after 30 days</span>
-            <a href="{{ url_for('admin_submissions') }}" class="btn btn-sm btn-outline-primary">
-                <i class="fas fa-arrow-left me-1"></i> Back to Submissions
-            </a>
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 col-lg-2 d-md-block sidebar collapse bg-primary-custom p-0">
+            <div class="position-sticky pt-3">
+                <div class="text-center py-4">
+                    <h4 class="text-white"><i class="fas fa-user-shield me-2"></i>Admin Panel</h4>
+                </div>
+                <ul class="nav flex-column px-3">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin_dashboard') }}">
+                            <i class="fas fa-fw fa-tachometer-alt me-2"></i>Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin_submissions') }}">
+                            <i class="fas fa-fw fa-file-alt me-2"></i>Thesis Submissions
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for('manage_trash') }}">
+                            <i class="fas fa-fw fa-trash me-2"></i>Trash
+                        </a>
+                    </li>
+                </ul>
+            </div>
         </div>
-    </div>
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Title</th>
-                        <th>Deleted On</th>
-                        <th>Days Left</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in rejected_items %}
-                    <tr>
-                        <td>{{ item.id }}</td>
-                        <td>{{ item.title|truncate(40) }}</td>
-                        <td>{{ item.deleted_at.strftime('%Y-%m-%d') }}</td>
-                        <td>
-                            {% set days_left = 30 - (now().date() - item.deleted_at.date()).days %}
-                            <span class="badge {% if days_left > 7 %}bg-success{% elif days_left > 3 %}bg-warning{% else %}bg-danger{% endif %}">
-                                {{ days_left }} days
-                            </span>
-                        </td>
-                        <td>
-                            <form method="POST" action="{{ url_for('manage_trash') }}" class="d-inline">
-                                <input type="hidden" name="thesis_id" value="{{ item.id }}">
-                                <button type="submit" name="action" value="restore" class="btn btn-sm btn-outline-success me-1">
-                                    <i class="fas fa-trash-restore"></i> Restore
-                                </button>
-                                <button type="submit" name="action" value="delete" class="btn btn-sm btn-outline-danger">
-                                    <i class="fas fa-trash-alt"></i> Delete Permanently
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="5" class="text-center">No rejected items in trash</td>
-                    </tr>
+
+        <!-- Main Content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">
+                    <i class="fas fa-trash me-2"></i>Trash Management
+                </h1>
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
                     {% endfor %}
-                </tbody>
-            </table>
-        </div>
+                {% endif %}
+            {% endwith %}
+
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                Rejected theses are kept for 30 days before being permanently deleted.
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="m-0 font-weight-bold">
+                        <i class="fas fa-trash-restore me-2"></i>Rejected Theses
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if not rejected_items %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-circle me-2"></i>No rejected theses found.
+                        </div>
+                    {% else %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Title</th>
+                                        <th>Authors</th>
+                                        <th>Rejected On</th>
+                                        <th>Days Left</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in rejected_items %}
+                                    <tr>
+                                        <td>{{ item.title|truncate(40) }}</td>
+                                        <td>{{ item.authors|truncate(30) }}</td>
+                                        <td>{{ item.deleted_at.strftime('%Y-%m-%d') if item.deleted_at else 'N/A' }}</td>
+                                        <td>
+                                            {% if item.deleted_at %}
+                                                {{ 30 - (now - item.deleted_at).days }}
+                                            {% else %}
+                                                N/A
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <form method="POST" style="display: inline;">
+                                                <input type="hidden" name="thesis_id" value="{{ item.id }}">
+                                                <button type="submit" name="action" value="restore" 
+                                                    class="btn btn-sm btn-success me-1" title="Restore">
+                                                    <i class="fas fa-trash-restore"></i> Restore
+                                                </button>
+                                                <button type="submit" name="action" value="delete" 
+                                                    class="btn btn-sm btn-danger" title="Delete Permanently"
+                                                    onclick="return confirm('Are you sure you want to permanently delete this thesis?')">
+                                                    <i class="fas fa-trash-alt"></i> Delete
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </main>
     </div>
 </div>
 {% endblock %}

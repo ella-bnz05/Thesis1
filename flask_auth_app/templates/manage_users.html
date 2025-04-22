@@ -25,13 +25,36 @@
                 {% endif %}
             {% endwith %}
 
-            <div class="card">
-                <div class="card-header">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="m-0">User Accounts</h5>
+                    <form method="GET" action="{{ url_for('manage_users') }}" class="d-flex">
+                        <div class="input-group">
+                            <input type="text" 
+                                   class="form-control" 
+                                   name="search" 
+                                   placeholder="Search by username..."
+                                   value="{{ search_query if search_query }}">
+                            <button class="btn btn-outline-primary" type="submit">
+                                <i class="fas fa-search"></i>
+                            </button>
+                            {% if search_query %}
+                            <a href="{{ url_for('manage_users') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times"></i>
+                            </a>
+                            {% endif %}
+                        </div>
+                    </form>
                 </div>
                 <div class="card-body">
                     {% if not users %}
-                        <div class="alert alert-warning">No other users found.</div>
+                        <div class="alert alert-warning">
+                            {% if search_query %}
+                                No users found matching "{{ search_query }}"
+                            {% else %}
+                                No other users found.
+                            {% endif %}
+                        </div>
                     {% else %}
                         <div class="table-responsive">
                             <table class="table table-hover">

@@ -115,10 +115,22 @@
                                         </td>
                                         <td>{{ submission.created_at.strftime('%Y-%m-%d') }}</td>
                                         <td>
-                                            <a href="{{ url_for('review_submission', submission_id=submission.id) }}" 
-                                               class="btn btn-sm btn-outline-primary">
-                                                <i class="fas fa-eye"></i> View
-                                            </a>
+                                            {% if submission.status == 'approved' and submission.published_thesis_id %}
+                                                <a href="{{ url_for('view_thesis', thesis_id=submission.published_thesis_id) }}" 
+                                                   class="btn btn-sm btn-outline-success" title="View Published Thesis">
+                                                    <i class="fas fa-file-alt"></i> View
+                                                </a>
+                                            {% elif submission.status == 'pending' %}
+                                                <a href="{{ url_for('review_submission', submission_id=submission.id) }}" 
+                                                   class="btn btn-sm btn-outline-primary" title="Review Submission">
+                                                    <i class="fas fa-eye"></i> Review
+                                                </a>
+                                            {% elif submission.status == 'rejected' %}
+                                                <a href="{{ url_for('manage_trash') }}" 
+                                                   class="btn btn-sm btn-outline-danger" title="View in Trash">
+                                                    <i class="fas fa-trash"></i> Trash
+                                                </a>
+                                            {% endif %}
                                         </td>
                                     </tr>
                                     {% else %}

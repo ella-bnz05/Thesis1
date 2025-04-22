@@ -12,6 +12,7 @@ import os
 import PyPDF2
 from io import BytesIO
 from datetime import datetime
+import shutil
 
 app = Flask(__name__, template_folder='templates')
 app.secret_key = 'your_secret_key'
@@ -333,11 +334,17 @@ def admin_dashboard():
     """)
     stats = cursor.fetchone()
     
-    # Get recent submissions
+    # Get recent submissions with published thesis info
     cursor.execute("""
-        SELECT id, title, status, created_at 
-        FROM thesis_submissions 
-        ORDER BY created_at DESC 
+        SELECT 
+            ts.id, 
+            ts.title, 
+            ts.status, 
+            ts.created_at,
+            pt.id as published_thesis_id
+        FROM thesis_submissions ts
+        LEFT JOIN published_theses pt ON ts.id = pt.submission_id
+        ORDER BY ts.created_at DESC 
         LIMIT 5
     """)
     recent_submissions = cursor.fetchall()
@@ -630,6 +637,7 @@ def manage_users():
         abort(403)
 
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    search_query = request.args.get('search', '').strip()
 
     if request.method == 'POST':
         user_id = request.form.get('user_id')
@@ -647,10 +655,20 @@ def manage_users():
             mysql.connection.rollback()
             flash(f'Error: {str(e)}', 'danger')
 
-    cursor.execute("SELECT id, username, email, role FROM users WHERE id != %s", (current_user.id,))
+    # Modified query to include search
+    query = "SELECT id, username, email, role FROM users WHERE id != %s"
+    params = [current_user.id]
+    
+    if search_query:
+        query += " AND username LIKE %s"
+        params.append(f'%{search_query}%')
+
+    cursor.execute(query, tuple(params))
     users = cursor.fetchall()
 
-    return render_template('manage_users.html', users=users)
+    return render_template('manage_users.html', 
+                         users=users,
+                         search_query=search_query)
 
 
 @app.route('/admin/submission/<int:submission_id>', methods=['GET', 'POST'])
@@ -660,11 +678,25 @@ def review_submission(submission_id):
         abort(403)
 
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute("""
+        SELECT ts.*, u.username as admin_username 
+        FROM thesis_submissions ts
+        JOIN users u ON ts.admin_id = u.id
+        WHERE ts.id = %s
+    """, (submission_id,))
+    submission = cursor.fetchone()
+
+    if not submission:
+        abort(404)
+
+    # Check file status
+    file_exists = submission['file_path'] and os.path.exists(submission['file_path'])
+    file_missing = not file_exists and submission.get('file_persisted', False)
 
     if request.method == 'POST':
         action = request.form.get('action')
         
-        # Handle simple rejection without processing revised file
+        # Handle rejection
         if action == 'reject':
             try:
                 cursor.execute("""
@@ -680,59 +712,63 @@ def review_submission(submission_id):
                 flash(f'Error rejecting thesis: {str(e)}', 'danger')
                 return redirect(url_for('admin_submissions'))
 
-        # Handle approval or editable rejection with metadata update
+        # Handle file upload - require PDF for approval
+        revised_file = request.files.get('revised_file')
+        current_file = submission['file_path']
+
+        if action == 'approve' and (not revised_file or not revised_file.filename.lower().endswith('.pdf')):
+            flash('You must upload a PDF file before approving', 'danger')
+            return redirect(url_for('review_submission', submission_id=submission_id))
+
+        if revised_file and revised_file.filename != '':
+            if allowed_file(revised_file.filename):
+                # Ensure we save as PDF
+                filename = secure_filename(f"{submission_id}_{os.path.splitext(revised_file.filename)[0]}.pdf")
+                current_file = os.path.join(app.config['UPLOAD_FOLDER'], 'submissions', filename)
+                os.makedirs(os.path.dirname(current_file), exist_ok=True)
+                revised_file.save(current_file)
+                cursor.execute("""
+                    UPDATE thesis_submissions 
+                    SET file_path = %s, file_persisted = TRUE, file_reuploaded = TRUE
+                    WHERE id = %s
+                """, (current_file, submission_id))
+            else:
+                flash('Invalid file type - must be PDF for final submission', 'danger')
+                return redirect(url_for('review_submission', submission_id=submission_id))
+        elif not submission.get('file_persisted', False) and file_exists:
+            cursor.execute("""
+                UPDATE thesis_submissions 
+                SET file_persisted = TRUE 
+                WHERE id = %s
+            """, (submission_id,))
+
+        # Process metadata
         edited_title = request.form.get('title')
         edited_authors = request.form.get('authors')
         edited_school = request.form.get('school')
         edited_year = request.form.get('year_made')
         edited_keywords = request.form.get('keywords')
         notes = request.form.get('notes')
-        revised_file = request.files.get('revised_file')
-
-        revised_filepath = None
-        num_pages = None
-        page_texts = []
 
         try:
-            # --- (1) Save revised PDF (if provided) ---
-            if revised_file and revised_file.filename.lower().endswith('.pdf'):
-                filename = secure_filename(revised_file.filename)
-                revised_dir = os.path.join(app.config['UPLOAD_FOLDER'], 'revised')
-                os.makedirs(revised_dir, exist_ok=True)
-                revised_filepath = os.path.join(revised_dir, f"{submission_id}_{filename}")
-                revised_file.save(revised_filepath)
-
-                with open(revised_filepath, 'rb') as f:
-                    reader = PyPDF2.PdfReader(f)
-                    num_pages = len(reader.pages)
-                    for i, page in enumerate(reader.pages):
-                        page_text = page.extract_text()
-                        if page_text:
-                            page_texts.append({
-                                'page_number': i + 1,
-                                'text': page_text
-                            })
-            # --- (2) If no revised file, extract from original ---
-            elif not revised_file:
-                cursor.execute("SELECT file_path FROM thesis_submissions WHERE id = %s", (submission_id,))
-                submission_data = cursor.fetchone()
-
-                if submission_data and submission_data['file_path'].lower().endswith('.pdf'):
-                    with open(submission_data['file_path'], 'rb') as f:
+            # Process text extraction
+            num_pages = 0
+            page_texts = []
+            if current_file and os.path.exists(current_file):
+                if current_file.lower().endswith('.pdf'):
+                    with open(current_file, 'rb') as f:
                         reader = PyPDF2.PdfReader(f)
                         num_pages = len(reader.pages)
                         for i, page in enumerate(reader.pages):
-                            page_text = page.extract_text()
-                            if page_text:
-                                page_texts.append({
-                                    'page_number': i + 1,
-                                    'text': page_text
-                                })
+                            text = page.extract_text()
+                            if text:
+                                page_texts.append({'page_number': i+1, 'text': text})
 
-            # --- (3) Save revision history ---
+            # Save version history
             cursor.execute("""
                 INSERT INTO thesis_versions
-                (thesis_id, edited_title, edited_authors, edited_school, edited_year_made, edited_keywords, notes, edited_by)
+                (thesis_id, edited_title, edited_authors, edited_school, 
+                 edited_year_made, edited_keywords, notes, edited_by)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """, (
                 submission_id,
@@ -745,12 +781,11 @@ def review_submission(submission_id):
                 current_user.id
             ))
 
-            # --- (4) Update submission status ---
-            new_status = 'approved' if action == 'approve' else 'rejected'
+            # Update submission
             cursor.execute("""
                 UPDATE thesis_submissions
                 SET title = %s, authors = %s, school = %s, year_made = %s, keywords = %s,
-                    status = %s, revised_file_path = %s, num_pages = %s
+                    status = %s, num_pages = %s
                 WHERE id = %s
             """, (
                 edited_title,
@@ -758,35 +793,36 @@ def review_submission(submission_id):
                 edited_school,
                 edited_year,
                 edited_keywords,
-                new_status,
-                revised_filepath,
+                'approved' if action == 'approve' else 'pending',
                 num_pages,
                 submission_id
             ))
 
-            published_thesis_id = None
-
-            # --- (5) If approved, publish the thesis ---
+            # Publish if approved
             if action == 'approve':
-                cursor.execute("SELECT file_path FROM thesis_submissions WHERE id = %s", (submission_id,))
-                submission_data = cursor.fetchone()
+                if not current_file or not os.path.exists(current_file):
+                    raise Exception("Thesis file not found for publishing")
 
-                if not submission_data or not submission_data['file_path']:
-                    raise Exception("Original thesis file path not found in database")
+                # Ensure we're publishing a PDF
+                if not current_file.lower().endswith('.pdf'):
+                    raise Exception("Only PDF files can be published")
 
-                original_path = revised_filepath or submission_data['file_path']
-                filename = os.path.basename(original_path)
-                publish_path = os.path.join(app.config['UPLOAD_FOLDER'], 'published', filename)
-                os.makedirs(os.path.dirname(publish_path), exist_ok=True)
+                # Create published directory structure
+                publish_dir = os.path.join(app.config['UPLOAD_FOLDER'], 'published')
+                os.makedirs(publish_dir, exist_ok=True)
 
-                if os.path.exists(original_path):
-                    os.rename(original_path, publish_path)
-                else:
-                    raise Exception("Original thesis file not found on server")
+                # Generate PDF filename
+                pdf_filename = f"{submission_id}_{secure_filename(edited_title)}.pdf"
+                publish_path = os.path.join(publish_dir, pdf_filename)
 
+                # Copy the file
+                shutil.copy2(current_file, publish_path)
+
+                # Insert into published_theses
                 cursor.execute("""
                     INSERT INTO published_theses
-                    (submission_id, file_path, title, authors, school, year_made, keywords, published_by, num_pages)
+                    (submission_id, file_path, title, authors, school, 
+                     year_made, keywords, published_by, num_pages)
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (
                     submission_id,
@@ -799,54 +835,37 @@ def review_submission(submission_id):
                     current_user.id,
                     num_pages
                 ))
-                published_thesis_id = cursor.lastrowid
+                published_id = cursor.lastrowid
 
-            # --- (6) Store page texts ---
-            if page_texts and published_thesis_id:
+                # Store page texts
                 for page in page_texts:
                     cursor.execute("""
                         INSERT INTO thesis_pages 
                         (thesis_id, page_number, page_text)
                         VALUES (%s, %s, %s)
-                    """, (
-                        published_thesis_id,
-                        page['page_number'],
-                        page['text']
-                    ))
+                    """, (published_id, page['page_number'], page['text']))
 
             mysql.connection.commit()
-            flash('Thesis published successfully!' if action == 'approve' else 'Submission Rejected Successfully', 'success')
+            flash('Thesis published!' if action == 'approve' else 'Changes saved', 'success')
             return redirect(url_for('admin_submissions'))
 
         except Exception as e:
             mysql.connection.rollback()
             flash(f'Error processing submission: {str(e)}', 'danger')
-            return redirect(url_for('admin_submissions'))
+            return redirect(url_for('review_submission', submission_id=submission_id))
 
-    # --- GET request: Display submission info ---
-    cursor.execute("""
-        SELECT ts.*, u.username as admin_username 
-        FROM thesis_submissions ts
-        JOIN users u ON ts.admin_id = u.id
-        WHERE ts.id = %s
-    """, (submission_id,))
-    submission = cursor.fetchone()
-
-    if not submission:
-        abort(404)
-
-    cursor.execute("""
-        SELECT page_number, page_text 
-        FROM thesis_pages 
-        WHERE thesis_id = %s
-        ORDER BY page_number
-    """, (submission_id,))
-    page_texts = cursor.fetchall()
+    # GET request - show preview if image
+    preview_url = None
+    if submission['file_path'] and os.path.exists(submission['file_path']):
+        if submission['file_path'].lower().endswith(('.png', '.jpg', '.jpeg')):
+            preview_url = url_for('static', filename='uploads/submissions/' + os.path.basename(submission['file_path']))
 
     return render_template('review_submission.html', 
-                           submission=submission,
-                           page_texts=page_texts)
-
+                         submission=submission,
+                         preview_url=preview_url,
+                         existing_file=os.path.basename(submission['file_path']) if submission['file_path'] else None,
+                         file_missing=file_missing,
+                         page_texts=cursor.fetchall() if 'page_texts' in locals() else [])
 
 @app.route('/admin/publish/<int:submission_id>', methods=['POST'])
 @login_required
@@ -908,7 +927,120 @@ def publish_thesis(submission_id):
         mysql.connection.rollback()
         flash(f'Error publishing thesis: {str(e)}', 'danger')
         return redirect(url_for('admin_submissions'))
+@app.route('/admin/edit-thesis/<int:thesis_id>', methods=['GET', 'POST'])
+@login_required
+def edit_published_thesis(thesis_id):
+    if not current_user.is_admin():
+        abort(403)
 
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    
+    # GET the existing thesis first to verify it exists
+    cursor.execute("SELECT * FROM published_theses WHERE id = %s", (thesis_id,))
+    thesis = cursor.fetchone()
+    
+    if not thesis:
+        abort(404)
+        
+    if request.method == 'POST':
+        title = request.form.get('title')
+        authors = request.form.get('authors')
+        school = request.form.get('school')
+        year_made = request.form.get('year_made')
+        keywords = request.form.get('keywords')
+        
+        try:
+            # Start transaction
+            mysql.connection.begin()
+            
+            # 1. First update published_theses
+            cursor.execute("""
+                UPDATE published_theses
+                SET title = %s, authors = %s, school = %s, 
+                    year_made = %s, keywords = %s
+                WHERE id = %s
+            """, (title, authors, school, year_made, keywords, thesis_id))
+            
+            # 2. Then insert into version history
+            cursor.execute("""
+                INSERT INTO thesis_versions
+                (thesis_id, edited_title, edited_authors, 
+                 edited_school, edited_year_made, edited_keywords, 
+                 notes, edited_by)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """, (
+                thesis_id,  # Using the same ID that exists in published_theses
+                title, 
+                authors,
+                school,
+                year_made,
+                keywords,
+                "Metadata updated via edit", 
+                current_user.id
+            ))
+            
+            # 3. Also update the original submission (optional but recommended)
+            if thesis.get('submission_id'):
+                cursor.execute("""
+                    UPDATE thesis_submissions
+                    SET title = %s, authors = %s, school = %s,
+                        year_made = %s, keywords = %s
+                    WHERE id = %s
+                """, (title, authors, school, year_made, keywords, thesis['submission_id']))
+            
+            mysql.connection.commit()
+            flash('Thesis updated successfully!', 'success')
+            return redirect(url_for('view_thesis', thesis_id=thesis_id))
+            
+        except Exception as e:
+            mysql.connection.rollback()
+            flash(f'Error updating thesis: {str(e)}', 'danger')
+            # For debugging - print the exact query that failed
+            print(f"Failed query: {cursor._last_executed}")
+    
+    return render_template('edit_thesis.html', thesis=thesis)
+@app.route('/admin/delete-thesis/<int:thesis_id>', methods=['POST'])
+@login_required
+def delete_published_thesis(thesis_id):
+    if not current_user.is_admin():
+        abort(403)
+
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    
+    try:
+        # Start transaction
+        mysql.connection.begin()
+        
+        # First delete related records
+        cursor.execute("DELETE FROM thesis_pages WHERE thesis_id = %s", (thesis_id,))
+        cursor.execute("DELETE FROM thesis_versions WHERE thesis_id = %s", (thesis_id,))
+        
+        # Get file path before deletion
+        cursor.execute("SELECT file_path FROM published_theses WHERE id = %s", (thesis_id,))
+        thesis = cursor.fetchone()
+        
+        if not thesis:
+            flash('Thesis not found', 'danger')
+            return redirect(url_for('browse_theses'))
+
+        # Delete from database
+        cursor.execute("DELETE FROM published_theses WHERE id = %s", (thesis_id,))
+        
+        # Delete the file
+        if thesis['file_path'] and os.path.exists(thesis['file_path']):
+            try:
+                os.remove(thesis['file_path'])
+            except Exception as e:
+                print(f"Error deleting file: {e}")
+                # Continue with DB deletion even if file delete fails
+
+        mysql.connection.commit()
+        flash('Thesis deleted successfully', 'success')
+    except Exception as e:
+        mysql.connection.rollback()
+        flash(f'Error deleting thesis: {str(e)}', 'danger')
+    
+    return redirect(url_for('browse_theses'))
 @app.route('/logout')
 @login_required
 def logout():

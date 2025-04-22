@@ -1,97 +1,198 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container">
-    <!-- Header with back button -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Review Thesis Submission</h2>
-        <a href="{{ url_for('admin_submissions') }}" class="btn btn-secondary">
-            <i class="fas fa-arrow-left me-1"></i> Back to List
-        </a>
-    </div>
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        {% include 'admin_sidebar.html' %}
 
-    <!-- Review Form -->
-    <div class="card mb-4">
-        <div class="card-header">
-            Original File: {{ submission.original_filename }}
-        </div>
-        <div class="card-body">
-            {% if submission.file_path %}
-                <div class="mb-4">
-                    <label class="form-label fw-bold">Preview</label>
-                    {% if submission.file_path.endswith('.pdf') %}
-                        <embed src="{{ url_for('static', filename=submission.file_path) }}"
-                               type="application/pdf" width="100%" height="500px">
-                    {% else %}
-                        <img src="{{ url_for('static', filename=submission.file_path) }}"
-                             class="img-fluid rounded border" alt="Thesis Image Preview">
-                    {% endif %}
+        <!-- Main Content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
+            <!-- Header -->
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">
+                    <i class="fas fa-file-alt me-2"></i>Review Submission
+                </h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <a href="{{ url_for('admin_submissions') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i> Back to Submissions
+                    </a>
                 </div>
-            {% else %}
-                <div class="alert alert-warning">No file found for preview.</div>
-            {% endif %}
-        
-        <div class="card-body">
-            <h5>Extracted Information</h5>
+            </div>
 
-            <!-- Form submits to review_submission route first -->
-            <form method="POST" enctype="multipart/form-data" action="{{ url_for('review_submission', submission_id=submission.id) }}">
-                <div class="form-group mb-3">
-                    <label for="title">Title</label>
-                    <input type="text" name="title" class="form-control" value="{{ submission.title }}" required>
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endwith %}
+
+            <div class="row">
+                <!-- Main Content Column -->
+                <div class="col-lg-8">
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                            <h6 class="m-0 font-weight-bold text-primary">
+                                <i class="fas fa-file me-1"></i>
+                                {{ submission.original_filename }}
+                                {% if existing_file %}
+                                    <span class="badge bg-success ms-2">File Available</span>
+                                {% elif file_missing %}
+                                    <span class="badge bg-danger ms-2">File Missing</span>
+                                {% endif %}
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            {% if preview_url %}
+                                <div class="text-center mb-4">
+                                    <h5 class="font-weight-bold text-gray-800 mb-3">
+                                        <i class="fas fa-image me-2"></i>Uploaded Image Preview
+                                    </h5>
+                                    <img src="{{ preview_url }}" class="img-fluid rounded shadow-sm" style="max-height: 400px;">
+                                </div>
+                            {% elif existing_file and existing_file.endswith('.pdf') %}
+                                <div class="mb-4">
+                                    <h5 class="font-weight-bold text-gray-800 mb-3">
+                                        <i class="fas fa-file-pdf me-2"></i>Document Preview
+                                    </h5>
+                                    <div class="ratio ratio-16x9 bg-light rounded shadow-sm">
+                                        <iframe src="{{ url_for('serve_thesis_file', thesis_id=submission.id) }}" 
+                                               class="border-0"></iframe>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    No file available for preview
+                                </div>
+                            {% endif %}
+
+                            <form method="POST" enctype="multipart/form-data">
+                                <h5 class="font-weight-bold text-gray-800 mb-3">
+                                    <i class="fas fa-info-circle me-2"></i>Thesis Metadata
+                                </h5>
+                                
+                                <div class="row g-3 mb-4">
+                                    <div class="col-md-12">
+                                        <label class="form-label">Title</label>
+                                        <input type="text" name="title" class="form-control" 
+                                               value="{{ submission.title }}" required>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <label class="form-label">Authors</label>
+                                        <textarea name="authors" class="form-control" rows="2" required>{{ submission.authors }}</textarea>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <label class="form-label">School</label>
+                                        <input type="text" name="school" class="form-control" 
+                                               value="{{ submission.school }}">
+                                    </div>
+                                    
+                                    <div class="col-md-3">
+                                        <label class="form-label">Year</label>
+                                        <input type="text" name="year_made" class="form-control" 
+                                               value="{{ submission.year_made }}">
+                                    </div>
+                                    
+                                    <div class="col-md-9">
+                                        <label class="form-label">Keywords</label>
+                                        <textarea name="keywords" class="form-control" rows="1">{{ submission.keywords }}</textarea>
+                                    </div>
+                                </div>
+
+                                <h5 class="font-weight-bold text-gray-800 mb-3">
+                                    <i class="fas fa-file-upload me-2"></i>Document Upload
+                                </h5>
+                                <div class="mb-4">
+                                    <div class="upload-area p-4 border rounded bg-light">
+                                        <label class="form-label">
+                                            Upload Final PDF Version 
+                                        </label>
+                                        <input type="file" name="revised_file" class="form-control"
+                                               accept=".pdf" {% if not existing_file %}required{% endif %}>
+                                        <div class="form-text mt-2">
+                                            {% if existing_file %}
+                                                Current: {{ existing_file }}
+                                            {% else %}
+                                                You must upload a PDF file for final submission
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label class="form-label">Review Notes</label>
+                                    <textarea name="notes" class="form-control" rows="3" 
+                                              placeholder="Add any review comments..."></textarea>
+                                </div>
+
+                                <div class="d-flex justify-content-end gap-2 border-top pt-3">
+                                    <button type="submit" name="action" value="reject" 
+                                            class="btn btn-danger px-4">
+                                        <i class="fas fa-times me-1"></i> Reject
+                                    </button>
+                                    <button type="submit" name="action" value="approve" 
+                                            class="btn btn-success px-4"
+                                            {% if not existing_file %}disabled{% endif %}>
+                                        <i class="fas fa-check me-1"></i> Approve
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="form-group mb-3">
-                    <label for="authors">Authors</label>
-                    <textarea name="authors" class="form-control" rows="2" required>{{ submission.authors }}</textarea>
+                <!-- Extracted Text Column -->
+                <div class="col-lg-4">
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">
+                                <i class="fas fa-align-left me-2"></i>Extracted Text
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            {% if submission.extracted_text %}
+                                <div style="max-height: 500px; overflow-y: auto;" class="p-3 bg-light rounded">
+                                    <pre class="mb-0 small">{{ submission.extracted_text }}</pre>
+                                </div>
+                            {% else %}
+                                <div class="alert alert-warning mb-0">
+                                    <i class="fas fa-exclamation-circle me-2"></i>
+                                    No text extracted from document
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
                 </div>
-
-                <div class="form-group mb-3">
-                    <label for="school">School</label>
-                    <input type="text" name="school" class="form-control" value="{{ submission.school }}">
-                </div>
-
-                <div class="form-group mb-3">
-                    <label for="year_made">Year</label>
-                    <input type="text" name="year_made" class="form-control" value="{{ submission.year_made }}">
-                </div>
-
-                <div class="form-group mb-3">
-                    <label for="keywords">Keywords</label>
-                    <textarea name="keywords" class="form-control" rows="2">{{ submission.keywords }}</textarea>
-                </div>
-
-                <div class="form-group mb-3">
-                    <label for="revised_file">Upload Thesis PDF (Optional)</label>
-                    <input type="file" name="revised_file" class="form-control" accept=".pdf">
-                    <small class="form-text text-muted">Uploading a revised PDF will replace the original for publishing.</small>
-                </div>
-
-                <div class="form-group mb-3">
-                    <label for="notes">Notes</label>
-                    <textarea name="notes" class="form-control" rows="2" placeholder="Any corrections or comments..."></textarea>
-                </div>
-
-                <div class="btn-group mt-3" role="group">
-                    <button type="submit" name="action" value="approve" class="btn btn-success">
-                        Approve and Publish
-                    </button>
-                    <button type="submit" name="action" value="reject" class="btn btn-danger">
-                        Reject Submission
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Text Preview -->
-    <div class="card">
-        <div class="card-header">
-            Extracted Text Preview
-        </div>
-        <div class="card-body">
-            <pre class="extracted-text">{{ submission.extracted_text[:2000] }}...</pre>
-        </div>
+            </div>
+        </main>
     </div>
 </div>
+
+<script>
+    // Disable approve button if no file exists
+    document.addEventListener('DOMContentLoaded', function() {
+        const approveBtn = document.querySelector('button[value="approve"]');
+        const fileInput = document.querySelector('input[name="revised_file"]');
+        
+        // Enable/disable approve button based on file existence
+        if (!{{ 'true' if existing_file else 'false' }}) {
+            if (approveBtn) approveBtn.disabled = true;
+        }
+
+        // Enable approve button when a new file is selected
+        if (fileInput) {
+            fileInput.addEventListener('change', function() {
+                if (this.files.length > 0) {
+                    if (approveBtn) approveBtn.disabled = false;
+                }
+            });
+        }
+    });
+</script>
 {% endblock %}

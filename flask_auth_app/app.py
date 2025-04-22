@@ -11,6 +11,7 @@ import spacy
 import os
 import PyPDF2
 from io import BytesIO
+from datetime import datetime
 
 app = Flask(__name__, template_folder='templates')
 app.secret_key = 'your_secret_key'
@@ -520,18 +521,17 @@ def admin_submissions():
     if not current_user.is_admin():
         abort(403)
 
-    status_filter = request.args.get('status', 'all')
+    # Change this line to default to 'pending'
+    status_filter = request.args.get('status', 'pending')
 
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
 
-    # Base query
     query = """
         SELECT ts.*, u.username as admin_username 
         FROM thesis_submissions ts
         JOIN users u ON ts.admin_id = u.id
     """
     
-    # Add status filter if specified
     if status_filter in ['pending', 'approved', 'rejected']:
         query += " WHERE ts.status = %s"
         params = (status_filter,)
@@ -558,7 +558,8 @@ def admin_submissions():
                          submissions=submissions,
                          stats=stats,
                          current_filter=status_filter)
-# Add a new route for managing trash/rejected items
+
+
 @app.route('/admin/trash', methods=['GET', 'POST'])
 @login_required
 def manage_trash():
@@ -566,11 +567,11 @@ def manage_trash():
         abort(403)
 
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    
+
     if request.method == 'POST':
         action = request.form.get('action')
         thesis_id = request.form.get('thesis_id')
-        
+
         try:
             if action == 'restore':
                 cursor.execute("""
@@ -585,21 +586,19 @@ def manage_trash():
                     WHERE id = %s AND status = 'rejected'
                 """, (thesis_id,))
                 flash('Thesis permanently deleted', 'success')
-            
+
             mysql.connection.commit()
         except Exception as e:
             mysql.connection.rollback()
             flash(f'Error processing request: {str(e)}', 'danger')
-    
-    # Get rejected items older than 30 days for permanent deletion
+
+    # Auto-delete old rejected items
     cursor.execute("""
         SELECT * FROM thesis_submissions 
         WHERE status = 'rejected' 
         AND deleted_at < DATE_SUB(NOW(), INTERVAL 30 DAY)
     """)
     old_rejected = cursor.fetchall()
-    
-    # Auto-delete old rejected items
     if old_rejected:
         try:
             cursor.executemany("""
@@ -610,7 +609,7 @@ def manage_trash():
         except Exception as e:
             mysql.connection.rollback()
             print(f"Error auto-deleting old rejected items: {e}")
-    
+
     # Get all rejected items
     cursor.execute("""
         SELECT ts.*, u.username as admin_username 
@@ -620,8 +619,39 @@ def manage_trash():
         ORDER BY ts.deleted_at DESC
     """)
     rejected_items = cursor.fetchall()
-    
-    return render_template('manage_trash.html', rejected_items=rejected_items)
+
+    # Pass current time to the template
+    return render_template('manage_trash.html', rejected_items=rejected_items, now=datetime.now())
+
+@app.route('/admin/users', methods=['GET', 'POST'])
+@login_required
+def manage_users():
+    if not current_user.is_admin():
+        abort(403)
+
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+
+    if request.method == 'POST':
+        user_id = request.form.get('user_id')
+        action = request.form.get('action')
+        try:
+            if action == 'delete':
+                cursor.execute("DELETE FROM users WHERE id = %s", (user_id,))
+                flash('User deleted successfully.', 'success')
+            elif action == 'change_role':
+                new_role = request.form.get('new_role')
+                cursor.execute("UPDATE users SET role = %s WHERE id = %s", (new_role, user_id))
+                flash('User role updated.', 'success')
+            mysql.connection.commit()
+        except Exception as e:
+            mysql.connection.rollback()
+            flash(f'Error: {str(e)}', 'danger')
+
+    cursor.execute("SELECT id, username, email, role FROM users WHERE id != %s", (current_user.id,))
+    users = cursor.fetchall()
+
+    return render_template('manage_users.html', users=users)
+
 
 @app.route('/admin/submission/<int:submission_id>', methods=['GET', 'POST'])
 @login_required

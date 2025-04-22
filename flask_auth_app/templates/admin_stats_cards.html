@@ -1,0 +1,66 @@
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card primary h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Theses</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.total_theses }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-file-alt fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card success h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Published</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.published }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <a href="{{ url_for('admin_submissions') }}" class="text-decoration-none">
+            <div class="card stat-card h-100 {% if current_filter == 'pending' %}border-primary{% endif %}">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Pending Review</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.pending }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <a href="{{ url_for('manage_trash') }}" class="text-decoration-none">
+            <div class="card stat-card h-100 {% if current_page == 'trash' %}border-danger{% endif %}">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Rejected (Trash)</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.rejected }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-trash fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>

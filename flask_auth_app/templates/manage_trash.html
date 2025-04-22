@@ -3,35 +3,14 @@
 {% block title %}Manage Trash{% endblock %}
 
 {% block content %}
+</style>
 <div class="container-fluid">
     <div class="row">
         <!-- Sidebar -->
-        <div class="col-md-3 col-lg-2 d-md-block sidebar collapse bg-primary-custom p-0">
-            <div class="position-sticky pt-3">
-                <div class="text-center py-4">
-                    <h4 class="text-white"><i class="fas fa-user-shield me-2"></i>Admin Panel</h4>
-                </div>
-                <ul class="nav flex-column px-3">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('admin_dashboard') }}">
-                            <i class="fas fa-fw fa-tachometer-alt me-2"></i>Dashboard
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('admin_submissions') }}">
-                            <i class="fas fa-fw fa-file-alt me-2"></i>Thesis Submissions
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" href="{{ url_for('manage_trash') }}">
-                            <i class="fas fa-fw fa-trash me-2"></i>Trash
-                        </a>
-                    </li>
-                </ul>
-            </div>
-        </div>
+        {% include 'admin_sidebar.html' %}
 
-        <!-- Main Content -->
+        <!-- Main Content -->  
+               
         <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                 <h1 class="h2">
@@ -94,16 +73,21 @@
                                         <td>
                                             <form method="POST" style="display: inline;">
                                                 <input type="hidden" name="thesis_id" value="{{ item.id }}">
+                                                
+                                                <!-- Retrieve Button -->
                                                 <button type="submit" name="action" value="restore" 
-                                                    class="btn btn-sm btn-success me-1" title="Restore">
-                                                    <i class="fas fa-trash-restore"></i> Restore
+                                                    class="btn btn-sm btn-outline-success me-1" title="Retrieve and mark as pending">
+                                                    <i class="fas fa-undo"></i> Retrieve
                                                 </button>
+                                                
+                                                <!-- Permanently Delete Button -->
                                                 <button type="submit" name="action" value="delete" 
-                                                    class="btn btn-sm btn-danger" title="Delete Permanently"
-                                                    onclick="return confirm('Are you sure you want to permanently delete this thesis?')">
-                                                    <i class="fas fa-trash-alt"></i> Delete
+                                                    class="btn btn-sm btn-outline-danger" title="Permanently Delete"
+                                                    onclick="return confirm('Are you sure you want to permanently delete this thesis? This action cannot be undone.')">
+                                                    <i class="fas fa-trash-alt"></i> Permanently Delete
                                                 </button>
                                             </form>
+                                            
                                         </td>
                                     </tr>
                                     {% endfor %}

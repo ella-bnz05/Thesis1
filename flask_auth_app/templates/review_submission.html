@@ -16,6 +16,22 @@
             Original File: {{ submission.original_filename }}
         </div>
         <div class="card-body">
+            {% if submission.file_path %}
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Preview</label>
+                    {% if submission.file_path.endswith('.pdf') %}
+                        <embed src="{{ url_for('static', filename=submission.file_path) }}"
+                               type="application/pdf" width="100%" height="500px">
+                    {% else %}
+                        <img src="{{ url_for('static', filename=submission.file_path) }}"
+                             class="img-fluid rounded border" alt="Thesis Image Preview">
+                    {% endif %}
+                </div>
+            {% else %}
+                <div class="alert alert-warning">No file found for preview.</div>
+            {% endif %}
+        
+        <div class="card-body">
             <h5>Extracted Information</h5>
 
             <!-- Form submits to review_submission route first -->

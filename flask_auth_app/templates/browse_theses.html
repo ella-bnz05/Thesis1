@@ -1,7 +1,133 @@
 {% extends "base.html" %}
 
 {% block content %}
+<!-- Bootstrap 5 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<!-- Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+    :root {
+        --primary-color: #4e73df;
+        --secondary-color: #f8f9fc;
+        --accent-color: #1cc88a;
+    }
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f8f9fc;
+    }
+    .sidebar {
+        background: linear-gradient(180deg, var(--primary-color) 0%, #224abe 100%);
+        min-height: 100vh;
+        color: white;
+    }
+    .sidebar .nav-link {
+        color: rgba(255, 255, 255, 0.8);
+        margin-bottom: 5px;
+    }
+    .sidebar .nav-link:hover {
+        color: white;
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+    .sidebar .nav-link.active {
+        color: white;
+        font-weight: bold;
+    }
+    .card {
+        border: none;
+        border-radius: 10px;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        margin-bottom: 20px;
+    }
+    .card-header {
+        background-color: white;
+        border-bottom: 1px solid #e3e6f0;
+        font-weight: 600;
+    }
+    .bg-primary-custom {
+        background-color: var(--primary-color) !important;
+    }
+    .bg-success-custom {
+        background-color: var(--accent-color) !important;
+    }
+    .stat-card {
+        border-left: 5px solid;
+    }
+    .stat-card.primary {
+        border-left-color: var(--primary-color);
+    }
+    .stat-card.success {
+        border-left-color: var(--accent-color);
+    }
+    .upload-area {
+        border: 2px dashed #d1d3e2;
+        border-radius: 10px;
+        padding: 20px;
+        background-color: white;
+    }
+    .upload-area:hover {
+        border-color: var(--primary-color);
+    }
+    #filePreview {
+        max-height: 300px;
+        object-fit: contain;
+    }
+</style>
+<div class="row">
+    <!-- Sidebar -->
+    <div class="col-md-3 col-lg-2 d-md-block sidebar collapse bg-primary-custom p-0">
+        <div class="position-sticky pt-3">
+            <div class="text-center py-4">
+                <h4 class="text-white"><i class="fas fa-user-shield me-2"></i>Admin Panel</h4>
+            </div>
+            <ul class="nav flex-column px-3">
+                <li class="nav-item">
+                    <a class="nav-link active" href="{{ url_for('admin_dashboard') }}">
+                        <i class="fas fa-fw fa-tachometer-alt me-2"></i>Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_submissions') }}">
+                        <i class="fas fa-fw fa-file-alt me-2"></i>Thesis Submissions
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('browse_theses') }}">
+                        <i class="fas fa-fw fa-book me-2"></i>Published Theses
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">
+                        <i class="fas fa-fw fa-users me-2"></i>Users
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
+        <!-- Header with User Dropdown -->
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+            <h1 class="h2">Dashboard</h1>
+            <div class="btn-toolbar mb-2 mb-md-0">
+                <div class="dropdown">
+                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown">
+                        <i class="fas fa-user-circle me-1"></i> {{ current_user.username }}
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="#">
+                            <i class="fas fa-user me-1"></i> Profile
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" href="{{ url_for('logout') }}">
+                            <i class="fas fa-sign-out-alt me-1"></i> Logout
+                        </a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
 <div class="container">
+    
     <h2 class="my-4">Approved Theses</h2>
     
     <!-- Search Form -->

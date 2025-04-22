@@ -513,23 +513,106 @@ def extract_page_count(filepath):
             return len(reader.pages)
     return 1  # For images, consider each as one page
 
+# First, modify the admin_submissions route to handle status filtering
 @app.route('/admin/submissions')
 @login_required
 def admin_submissions():
     if not current_user.is_admin():
         abort(403)
-    
+
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+
+    # Example query to get stats
+    cursor.execute("SELECT COUNT(*) as total FROM thesis_submissions")
+    total_theses = cursor.fetchone()['total']
+
+    cursor.execute("SELECT COUNT(*) as total FROM users WHERE role = 'admin'")
+    total_admins = cursor.fetchone()['total']
+
+    cursor.execute("SELECT COUNT(*) as total FROM users WHERE role = 'user'")
+    total_users = cursor.fetchone()['total']
+
+    cursor.execute("SELECT COUNT(*) as total FROM published_theses")
+    total_published = cursor.fetchone()['total']
+
+    stats = {
+        'total_theses': total_theses,
+        'total_admins': total_admins,
+        'total_users': total_users,
+        'total_published': total_published
+    }
+
+    # Your existing logic to fetch submissions
+    cursor.execute("SELECT * FROM thesis_submissions")
+    submissions = cursor.fetchall()
+
+    return render_template('admin_submissions.html',
+                           submissions=submissions,
+                           stats=stats)
+# Add a new route for managing trash/rejected items
+@app.route('/admin/trash', methods=['GET', 'POST'])
+@login_required
+def manage_trash():
+    if not current_user.is_admin():
+        abort(403)
+
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    
+    if request.method == 'POST':
+        action = request.form.get('action')
+        thesis_id = request.form.get('thesis_id')
+        
+        try:
+            if action == 'restore':
+                cursor.execute("""
+                    UPDATE thesis_submissions 
+                    SET status = 'pending', deleted_at = NULL
+                    WHERE id = %s
+                """, (thesis_id,))
+                flash('Thesis restored successfully', 'success')
+            elif action == 'delete':
+                cursor.execute("""
+                    DELETE FROM thesis_submissions 
+                    WHERE id = %s AND status = 'rejected'
+                """, (thesis_id,))
+                flash('Thesis permanently deleted', 'success')
+            
+            mysql.connection.commit()
+        except Exception as e:
+            mysql.connection.rollback()
+            flash(f'Error processing request: {str(e)}', 'danger')
+    
+    # Get rejected items older than 30 days for permanent deletion
+    cursor.execute("""
+        SELECT * FROM thesis_submissions 
+        WHERE status = 'rejected' 
+        AND deleted_at < DATE_SUB(NOW(), INTERVAL 30 DAY)
+    """)
+    old_rejected = cursor.fetchall()
+    
+    # Auto-delete old rejected items
+    if old_rejected:
+        try:
+            cursor.executemany("""
+                DELETE FROM thesis_submissions 
+                WHERE id = %s
+            """, [(item['id'],) for item in old_rejected])
+            mysql.connection.commit()
+        except Exception as e:
+            mysql.connection.rollback()
+            print(f"Error auto-deleting old rejected items: {e}")
+    
+    # Get all rejected items
     cursor.execute("""
         SELECT ts.*, u.username as admin_username 
         FROM thesis_submissions ts
         JOIN users u ON ts.admin_id = u.id
-        WHERE ts.status = 'pending'
-        ORDER BY ts.created_at DESC
+        WHERE ts.status = 'rejected'
+        ORDER BY ts.deleted_at DESC
     """)
-    submissions = cursor.fetchall()
+    rejected_items = cursor.fetchall()
     
-    return render_template('admin_submissions.html', submissions=submissions)
+    return render_template('manage_trash.html', rejected_items=rejected_items)
 
 @app.route('/admin/submission/<int:submission_id>', methods=['GET', 'POST'])
 @login_required
@@ -541,6 +624,24 @@ def review_submission(submission_id):
 
     if request.method == 'POST':
         action = request.form.get('action')
+        
+        # Handle simple rejection without processing revised file
+        if action == 'reject':
+            try:
+                cursor.execute("""
+                    UPDATE thesis_submissions 
+                    SET status = 'rejected', deleted_at = NOW()
+                    WHERE id = %s
+                """, (submission_id,))
+                mysql.connection.commit()
+                flash('Thesis moved to trash', 'success')
+                return redirect(url_for('admin_submissions'))
+            except Exception as e:
+                mysql.connection.rollback()
+                flash(f'Error rejecting thesis: {str(e)}', 'danger')
+                return redirect(url_for('admin_submissions'))
+
+        # Handle approval or editable rejection with metadata update
         edited_title = request.form.get('title')
         edited_authors = request.form.get('authors')
         edited_school = request.form.get('school')
@@ -624,8 +725,9 @@ def review_submission(submission_id):
                 submission_id
             ))
 
-            # --- (5) If approved, publish the thesis first ---
             published_thesis_id = None
+
+            # --- (5) If approved, publish the thesis ---
             if action == 'approve':
                 cursor.execute("SELECT file_path FROM thesis_submissions WHERE id = %s", (submission_id,))
                 submission_data = cursor.fetchone()
@@ -660,7 +762,7 @@ def review_submission(submission_id):
                 ))
                 published_thesis_id = cursor.lastrowid
 
-            # --- (6) Store page texts if we have them ---
+            # --- (6) Store page texts ---
             if page_texts and published_thesis_id:
                 for page in page_texts:
                     cursor.execute("""
@@ -673,7 +775,6 @@ def review_submission(submission_id):
                         page['text']
                     ))
 
-            # --- (7) Commit ---
             mysql.connection.commit()
             flash('Thesis published successfully!' if action == 'approve' else 'Submission Rejected Successfully', 'success')
             return redirect(url_for('admin_submissions'))
@@ -683,7 +784,7 @@ def review_submission(submission_id):
             flash(f'Error processing submission: {str(e)}', 'danger')
             return redirect(url_for('admin_submissions'))
 
-    # GET request handling
+    # --- GET request: Display submission info ---
     cursor.execute("""
         SELECT ts.*, u.username as admin_username 
         FROM thesis_submissions ts
@@ -704,8 +805,8 @@ def review_submission(submission_id):
     page_texts = cursor.fetchall()
 
     return render_template('review_submission.html', 
-                         submission=submission,
-                         page_texts=page_texts)
+                           submission=submission,
+                           page_texts=page_texts)
 
 
 @app.route('/admin/publish/<int:submission_id>', methods=['POST'])

@@ -140,5 +140,18 @@
     "entities": [
         {"start": 0, "end": 25, "label": "AUTHOR"}
     ]
-} 
+},
+{
+    "text": "DEVELOPMENT OF A VIRTUAL NURSE SYSTEM WITH BASIC HEALTH DETECTION USING GEOLOCATION BASED TECHNOLOGY\n\nUndergraduate Thesis\nSubmitted to the Faculty of the\nDepartment of Computer Studies\nCavite State University - Imus Campus\nCity of Imus, Cavite\n\nof the requirements in the degree\nBachelor of Science in Computer Science\n\nVIRGILIO JR. C. DIAZ\nRODNIE G. GELLA\nSHARINA ACEL V. MACROHON\nJANUARY 2025",
+    "annotations": [
+        {"start": 0, "end": 112, "label": "TITLE"},
+        {"start": 113, "end": 132, "label": "TITLE"},
+        {"start": 295, "end": 316, "label": "AUTHOR"},
+        {"start": 317, "end": 340, "label": "AUTHOR"},
+        {"start": 341, "end": 370, "label": "AUTHOR"},
+        {"start": 138, "end": 166, "label": "DEPARTMENT"},
+        {"start": 167, "end": 199, "label": "CAMPUS"},
+        {"start": 371, "end": 385, "label": "DATE"}
+    ]
+}
 ]

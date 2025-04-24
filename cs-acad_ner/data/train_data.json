@@ -1,149 +1,88 @@
 [
-    {
-      "text": "DEVELOPMENT OF A WIFI SECURITY APPLICATION FOR DETECTING AND MITIGATING EVIL TWIN ATTACKS Undergraduate Thesis Submitted to the Faculty of the Department of Computer Studies Cavite State University - Imus Campus City of Imus, Cavite In partial fulfilment of the requirements for the degree Bachelor of Science in Computer Science CZAR JOHN VILLAREAL LOUISE MARK BANDOJA VON PHILIPPE ACERO January 2025",
-      "entities": [
-        [0, 44, "SOLUTION"],
-        [50, 87, "RESEARCH_PROBLEM"],
-        [89, 108, "PAPER_TYPE"],
-        [139, 167, "DEPARTMENT"],
-        [168, 203, "CAMPUS"],
-        [309, 328, "AUTHOR"],
-        [329, 349, "AUTHOR"],
-        [350, 370, "AUTHOR"],
-        [371, 383, "DATE"]
+  {
+      "text": "DEVELOPMENT OF A WIFI SECURITY APPLICATION FOR DETECTING AND MITIGATING EVIL TWIN ATTACKS\n\nUndergraduate Thesis\nSubmitted to the Faculty of the\nDepartment of Computer Studies\nCavite State University - Imus Campus\nCity of Imus, Cavite\n\nIn partial fulfilment\nof the requirements for the degree\nBachelor of Science in Computer Science\n\nCZAR JOHN VILLAREAL\nLOUISE MARK BANDOJA\nVON PHILIPPE ACERO\nJanuary 2025",
+      "annotations": [
+          {"start": 0, "end": 84, "label": "TITLE"},
+          {"start": 254, "end": 273, "label": "AUTHOR"},
+          {"start": 274, "end": 294, "label": "AUTHOR"},
+          {"start": 295, "end": 316, "label": "AUTHOR"},
+          {"start": 138, "end": 166, "label": "DEPARTMENT"},
+          {"start": 167, "end": 199, "label": "CAMPUS"},
+          {"start": 317, "end": 331, "label": "DATE"}
       ]
-    },
-    {
-      "text": "VISLIGHT: LEVERAGING INTELLIGENT TRAFFIC LIGHT SENSORS TO MITIGATE URBAN CONGESTION DURING RUSH HOURS A Thesis Proposal Submitted to the Faculty of the Department of Computer Studies Cavite State University - Imus Campus City of Imus, Cavite In partial fulfilment of the requirements in the subject COSC 75A - Software Engineering I JOSE ANGELO B. BITANGA JOHN ROBERT L. OLANO GWEN MARINIE C. PACIENTE JANUARY 2024",
-      "entities": [
-        [0, 66, "SOLUTION"],
-        [68, 98, "RESEARCH_PROBLEM"],
-        [100, 116, "PAPER_TYPE"],
-        [149, 177, "DEPARTMENT"],
-        [178, 213, "CAMPUS"],
-        [323, 344, "AUTHOR"],
-        [345, 370, "AUTHOR"],
-        [371, 396, "AUTHOR"],
-        [397, 409, "DATE"]
+  },
+  {
+      "text": "DEVELOPMENT OF AN INTERNET OF THINGS-BASED WASTE DETECTION\nSYSTEM FOR DRAINAGE CANALS: CLASSIFICATION AND\nMONITORING OF WASTE TYPES\n\nUndergraduate Thesis\nSubmitted to the Faculty of the\nDepartment of Computer Studies\nCavite State University - Imus Campus\nCity of imus, Cavite\n\nIn partial fulfilment\nof the requirements in the degree\nBachelor of Science in Computer Science\n\nVIRGILIO JR. C. DIAZ\nRODNIE G. GELLA\nSHARINA ACEL V. MACROHON\nJANUARY 2025",
+      "annotations": [
+          {"start": 0, "end": 95, "label": "TITLE"},
+          {"start": 263, "end": 284, "label": "AUTHOR"},
+          {"start": 285, "end": 308, "label": "AUTHOR"},
+          {"start": 309, "end": 338, "label": "AUTHOR"},
+          {"start": 164, "end": 198, "label": "DEPARTMENT"},
+          {"start": 199, "end": 231, "label": "CAMPUS"},
+          {"start": 339, "end": 353, "label": "DATE"}
       ]
-    },
-    {
-      "text": "DEVELOPMENT OF AN INTERNET OF THINGS-BASED WASTE DETECTION SYSTEM FOR DRAINAGE CANALS: CLASSIFICATION AND MONITORING OF WASTE TYPES Undergraduate Thesis Submitted to the Faculty of the Department of Computer Studies Cavite State University - Imus Campus City of Imus, Cavite In partial fulfilment of the requirements in the degree Bachelor of Science in Computer Science VIRGILIO JR. C. DIAZ RODNIE G. GELLA SHARINA ACEL V. MACROHON JANUARY 2025",
-      "entities": [
-        [0, 75, "SOLUTION"],
-        [77, 110, "RESEARCH_PROBLEM"],
-        [112, 131, "PAPER_TYPE"],
-        [146, 174, "DEPARTMENT"],
-        [175, 210, "CAMPUS"],
-        [311, 330, "AUTHOR"],
-        [331, 350, "AUTHOR"],
-        [351, 376, "AUTHOR"],
-        [377, 389, "DATE"]
+  },
+  {
+      "text": "VISLIGHT: LEVERAGING INTELLIGENT TRAFFIC LIGHT SENSORS TO MITIGATE URBAN CONGESTION DURING RUSH HOURS\n\nA Thesis Proposal\nSubmitted to the Faculty of the Department\nof Computer Studies\nCavite State University - Imus Campus\nCity of Imus, Cavite\n\nIn partial fulfilment\nof the requirements in the subject\nCOSC 75A - Sofware Engineering I\n\nJOSE ANGELO B. BITANGA\nJOHN ROBERT L. OLANO\nGWEN MARINIE C. PACIENTE\nJANUARY 2024",
+      "annotations": [
+          {"start": 0, "end": 98, "label": "TITLE"},
+          {"start": 256, "end": 281, "label": "AUTHOR"},
+          {"start": 282, "end": 305, "label": "AUTHOR"},
+          {"start": 306, "end": 337, "label": "AUTHOR"},
+          {"start": 141, "end": 169, "label": "DEPARTMENT"},
+          {"start": 170, "end": 200, "label": "CAMPUS"},
+          {"start": 338, "end": 352, "label": "DATE"}
       ]
-    },
-    {
-      "text": "DESIGNING A MACHINE LEARNING-BASED SYSTEM TO PREDICT MONTHLY ELECTRICITY AND WATER BILLS FOR HOUSEHOLD BUDGETING Undergraduate Thesis Submitted to the Faculty of the Department of Computer Studies Cavite State University - Imus Campus Imus City, Cavite In partial fulfilment of the requirements for the degree Bachelor of Science in Computer Science CARLEA MARIA G. AGUINALDO LEONARDO LUIZ B. CHAVEZ JORDAN ANGELO RAVIS January 2025",
-      "entities": [
-        [0, 83, "SOLUTION"],
-        [85, 132, "RESEARCH_PROBLEM"],
-        [134, 156, "PAPER_TYPE"],
-        [171, 199, "DEPARTMENT"],
-        [200, 235, "CAMPUS"],
-        [281, 307, "AUTHOR"],
-        [308, 333, "AUTHOR"],
-        [334, 359, "AUTHOR"],
-        [360, 372, "DATE"]
+  },
+  {
+      "text": "SYNTAX RECALL: ENHANCING CODING SKILLS THROUGH 2D TEXT-BASED INTERACTIVE COMBAT GAME\n\nUndergraduate Thesis\nSubmitted to the Faculty of the\nDepartment of Computer Studies\nCavite State University - Imus Campus\n\nCity of Imus, Cavite\n\nIn partial fulfilment\nof the requirements for the degree\n\nBachelor of Science in Computer Science\n\nRAFAELLA R. BANEZ\nAALIHYA M. RIVERO\nRYAN CHRISTIAN M. ROBLES\nJanuary 2025",
+      "annotations": [
+          {"start": 0, "end": 97, "label": "TITLE"},
+          {"start": 259, "end": 278, "label": "AUTHOR"},
+          {"start": 279, "end": 299, "label": "AUTHOR"},
+          {"start": 300, "end": 327, "label": "AUTHOR"},
+          {"start": 148, "end": 176, "label": "DEPARTMENT"},
+          {"start": 177, "end": 207, "label": "CAMPUS"},
+          {"start": 328, "end": 342, "label": "DATE"}
       ]
-    },
-    {
-      "text": "DESIGNING A DEEP LEARNING FRAMEWORK FOR HANDWRITTEN DIGIT RECOGNITION USING CONVOLUTIONAL NEURAL NETWORKS Undergraduate Thesis Submitted to the Faculty of the Department of Computer Science Cavite State University - Imus Campus City of Imus, Cavite In partial fulfilment of the requirements for the degree Bachelor of Science in Computer Science ANA L. RAMOS MIGUEL T. DE LEON JULIAN F. CASTRO January 2025",
-      "entities": [
-        [0, 78, "SOLUTION"],
-        [80, 114, "RESEARCH_PROBLEM"],
-        [116, 148, "METHOD"],
-        [150, 189, "TOOL"],
-        [190, 206, "PAPER_TYPE"],
-        [221, 249, "DEPARTMENT"],
-        [250, 285, "CAMPUS"],
-        [357, 378, "AUTHOR"],
-        [379, 406, "AUTHOR"],
-        [407, 434, "AUTHOR"],
-        [435, 447, "DATE"]
+  },
+  {
+      "text": "DESIGNING A MACHINE LEARNING-BASED SYSTEM TO PREDICT\nMONTHLY ELECTRICITY AND WATER BILLS FOR HOUSEHOLD BUDGETING\n\nUndergraduate Thesis\nSubmitted to the Faculty of the\nDepartment of Computer Studies\nCavite State University - Imus Campus\nImus City, Cavite\n\nIn partial fulfilment\nof the requirements for the degree\nBachelor of Science in Computer Science\n\nAGUINALDO, CARLEA MARIA G.\nCHAVEZ, LEONARDO LUIZ B.\nRAVIS, JORDAN ANGELO\nJanuary 2025",
+      "annotations": [
+          {"start": 0, "end": 112, "label": "TITLE"},
+          {"start": 325, "end": 351, "label": "AUTHOR"},
+          {"start": 352, "end": 380, "label": "AUTHOR"},
+          {"start": 381, "end": 398, "label": "AUTHOR"},
+          {"start": 148, "end": 176, "label": "DEPARTMENT"},
+          {"start": 177, "end": 209, "label": "CAMPUS"},
+          {"start": 399, "end": 413, "label": "DATE"}
       ]
-    },
-    {
-      "text": "OPTIMIZING WASTE MANAGEMENT SYSTEMS USING ARTIFICIAL INTELLIGENCE ALGORITHMS FOR SMART CITY APPLICATIONS Journal Paper Published in the International Journal of Environmental Computing Volume 5, Issue 3 University of Science and Technology March 2024",
-      "entities": [
-        [0, 88, "SOLUTION"],
-        [90, 126, "RESEARCH_PROBLEM"],
-        [128, 167, "METHOD"],
-        [169, 205, "TOOL"],
-        [206, 218, "PAPER_TYPE"],
-        [233, 268, "DEPARTMENT"],
-        [269, 289, "CAMPUS"],
-        [338, 366, "DATE"]
+  },
+  {
+      "text": "DEVELOPMENT OF A VIRTUAL NURSE SYSTEM WITH BASIC HEALTH DETECTION USING GEOLOCATION BASED TECHNOLOGY\n\nUndergraduate Thesis\nSubmitted to the Faculty of the\nDepartment of Computer Studies\nCavite State University - Imus Campus\nCity of Imus, Cavite\n\nof the requirements in the degree\nBachelor of Science in Computer Science\n\nVIRGILIO JR. C. DIAZ\nRODNIE G. GELLA\nSHARINA ACEL V. MACROHON\nJANUARY 2025",
+      "annotations": [
+          {"start": 0, "end": 112, "label": "TITLE"},
+          {"start": 295, "end": 316, "label": "AUTHOR"},
+          {"start": 317, "end": 340, "label": "AUTHOR"},
+          {"start": 341, "end": 370, "label": "AUTHOR"},
+          {"start": 138, "end": 166, "label": "DEPARTMENT"},
+          {"start": 167, "end": 199, "label": "CAMPUS"},
+          {"start": 371, "end": 385, "label": "DATE"}
       ]
-    },
-    {
-      "text": "DEVELOPMENT OF A MOBILE-BASED MEDICAL CONSULTATION APPLICATION USING A RECOMMENDER SYSTEM Undergraduate Thesis Submitted to the Faculty of the Department of Information Technology Cavite State University - Imus Campus City of Imus, Cavite In partial fulfilment of the requirements for the degree Bachelor of Science in Information Technology RAUL J. VELASQUEZ TESSA M. BAUTISTA KIMBERLY P. FERNANDO March 2025",
-      "entities": [
-        [0, 80, "SOLUTION"],
-        [82, 130, "RESEARCH_PROBLEM"],
-        [132, 160, "METHOD"],
-        [162, 204, "TOOL"],
-        [205, 221, "PAPER_TYPE"],
-        [236, 264, "DEPARTMENT"],
-        [265, 300, "CAMPUS"],
-        [385, 406, "AUTHOR"],
-        [407, 436, "AUTHOR"],
-        [437, 466, "AUTHOR"],
-        [467, 479, "DATE"]
+  },
+  {
+      "text": "EMPOWERING SMALL BUSINESSES WITH AN ALDRIVEN SOCIAL MEDIA MANAGEMENT TOOL\n\nAn Undergraduate Thesis\nSubmitted to the Faculty of\nDepartment of Computer Studies\nCavite Stale University\nImus, Cavite\n\nIn partial fulfilment\nof the requirements for the degree of\nBachelor of Science in Computer Science\n\nJOHN ALCHRISTIAN M. BELARMINO\nEDILBERTO P. LUSTERIO JR.\nRINOA JAYNE M. CATANAOAN\nJANUARY 2025",
+      "annotations": [
+          {"start": 0, "end": 76, "label": "TITLE"},
+          {"start": 82, "end": 101, "label": "PAPER_TYPE"},
+          {"start": 279, "end": 311, "label": "AUTHOR"},
+          {"start": 312, "end": 341, "label": "AUTHOR"},
+          {"start": 342, "end": 372, "label": "AUTHOR"},
+          {"start": 116, "end": 145, "label": "DEPARTMENT"},
+          {"start": 146, "end": 161, "label": "CAMPUS"},
+          {"start": 373, "end": 387, "label": "DATE"}
       ]
-    },
-    {
-      "text": "PREDICTING STOCK MARKET TRENDS USING MACHINE LEARNING AND NATURAL LANGUAGE PROCESSING Journal Paper Published in the Journal of Financial Technology Volume 8, Issue 2 National University of Technology June 2024",
-      "entities": [
-        [0, 70, "SOLUTION"],
-        [72, 107, "RESEARCH_PROBLEM"],
-        [109, 149, "METHOD"],
-        [151, 184, "TOOL"],
-        [185, 197, "PAPER_TYPE"],
-        [212, 247, "DEPARTMENT"],
-        [248, 275, "CAMPUS"],
-        [322, 338, "DATE"]
-      ]
-    },
-    {
-      "text": "A STUDY ON THE USAGE OF GAMIFICATION IN ONLINE LEARNING PLATFORMS Research Proposal Submitted to the Faculty of the Department of Educational Technology Cavite State University - Imus Campus City of Imus, Cavite In partial fulfilment of the requirements for the degree Bachelor of Science in Educational Technology LUISA D. GOMEZ EDWARD S. AGUILAR DIANA R. SANTOS February 2024",
-      "entities": [
-        [0, 63, "SOLUTION"],
-        [65, 104, "RESEARCH_PROBLEM"],
-        [106, 134, "METHOD"],
-        [136, 168, "TOOL"],
-        [169, 184, "PAPER_TYPE"],
-        [199, 227, "DEPARTMENT"],
-        [228, 263, "CAMPUS"],
-        [342, 364, "AUTHOR"],
-        [365, 391, "AUTHOR"],
-        [392, 419, "AUTHOR"],
-        [420, 432, "DATE"]
-      ]
-    },
-    {
-      "text": "DEVELOPING A CLOUD-BASED PLATFORM FOR REAL-TIME COLLABORATIVE DOCUMENT EDITING Master's Thesis Submitted to the Faculty of the Department of Information Systems University of the Philippines - Diliman Quezon City, Metro Manila In partial fulfilment of the requirements for the degree Master of Science in Information Systems JUAN P. DELA CRUZ MARIA L. REYES PATRICK J. LOPEZ July 2024",
-      "entities": [
-        [0, 78, "SOLUTION"],
-        [80, 118, "RESEARCH_PROBLEM"],
-        [120, 148, "METHOD"],
-        [150, 188, "TOOL"],
-        [189, 202, "PAPER_TYPE"],
-        [217, 243, "DEPARTMENT"],
-        [244, 285, "CAMPUS"],
-        [342, 360, "AUTHOR"],
-        [361, 388, "AUTHOR"],
-        [389, 414, "AUTHOR"],
-        [415, 427, "DATE"]
-      ]
-    }
-  ]
-  
+  }
+
+]

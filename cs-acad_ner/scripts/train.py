@@ -133,7 +133,7 @@ if __name__ == "__main__":
     ENTITY_LABELS = ["TITLE", "AUTHOR", "CAMPUS", "DEPARTMENT", "DATE"]
 
     # Load and preprocess data
-    train_data = load_data("data/converted_data.json")
+    train_data = load_data("data/converted_data1.json")
     
     # Create a blank model with necessary entity labels
     nlp = create_blank_model(ENTITY_LABELS)

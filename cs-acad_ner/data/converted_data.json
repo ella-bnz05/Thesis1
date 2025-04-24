@@ -3,32 +3,13 @@
         "text": "DESIGNING A MACHINE LEARNING-BASED SYSTEM TO PREDICT MONTHLY ELECTRICITY AND WATER BILLS FOR HOUSEHOLD BUDGETING",
         "entities": [
             [
-                53,
+               0,
                 112,
-                "RESEARCH_PROBLEM"
-            ],
-            [
-                0,
-                41,
-                "SOLUTION"
-            ],
-            [
-                12,
-                41,
-                "METHOD"
+                "TITLE"
             ]
         ]
     },
-    {
-        "text": "Undergraduate Thesis",
-        "entities": [
-            [
-                0,
-                20,
-                "PAPER_TYPE"
-            ]
-        ]
-    },
+
     {
         "text": "Department of Computer Studies",
         "entities": [
@@ -93,27 +74,13 @@
         "text": "DEVELOPMENT OF A VIRTUAL NURSE SYSTEM WITH BASIC HEALTH DETECTION USING GEOLOCATION BASED TECHNOLOGY",
         "entities": [
             [
-                72,
+                0,
                 100,
-                "TOOL"
-            ],
-            [
-                0,
-                65,
-                "SOLUTION"
+                "TITLE"
             ]
         ]
     },
-    {
-        "text": "Undergraduate Thesis",
-        "entities": [
-            [
-                0,
-                20,
-                "PAPER_TYPE"
-            ]
-        ]
-    },
+   
     {
         "text": "Department of Computer Studies",
         "entities": [
@@ -174,16 +141,7 @@
             ]
         ]
     },
-    {
-        "text": "An Undergraduate Thesis",
-        "entities": [
-            [
-                3,
-                23,
-                "PAPER_TYPE"
-            ]
-        ]
-    },
+
     {
         "text": "Department of Computer Studies",
         "entities": [
@@ -248,32 +206,13 @@
         "text": "SMARTLAND: DEVELOPMENT OF A GIS-BASED AGRICULTURAL LAND ANALYSIS AND MAPPING SYSTEM FOR E-COMMERCE MARKETPLACE INTEGRATION",
         "entities": [
             [
-                88,
+                0,
                 122,
-                "RESEARCH_PROBLEM"
-            ],
-            [
-                28,
-                37,
-                "TOOL"
-            ],
-            [
-                0,
-                83,
-                "SOLUTION"
+                "TITLE"
             ]
         ]
     },
-    {
-        "text": "Undergraduate Thesis",
-        "entities": [
-            [
-                0,
-                20,
-                "PAPER_TYPE"
-            ]
-        ]
-    },
+
     {
         "text": "of the Department of Computer Studies",
         "entities": [
@@ -337,33 +276,15 @@
     {
         "text": "SIMULATION OF AN IOT-BASED SMART TRAFFIC SYSTEM TO REDUCE EMERGENCY RESPONSE DELAYS FOR AMBULANCES",
         "entities": [
+     
             [
-                17,
-                26,
-                "TOOL"
-            ],
-            [
-                58,
+                0,
                 98,
-                "RESEARCH_PROBLEM"
-            ],
-            [
-                0,
-                47,
-                "SOLUTION"
+                "TITLE"
             ]
         ]
     },
-    {
-        "text": "Undergraduate Thesis",
-        "entities": [
-            [
-                0,
-                20,
-                "PAPER_TYPE"
-            ]
-        ]
-    },
+
     {
         "text": "of the Department of Computer Studies",
         "entities": [
@@ -387,28 +308,15 @@
     {
         "text": "SENTIMENT ANALYSIS OF THE SWOTIFY PLATFORM OF CENTRAL STUDENT GOVERNMENT IN CAVITE STATE UNIVERSITY- IMUS CAMPUS",
         "entities": [
-            [
-                0,
-                18,
-                "METHOD"
-            ],
+            
             [
                 0,
                 112,
-                "SOLUTION"
+                "TITLE"
             ]
         ]
     },
-    {
-        "text": "Research Project,",
-        "entities": [
-            [
-                0,
-                16,
-                "PAPER_TYPE"
-            ]
-        ]
-    },
+
     {
         "text": "Department of Computer Studies",
         "entities": [
@@ -473,27 +381,13 @@
         "text": "DEVELOPMENT OF A WIFI SECURITY APPLICATION FOR DETECTING AND MITIGATING EVIL TWIN ATTACKS",
         "entities": [
             [
-                47,
+                0,
                 89,
-                "RESEARCH_PROBLEM"
-            ],
-            [
-                0,
-                43,
-                "SOLUTION"
+                "TITLE"
             ]
         ]
     },
-    {
-        "text": "Undergraduate Thesis",
-        "entities": [
-            [
-                0,
-                20,
-                "PAPER_TYPE"
-            ]
-        ]
-    },
+    
     {
         "text": "Department of Computer Studies",
         "entities": [
@@ -558,29 +452,9 @@
         "text": "DEVELOPMENT OF AN INTERNET OF THINGS-BASED WASTE DETECTION SYSTEM FOR DRAINAGE CANALS: CLASSIFICATION AND MONITORING OF WASTE TYPES",
         "entities": [
             [
-                87,
+                0,
                 131,
-                "RESEARCH_PROBLEM"
-            ],
-            [
-                0,
-                85,
-                "SOLUTION"
-            ],
-            [
-                18,
-                42,
-                "TOOL"
-            ]
-        ]
-    },
-    {
-        "text": "Undergraduate Thesis",
-        "entities": [
-            [
-                0,
-                20,
-                "PAPER_TYPE"
+                "TITLE"
             ]
         ]
     },
@@ -638,32 +512,13 @@
         "text": "VISLIGHT: LEVERAGING INTELLIGENT TRAFFIC LIGHT SENSORS TO MITIGATE URBAN CONGESTION DURING RUSH HOURS",
         "entities": [
             [
-                67,
-                101,
-                "RESEARCH_PROBLEM"
-            ],
-            [
                 0,
-                54,
-                "SOLUTION"
-            ],
-            [
-                21,
-                54,
-                "TOOL"
+                101,
+                "TITLE"
             ]
         ]
     },
-    {
-        "text": "A Thesis Proposal",
-        "entities": [
-            [
-                2,
-                17,
-                "PAPER_TYPE"
-            ]
-        ]
-    },
+  
     {
         "text": "Department of Computer Studies",
         "entities": [
@@ -739,16 +594,7 @@
             ]
         ]
     },
-    {
-        "text": "Undergraduate Thesis",
-        "entities": [
-            [
-                0,
-                20,
-                "PAPER_TYPE"
-            ]
-        ]
-    },
+   
     {
         "text": "Department of Computer Studies",
         "entities": [

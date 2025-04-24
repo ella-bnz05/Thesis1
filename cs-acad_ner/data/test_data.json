@@ -1,157 +1,86 @@
 [
-  {
-      "text": "DEVELOPMENT OF A VIRTUAL NURSE SYSTEM WITH BASIC HEALTH DETECTION USING GEOLOCATION BASED TECHNOLOGY",
-      "entities": [
-          {
-              "start": 72,
-              "end": 100,
-              "label": "TOOL"
-          },
-          {
-              "start": 0,
-              "end": 65,
-              "label": "SOLUTION"
-          }
-      ]
-  },
-  {
-      "text": "Department of Computer Studies",
-      "entities": [
-          {
-              "start": 0,
-              "end": 30,
-              "label": "DEPARTMENT"
-          }
-      ]
-  },
-  {
-      "text": "RODNIE G. GELLA",
-      "entities": [
-          {
-              "start": 0,
-              "end": 15,
-              "label": "AUTHOR"
-          }
-      ]
-  },
-  {
-      "text": "DEVELOPMENT OF A WIFI SECURITY APPLICATION FOR DETECTING AND MITIGATING EVIL TWIN ATTACKS",
-      "entities": [
-          {
-              "start": 47,
-              "end": 89,
-              "label": "RESEARCH_PROBLEM"
-          },
-          {
-              "start": 0,
-              "end": 43,
-              "label": "SOLUTION"
-          }
-      ]
-  },
-  {
-      "text": "2024",
-      "entities": [
-          {
-              "start": 0,
-              "end": 4,
-              "label": "DATE"
-          }
-      ]
-  },
-  {
-      "text": "VISLIGHT: LEVERAGING INTELLIGENT TRAFFIC LIGHT SENSORS TO MITIGATE URBAN CONGESTION DURING RUSH HOURS",
-      "entities": [
-          {
-              "start": 67,
-              "end": 101,
-              "label": "RESEARCH_PROBLEM"
-          },
-          {
-              "start": 0,
-              "end": 54,
-              "label": "SOLUTION"
-          }
-      ]
-  },
-  {
-    "text": "A MACHINE LEARNING APPROACH FOR AUTOMATIC GRADING OF PROGRAMMING ASSIGNMENTS",
-    "entities": [
-        {"start": 2, "end": 20, "label": "METHOD"},
-        {"start": 35, "end": 72, "label": "RESEARCH_PROBLEM"}
-    ]
-},
-{
-    "text": "Research Proposal: BLOCKCHAIN-BASED VOTING SYSTEM FOR STUDENT ELECTIONS",
-    "entities": [
-        {"start": 0, "end": 17, "label": "PAPER_TYPE"},
-        {"start": 19, "end": 65, "label": "SOLUTION"},
-        {"start": 19, "end": 34, "label": "TOOL"}
-    ]
-},
-{
-    "text": "Department of Information Technology",
-    "entities": [
-        {"start": 0, "end": 34, "label": "DEPARTMENT"}
-    ]
-},
-{
-    "text": "DRONE-BASED DELIVERY SYSTEM FOR MEDICAL SUPPLIES IN RURAL AREAS",
-    "entities": [
-        {"start": 0, "end": 59, "label": "SOLUTION"},
-        {"start": 0, "end": 15, "label": "TOOL"}
-    ]
-},
-{
-    "text": "MARK LEE T. SANTOS",
-    "entities": [
-        {"start": 0, "end": 18, "label": "AUTHOR"}
-    ]
-},
-{
-    "text": "December 2023",
-    "entities": [
-        {"start": 0, "end": 13, "label": "DATE"}
-    ]
-},
-{
-    "text": "NATURAL LANGUAGE PROCESSING FOR AUTOMATIC LEGAL DOCUMENT ANALYSIS",
-    "entities": [
-        {"start": 0, "end": 25, "label": "METHOD"},
-        {"start": 29, "end": 63, "label": "RESEARCH_PROBLEM"}
-    ]
-},
-{
-    "text": "Main Campus",
-    "entities": [
-        {"start": 0, "end": 11, "label": "CAMPUS"}
-    ]
-},
-{
-    "text": "UNDERGRADUATE THESIS: AI-POWERED TUTOR FOR PROGRAMMING STUDENTS",
-    "entities": [
-        {"start": 0, "end": 19, "label": "PAPER_TYPE"},
-        {"start": 21, "end": 61, "label": "SOLUTION"},
-        {"start": 21, "end": 31, "label": "TOOL"}
-    ]
-},
-{
-    "text": "MARIA CRISTINA R. DELA CRUZ",
-    "entities": [
-        {"start": 0, "end": 25, "label": "AUTHOR"}
-    ]
-},
-{
-    "text": "DEVELOPMENT OF A VIRTUAL NURSE SYSTEM WITH BASIC HEALTH DETECTION USING GEOLOCATION BASED TECHNOLOGY\n\nUndergraduate Thesis\nSubmitted to the Faculty of the\nDepartment of Computer Studies\nCavite State University - Imus Campus\nCity of Imus, Cavite\n\nof the requirements in the degree\nBachelor of Science in Computer Science\n\nVIRGILIO JR. C. DIAZ\nRODNIE G. GELLA\nSHARINA ACEL V. MACROHON\nJANUARY 2025",
-    "annotations": [
-        {"start": 0, "end": 112, "label": "TITLE"},
-        {"start": 113, "end": 132, "label": "TITLE"},
-        {"start": 295, "end": 316, "label": "AUTHOR"},
-        {"start": 317, "end": 340, "label": "AUTHOR"},
-        {"start": 341, "end": 370, "label": "AUTHOR"},
-        {"start": 138, "end": 166, "label": "DEPARTMENT"},
-        {"start": 167, "end": 199, "label": "CAMPUS"},
-        {"start": 371, "end": 385, "label": "DATE"}
-    ]
-}
+    {
+        "text": "DEVELOPMENT OF A WIFI SECURITY APPLICATION FOR DETECTING AND MITIGATING EVIL TWIN ATTACKS\n\nUndergraduate Thesis\nSubmitted to the Faculty of the\nDepartment of Computer Studies\nCavite State University - Imus Campus\nCity of Imus, Cavite\n\nIn partial fulfilment\nof the requirements for the degree\nBachelor of Science in Computer Science\n\nCZAR JOHN VILLAREAL\nLOUISE MARK BANDOJA\nVON PHILIPPE ACERO\nJanuary 2025",
+        "annotations": [
+            {"start": 0, "end": 84, "label": "TITLE"},
+            {"start": 254, "end": 273, "label": "AUTHOR"},
+            {"start": 274, "end": 294, "label": "AUTHOR"},
+            {"start": 295, "end": 316, "label": "AUTHOR"},
+            {"start": 138, "end": 166, "label": "DEPARTMENT"},
+            {"start": 167, "end": 199, "label": "CAMPUS"},
+            {"start": 317, "end": 331, "label": "DATE"}
+        ]
+    },
+    {
+        "text": "DEVELOPMENT OF AN INTERNET OF THINGS-BASED WASTE DETECTION\nSYSTEM FOR DRAINAGE CANALS: CLASSIFICATION AND\nMONITORING OF WASTE TYPES\n\nUndergraduate Thesis\nSubmitted to the Faculty of the\nDepartment of Computer Studies\nCavite State University - Imus Campus\nCity of imus, Cavite\n\nIn partial fulfilment\nof the requirements in the degree\nBachelor of Science in Computer Science\n\nVIRGILIO JR. C. DIAZ\nRODNIE G. GELLA\nSHARINA ACEL V. MACROHON\nJANUARY 2025",
+        "annotations": [
+            {"start": 0, "end": 17, "label": "TITLE"},
+            {"start": 263, "end": 284, "label": "AUTHOR"},
+            {"start": 285, "end": 308, "label": "AUTHOR"},
+            {"start": 309, "end": 338, "label": "AUTHOR"},
+            {"start": 164, "end": 198, "label": "DEPARTMENT"},
+            {"start": 199, "end": 231, "label": "CAMPUS"},
+            {"start": 339, "end": 353, "label": "DATE"}
+        ]
+    },
+    {
+        "text": "VISLIGHT: LEVERAGING INTELLIGENT TRAFFIC LIGHT SENSORS TO MITIGATE URBAN CONGESTION DURING RUSH HOURS\n\nA Thesis Proposal\nSubmitted to the Faculty of the Department\nof Computer Studies\nCavite State University - Imus Campus\nCity of Imus, Cavite\n\nIn partial fulfilment\nof the requirements in the subject\nCOSC 75A - Sofware Engineering I\n\nJOSE ANGELO B. BITANGA\nJOHN ROBERT L. OLANO\nGWEN MARINIE C. PACIENTE\nJANUARY 2024",
+        "annotations": [
+            {"start": 0, "end": 98, "label": "TITLE"},
+            {"start": 256, "end": 281, "label": "AUTHOR"},
+            {"start": 282, "end": 305, "label": "AUTHOR"},
+            {"start": 306, "end": 337, "label": "AUTHOR"},
+            {"start": 141, "end": 169, "label": "DEPARTMENT"},
+            {"start": 170, "end": 200, "label": "CAMPUS"},
+            {"start": 338, "end": 352, "label": "DATE"}
+        ]
+    },
+    {
+        "text": "SYNTAX RECALL: ENHANCING CODING SKILLS THROUGH 2D TEXT-BASED INTERACTIVE COMBAT GAME\n\nUndergraduate Thesis\nSubmitted to the Faculty of the\nDepartment of Computer Studies\nCavite State University - Imus Campus\n\nCity of Imus, Cavite\n\nIn partial fulfilment\nof the requirements for the degree\n\nBachelor of Science in Computer Science\n\nRAFAELLA R. BANEZ\nAALIHYA M. RIVERO\nRYAN CHRISTIAN M. ROBLES\nJanuary 2025",
+        "annotations": [
+            {"start": 0, "end": 97, "label": "TITLE"},
+            {"start": 259, "end": 278, "label": "AUTHOR"},
+            {"start": 279, "end": 299, "label": "AUTHOR"},
+            {"start": 300, "end": 327, "label": "AUTHOR"},
+            {"start": 148, "end": 176, "label": "DEPARTMENT"},
+            {"start": 177, "end": 207, "label": "CAMPUS"},
+            {"start": 328, "end": 342, "label": "DATE"}
+        ]
+    },
+    {
+        "text": "DESIGNING A MACHINE LEARNING-BASED SYSTEM TO PREDICT\nMONTHLY ELECTRICITY AND WATER BILLS FOR HOUSEHOLD BUDGETING\n\nUndergraduate Thesis\nSubmitted to the Faculty of the\nDepartment of Computer Studies\nCavite State University - Imus Campus\nImus City, Cavite\n\nIn partial fulfilment\nof the requirements for the degree\nBachelor of Science in Computer Science\n\nAGUINALDO, CARLEA MARIA G.\nCHAVEZ, LEONARDO LUIZ B.\nRAVIS, JORDAN ANGELO\nJanuary 2025",
+        "annotations": [
+            {"start": 0, "end": 171, "label": "TITLE"},
+            {"start": 325, "end": 351, "label": "AUTHOR"},
+            {"start": 352, "end": 380, "label": "AUTHOR"},
+            {"start": 381, "end": 398, "label": "AUTHOR"},
+            {"start": 148, "end": 176, "label": "DEPARTMENT"},
+            {"start": 177, "end": 209, "label": "CAMPUS"},
+            {"start": 399, "end": 413, "label": "DATE"}
+        ]
+    },
+    {
+        "text": "DEVELOPMENT OF A VIRTUAL NURSE SYSTEM WITH BASIC HEALTH DETECTION USING GEOLOCATION BASED TECHNOLOGY\n\nUndergraduate Thesis\nSubmitted to the Faculty of the\nDepartment of Computer Studies\nCavite State University - Imus Campus\nCity of Imus, Cavite\n\nof the requirements in the degree\nBachelor of Science in Computer Science\n\nVIRGILIO JR. C. DIAZ\nRODNIE G. GELLA\nSHARINA ACEL V. MACROHON\nJANUARY 2025",
+        "annotations": [
+            {"start": 0, "end": 112, "label": "TITLE"},
+            {"start": 295, "end": 316, "label": "AUTHOR"},
+            {"start": 317, "end": 340, "label": "AUTHOR"},
+            {"start": 341, "end": 370, "label": "AUTHOR"},
+            {"start": 138, "end": 166, "label": "DEPARTMENT"},
+            {"start": 167, "end": 199, "label": "CAMPUS"},
+            {"start": 371, "end": 385, "label": "DATE"}
+        ]
+    },
+    {
+        "text": "EMPOWERING SMALL BUSINESSES WITH AN ALDRIVEN SOCIAL MEDIA MANAGEMENT TOOL\n\nAn Undergraduate Thesis\nSubmitted to the Faculty of\nDepartment of Computer Studies\nCavite Stale University\nImus, Cavite\n\nIn partial fulfilment\nof the requirements for the degree of\nBachelor of Science in Computer Science\n\nJOHN ALCHRISTIAN M. BELARMINO\nEDILBERTO P. LUSTERIO JR.\nRINOA JAYNE M. CATANAOAN\nJANUARY 2025",
+        "annotations": [
+            {"start": 0, "end": 76, "label": "TITLE"},
+            {"start": 279, "end": 311, "label": "AUTHOR"},
+            {"start": 312, "end": 341, "label": "AUTHOR"},
+            {"start": 342, "end": 372, "label": "AUTHOR"},
+            {"start": 116, "end": 145, "label": "DEPARTMENT"},
+            {"start": 146, "end": 161, "label": "CAMPUS"},
+            {"start": 373, "end": 387, "label": "DATE"}
+        ]
+    }
 ]

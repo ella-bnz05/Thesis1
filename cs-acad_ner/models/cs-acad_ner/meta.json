@@ -22,11 +22,8 @@
       "CAMPUS",
       "DATE",
       "DEPARTMENT",
-      "PAPER_TYPE",
-      "RESEARCH_PROBLEM",
       "SOLUTION",
-      "TITLE",
-      "TOOL"
+      "TITLE"
     ]
   },
   "pipeline":[

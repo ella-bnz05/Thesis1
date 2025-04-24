@@ -113,5 +113,5 @@ def evaluate_model(model_path, data_path):
 if __name__ == "__main__":
     evaluate_model(
         model_path="models/cs-acad_ner",
-        data_path="data/test_data.json"
+        data_path="data/converted_data1.json"
     )

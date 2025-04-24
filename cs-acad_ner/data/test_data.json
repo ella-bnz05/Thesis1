@@ -73,5 +73,72 @@
               "label": "SOLUTION"
           }
       ]
-  }
+  },
+  {
+    "text": "A MACHINE LEARNING APPROACH FOR AUTOMATIC GRADING OF PROGRAMMING ASSIGNMENTS",
+    "entities": [
+        {"start": 2, "end": 20, "label": "METHOD"},
+        {"start": 35, "end": 72, "label": "RESEARCH_PROBLEM"}
+    ]
+},
+{
+    "text": "Research Proposal: BLOCKCHAIN-BASED VOTING SYSTEM FOR STUDENT ELECTIONS",
+    "entities": [
+        {"start": 0, "end": 17, "label": "PAPER_TYPE"},
+        {"start": 19, "end": 65, "label": "SOLUTION"},
+        {"start": 19, "end": 34, "label": "TOOL"}
+    ]
+},
+{
+    "text": "Department of Information Technology",
+    "entities": [
+        {"start": 0, "end": 34, "label": "DEPARTMENT"}
+    ]
+},
+{
+    "text": "DRONE-BASED DELIVERY SYSTEM FOR MEDICAL SUPPLIES IN RURAL AREAS",
+    "entities": [
+        {"start": 0, "end": 59, "label": "SOLUTION"},
+        {"start": 0, "end": 15, "label": "TOOL"}
+    ]
+},
+{
+    "text": "MARK LEE T. SANTOS",
+    "entities": [
+        {"start": 0, "end": 18, "label": "AUTHOR"}
+    ]
+},
+{
+    "text": "December 2023",
+    "entities": [
+        {"start": 0, "end": 13, "label": "DATE"}
+    ]
+},
+{
+    "text": "NATURAL LANGUAGE PROCESSING FOR AUTOMATIC LEGAL DOCUMENT ANALYSIS",
+    "entities": [
+        {"start": 0, "end": 25, "label": "METHOD"},
+        {"start": 29, "end": 63, "label": "RESEARCH_PROBLEM"}
+    ]
+},
+{
+    "text": "Main Campus",
+    "entities": [
+        {"start": 0, "end": 11, "label": "CAMPUS"}
+    ]
+},
+{
+    "text": "UNDERGRADUATE THESIS: AI-POWERED TUTOR FOR PROGRAMMING STUDENTS",
+    "entities": [
+        {"start": 0, "end": 19, "label": "PAPER_TYPE"},
+        {"start": 21, "end": 61, "label": "SOLUTION"},
+        {"start": 21, "end": 31, "label": "TOOL"}
+    ]
+},
+{
+    "text": "MARIA CRISTINA R. DELA CRUZ",
+    "entities": [
+        {"start": 0, "end": 25, "label": "AUTHOR"}
+    ]
+} 
 ]

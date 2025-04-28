@@ -233,18 +233,21 @@ def admin_dashboard():
     
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     
-    # Get stats
+    # Corrected stats calculation
     cursor.execute("""
-        SELECT 
-            COUNT(*) as total_theses,
-            SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) as published,
-            SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending,
-            SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) as rejected
-        FROM thesis_submissions
+        SELECT
+            (
+                (SELECT COUNT(*) FROM thesis_submissions WHERE status IN ('pending', 'rejected'))
+                +
+                (SELECT COUNT(*) FROM published_theses)
+            ) AS total_submissions,
+            (SELECT COUNT(*) FROM thesis_submissions WHERE status = 'pending') AS pending,
+            (SELECT COUNT(*) FROM thesis_submissions WHERE status = 'rejected') AS rejected,
+            (SELECT COUNT(*) FROM published_theses) AS total_published
     """)
     stats = cursor.fetchone()
     
-    # Get recent submissions with published thesis info
+    # Recent submissions (no change)
     cursor.execute("""
         SELECT 
             ts.id, 
@@ -262,11 +265,11 @@ def admin_dashboard():
     return render_template('admin_dashboard.html', 
                          stats=stats,
                          recent_submissions=recent_submissions)
-
 @app.route('/user-dashboard')
 @login_required
 def user_dashboard():
     return render_template('user_dashboard.html')
+
 @app.route('/theses')
 @login_required
 def browse_theses():
@@ -277,31 +280,38 @@ def browse_theses():
     page = request.args.get('page', 1, type=int)
     per_page = 10  # Items per page
     
-    if search_query:
-        cursor.execute("""
-            SELECT * FROM published_theses
-            WHERE title LIKE %s OR authors LIKE %s OR keywords LIKE %s
-            ORDER BY published_at DESC
-            LIMIT %s OFFSET %s
-        """, (f'%{search_query}%', f'%{search_query}%', f'%{search_query}%', per_page, (page-1)*per_page))
-    else:
-        cursor.execute("""
-            SELECT * FROM published_theses
-            ORDER BY published_at DESC
-            LIMIT %s OFFSET %s
-        """, (per_page, (page-1)*per_page))
+    # Base query
+    query = """
+        SELECT pt.*, u.username as publisher_username
+        FROM published_theses pt
+        JOIN users u ON pt.published_by = u.id
+    """
     
+    # Add search conditions if query exists
+    if search_query:
+        query += """
+            WHERE pt.title LIKE %s OR pt.authors LIKE %s OR pt.keywords LIKE %s
+        """
+        params = (f'%{search_query}%', f'%{search_query}%', f'%{search_query}%')
+    else:
+        params = ()
+    
+    # Add ordering and pagination
+    query += " ORDER BY pt.published_at DESC LIMIT %s OFFSET %s"
+    params += (per_page, (page-1)*per_page)
+    
+    cursor.execute(query, params)
     theses = cursor.fetchall()
     
     # Get total count for pagination
+    count_query = "SELECT COUNT(*) as total FROM published_theses"
     if search_query:
-        cursor.execute("""
-            SELECT COUNT(*) as total FROM published_theses
-            WHERE title LIKE %s OR authors LIKE %s OR keywords LIKE %s
-        """, (f'%{search_query}%', f'%{search_query}%', f'%{search_query}%'))
+        count_query += " WHERE title LIKE %s OR authors LIKE %s OR keywords LIKE %s"
+        count_params = (f'%{search_query}%', f'%{search_query}%', f'%{search_query}%')
     else:
-        cursor.execute("SELECT COUNT(*) as total FROM published_theses")
+        count_params = ()
     
+    cursor.execute(count_query, count_params)
     total = cursor.fetchone()['total']
     
     return render_template('browse_theses.html', 
@@ -309,8 +319,8 @@ def browse_theses():
                          search_query=search_query,
                          page=page,
                          per_page=per_page,
-                         total=total)
-
+                         total=total,
+                         total_pages=(total + per_page - 1) // per_page)
 @app.route('/thesis/<int:thesis_id>')
 @login_required
 def view_thesis(thesis_id):
@@ -462,14 +472,18 @@ def admin_submissions():
 
     # Get stats
     cursor.execute("""
-        SELECT 
-            COUNT(*) as total_theses,
-            SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) as published,
-            SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending,
-            SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) as rejected
-        FROM thesis_submissions
+        SELECT
+            (
+                (SELECT COUNT(*) FROM thesis_submissions WHERE status IN ('pending', 'rejected'))
+                +
+                (SELECT COUNT(*) FROM published_theses)
+            ) AS total_submissions,
+            (SELECT COUNT(*) FROM thesis_submissions WHERE status = 'pending') AS pending,
+            (SELECT COUNT(*) FROM thesis_submissions WHERE status = 'rejected') AS rejected,
+            (SELECT COUNT(*) FROM published_theses) AS total_published
     """)
     stats = cursor.fetchone()
+
 
     return render_template('admin_submissions.html',
                          submissions=submissions,

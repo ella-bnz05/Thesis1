@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% block content %}
+<button class="btn btn-primary d-md-none m-3" 
+        type="button" 
+        data-bs-toggle="collapse" 
+        data-bs-target=".sidebar" 
+        aria-expanded="false" 
+        aria-label="Toggle sidebar">
+    <i class="fas fa-bars"></i>
+</button>
+
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar Column -->            
+        {% include "admin_sidebar.html" %}
+
+
+        <!-- Main Content Column -->
+        <div class="col-md-9 col-lg-10 ms-sm-auto px-md-4 py-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h2>Admin Action History</h2>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <div class="dropdown">
+                        <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle me-1"></i> {{ current_user.username }}
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#">
+                                <i class="fas fa-user me-1"></i> Profile
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="{{ url_for('logout') }}">
+                                <i class="fas fa-sign-out-alt me-1"></i> Logout
+                            </a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <!-- Filters Card -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold">Filters</h6>
+                </div>
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-6">
+                            <label for="action_type" class="form-label">Action Type</label>
+                            <select name="action_type" id="action_type" class="form-select">
+                                <option value="">All Actions</option>
+                                {% for action_type in action_types %}
+                                <option value="{{ action_type }}" {% if current_filters.action_type == action_type %}selected{% endif %}>
+                                    {{ action_type }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="admin_id" class="form-label">Admin</label>
+                            <select name="admin_id" id="admin_id" class="form-select">
+                                <option value="">All Admins</option>
+                                {% for admin in admins %}
+                                <option value="{{ admin.id }}" {% if current_filters.admin_id == admin.id|string %}selected{% endif %}>
+                                    {{ admin.username }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary me-2">
+                                <i class="fas fa-filter me-1"></i> Filter
+                            </button>
+                            <a href="{{ url_for('admin_action_history') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-undo me-1"></i> Reset
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- History Table Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold">Action Log</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Date/Time</th>
+                                    <th>Admin</th>
+                                    <th>Action</th>
+                                    <th>Description</th>
+                                    <th>Target</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for action in actions %}
+                                <tr>
+                                    <td>{{ action.performed_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>{{ action.admin_username }}</td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if action.action_type == 'create' %}bg-success
+                                            {% elif action.action_type == 'delete' %}bg-danger
+                                            {% elif action.action_type == 'update' %}bg-primary
+                                            {% else %}bg-secondary{% endif %}">
+                                            {{ action.action_type|title }}
+                                        </span>
+                                    </td>
+                                    <td>{{ action.description }}</td>
+                                    <td>
+                                        {% if action.target_id and action.target_type %}
+                                        <a href="#" class="text-primary">{{ action.target_type|title }} #{{ action.target_id }}</a>
+                                        {% else %}
+                                        <span class="text-muted">N/A</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="5" class="text-center py-4">
+                                        <i class="fas fa-history fa-2x text-muted mb-2"></i>
+                                        <p class="text-muted">No actions found</p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    {% if total_pages > 1 %}
+                    <nav aria-label="Page navigation" class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            {% if page > 1 %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('admin_action_history', page=page-1, action_type=current_filters.action_type, admin_id=current_filters.admin_id) }}" aria-label="Previous">
+                                    <i class="fas fa-angle-left"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+
+                            {% for p in range(1, total_pages+1) %}
+                            <li class="page-item {% if p == page %}active{% endif %}">
+                                <a class="page-link" href="{{ url_for('admin_action_history', page=p, action_type=current_filters.action_type, admin_id=current_filters.admin_id) }}">{{ p }}</a>
+                            </li>
+                            {% endfor %}
+
+                            {% if page < total_pages %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('admin_action_history', page=page+1, action_type=current_filters.action_type, admin_id=current_filters.admin_id) }}" aria-label="Next">
+                                    <i class="fas fa-angle-right"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -74,11 +74,16 @@
                                 <div class="mb-3">
                                     <label for="fileInput" class="form-label">
                                         <i class="fas fa-cloud-upload-alt fa-3x text-primary mb-3"></i>
-                                        <h5>Drag & drop your file here or click to browse</h5>
+                                        <h5>Take a Picture, Drag & Drop a File, or Click to Upload</h5>
                                         <p class="text-muted">Supports JPG, PNG, PDF (Max 10MB)</p>
                                     </label>
-                                    <input class="form-control d-none" type="file" id="fileInput" name="file" accept="image/*,.pdf" required>
-                                </div>
+                                    <input class="form-control d-none" 
+                                    type="file" 
+                                    id="fileInput" 
+                                    name="file" 
+                                    accept="image/*,.pdf" 
+                                    capture="environment" 
+                                    required>                                </div>
                                 <div id="filePreviewContainer" class="mb-3" style="display:none;">
                                     <img id="filePreview" class="img-fluid rounded" src="" alt="Preview">
                                 </div>

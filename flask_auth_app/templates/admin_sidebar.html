@@ -4,10 +4,6 @@
         --secondary-color: #f8f9fc;
         --accent-color: #1cc88a;
     }
-    body {
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        background-color: #f8f9fc;
-    }
     .sidebar {
         background: linear-gradient(180deg, var(--primary-color) 0%, #224abe 100%);
         min-height: 100vh;
@@ -25,48 +21,12 @@
         color: white;
         font-weight: bold;
     }
-    .card {
-        border: none;
-        border-radius: 10px;
-        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
-        margin-bottom: 20px;
-    }
-    .card-header {
-        background-color: white;
-        border-bottom: 1px solid #e3e6f0;
-        font-weight: 600;
-    }
     .bg-primary-custom {
         background-color: var(--primary-color) !important;
     }
-    .bg-success-custom {
-        background-color: var(--accent-color) !important;
-    }
-    .stat-card {
-        border-left: 5px solid;
-    }
-    .stat-card.primary {
-        border-left-color: var(--primary-color);
-    }
-    .stat-card.success {
-        border-left-color: var(--accent-color);
-    }
-    .upload-area {
-        border: 2px dashed #d1d3e2;
-        border-radius: 10px;
-        padding: 20px;
-        background-color: white;
-    }
-    .upload-area:hover {
-        border-color: var(--primary-color);
-    }
-    #filePreview {
-        max-height: 300px;
-        object-fit: contain;
-    }
 </style>
 
-<!-- templates/admin_sidebar.html -->
+<!-- Admin Sidebar Component -->
 <div class="col-md-3 col-lg-2 d-md-block sidebar collapse bg-primary-custom p-0">
     <div class="position-sticky pt-3">
         <div class="text-center py-4">
@@ -88,15 +48,14 @@
                     <i class="fas fa-fw fa-file-alt me-2"></i>Thesis Submissions
                 </a>
             </li>
-
             <li class="nav-item">
-                <a class="nav-link {% if request.endpoint == 'manage_trash' %}active{% endif %}" href="{{ url_for('manage_trash') }}">
-                    <i class="fas fa-fw fa-trash me-2"></i>Trash
+                <a class="nav-link {% if request.endpoint == 'admin_action_history' %}active{% endif %}" href="{{ url_for('admin_action_history') }}">
+                    <i class="bi bi-clock-history me-2"></i>Action History
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link {% if request.endpoint == 'manage_users' %}active{% endif %}" href="{{ url_for('manage_users') }}">
-                    <i class="fas fa-fw fa-users me-2"></i>Users
+                <a class="nav-link {% if request.endpoint == 'manage_trash' %}active{% endif %}" href="{{ url_for('manage_trash') }}">
+                    <i class="fas fa-fw fa-trash me-2"></i>Trash
                 </a>
             </li>
         </ul>

@@ -2,19 +2,18 @@
   "lang":"en",
   "name":"cs_acad_ner",
   "version":"0.0.0",
-  "spacy_version":">=3.7.5,<3.8.0",
   "description":"",
   "author":"",
   "email":"",
   "url":"",
   "license":"",
+  "spacy_version":">=3.7.5,<3.8.0",
   "spacy_git_version":"a6d0fc360",
   "vectors":{
     "width":0,
     "vectors":0,
     "keys":0,
-    "name":null,
-    "mode":"default"
+    "name":null
   },
   "labels":{
     "ner":[
@@ -66,5 +65,8 @@
       }
     },
     "ner_loss":0.036873597
-  }
+  },
+  "requirements":[
+
+  ]
 }

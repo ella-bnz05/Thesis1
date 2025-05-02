@@ -1,0 +1,2 @@
+[spacy_models]
+en_cs_acad_ner = en_cs_acad_ner

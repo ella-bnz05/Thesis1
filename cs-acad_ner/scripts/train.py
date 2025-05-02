@@ -133,10 +133,10 @@ if __name__ == "__main__":
     ENTITY_LABELS = ["TITLE", "AUTHOR", "CAMPUS", "DEPARTMENT", "DATE"]
 
     # Load and preprocess data
-    train_data = load_data("data/converted_data1.json")
+    train_data = load_data("data/train_data.json")
     
     # Create a blank model with necessary entity labels
     nlp = create_blank_model(ENTITY_LABELS)
     
     # Train the model with span-based annotations
-    train_span_based_model(nlp, train_data, "models/cs-acad_ner")
+    train_span_based_model(nlp, train_data, "models/cs-acad_ner1")

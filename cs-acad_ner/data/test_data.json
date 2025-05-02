@@ -1,86 +1,653 @@
 [
     {
-        "text": "DEVELOPMENT OF A WIFI SECURITY APPLICATION FOR DETECTING AND MITIGATING EVIL TWIN ATTACKS\n\nUndergraduate Thesis\nSubmitted to the Faculty of the\nDepartment of Computer Studies\nCavite State University - Imus Campus\nCity of Imus, Cavite\n\nIn partial fulfilment\nof the requirements for the degree\nBachelor of Science in Computer Science\n\nCZAR JOHN VILLAREAL\nLOUISE MARK BANDOJA\nVON PHILIPPE ACERO\nJanuary 2025",
-        "annotations": [
-            {"start": 0, "end": 84, "label": "TITLE"},
-            {"start": 254, "end": 273, "label": "AUTHOR"},
-            {"start": 274, "end": 294, "label": "AUTHOR"},
-            {"start": 295, "end": 316, "label": "AUTHOR"},
-            {"start": 138, "end": 166, "label": "DEPARTMENT"},
-            {"start": 167, "end": 199, "label": "CAMPUS"},
-            {"start": 317, "end": 331, "label": "DATE"}
+        "text": "DESIGNING A MACHINE LEARNING-BASED SYSTEM TO PREDICT MONTHLY ELECTRICITY AND WATER BILLS FOR HOUSEHOLD BUDGETING",
+        "entities": [
+            [
+               0,
+                112,
+                "TITLE"
+            ]
+        ]
+    },
+
+    {
+        "text": "Department of Computer Studies",
+        "entities": [
+            [
+                0,
+                30,
+                "DEPARTMENT"
+            ]
         ]
     },
     {
-        "text": "DEVELOPMENT OF AN INTERNET OF THINGS-BASED WASTE DETECTION\nSYSTEM FOR DRAINAGE CANALS: CLASSIFICATION AND\nMONITORING OF WASTE TYPES\n\nUndergraduate Thesis\nSubmitted to the Faculty of the\nDepartment of Computer Studies\nCavite State University - Imus Campus\nCity of imus, Cavite\n\nIn partial fulfilment\nof the requirements in the degree\nBachelor of Science in Computer Science\n\nVIRGILIO JR. C. DIAZ\nRODNIE G. GELLA\nSHARINA ACEL V. MACROHON\nJANUARY 2025",
-        "annotations": [
-            {"start": 0, "end": 17, "label": "TITLE"},
-            {"start": 263, "end": 284, "label": "AUTHOR"},
-            {"start": 285, "end": 308, "label": "AUTHOR"},
-            {"start": 309, "end": 338, "label": "AUTHOR"},
-            {"start": 164, "end": 198, "label": "DEPARTMENT"},
-            {"start": 199, "end": 231, "label": "CAMPUS"},
-            {"start": 339, "end": 353, "label": "DATE"}
+        "text": "Cavite State University - Imus Campus",
+        "entities": [
+            [
+                0,
+                37,
+                "CAMPUS"
+            ]
         ]
     },
     {
-        "text": "VISLIGHT: LEVERAGING INTELLIGENT TRAFFIC LIGHT SENSORS TO MITIGATE URBAN CONGESTION DURING RUSH HOURS\n\nA Thesis Proposal\nSubmitted to the Faculty of the Department\nof Computer Studies\nCavite State University - Imus Campus\nCity of Imus, Cavite\n\nIn partial fulfilment\nof the requirements in the subject\nCOSC 75A - Sofware Engineering I\n\nJOSE ANGELO B. BITANGA\nJOHN ROBERT L. OLANO\nGWEN MARINIE C. PACIENTE\nJANUARY 2024",
-        "annotations": [
-            {"start": 0, "end": 98, "label": "TITLE"},
-            {"start": 256, "end": 281, "label": "AUTHOR"},
-            {"start": 282, "end": 305, "label": "AUTHOR"},
-            {"start": 306, "end": 337, "label": "AUTHOR"},
-            {"start": 141, "end": 169, "label": "DEPARTMENT"},
-            {"start": 170, "end": 200, "label": "CAMPUS"},
-            {"start": 338, "end": 352, "label": "DATE"}
+        "text": "AGUINALDO, CARLEA MARIA G.",
+        "entities": [
+            [
+                0,
+                26,
+                "AUTHOR"
+            ]
         ]
     },
     {
-        "text": "SYNTAX RECALL: ENHANCING CODING SKILLS THROUGH 2D TEXT-BASED INTERACTIVE COMBAT GAME\n\nUndergraduate Thesis\nSubmitted to the Faculty of the\nDepartment of Computer Studies\nCavite State University - Imus Campus\n\nCity of Imus, Cavite\n\nIn partial fulfilment\nof the requirements for the degree\n\nBachelor of Science in Computer Science\n\nRAFAELLA R. BANEZ\nAALIHYA M. RIVERO\nRYAN CHRISTIAN M. ROBLES\nJanuary 2025",
-        "annotations": [
-            {"start": 0, "end": 97, "label": "TITLE"},
-            {"start": 259, "end": 278, "label": "AUTHOR"},
-            {"start": 279, "end": 299, "label": "AUTHOR"},
-            {"start": 300, "end": 327, "label": "AUTHOR"},
-            {"start": 148, "end": 176, "label": "DEPARTMENT"},
-            {"start": 177, "end": 207, "label": "CAMPUS"},
-            {"start": 328, "end": 342, "label": "DATE"}
+        "text": "CHAVEZ, LEONARDO LUIZ B.",
+        "entities": [
+            [
+                0,
+                24,
+                "AUTHOR"
+            ]
         ]
     },
     {
-        "text": "DESIGNING A MACHINE LEARNING-BASED SYSTEM TO PREDICT\nMONTHLY ELECTRICITY AND WATER BILLS FOR HOUSEHOLD BUDGETING\n\nUndergraduate Thesis\nSubmitted to the Faculty of the\nDepartment of Computer Studies\nCavite State University - Imus Campus\nImus City, Cavite\n\nIn partial fulfilment\nof the requirements for the degree\nBachelor of Science in Computer Science\n\nAGUINALDO, CARLEA MARIA G.\nCHAVEZ, LEONARDO LUIZ B.\nRAVIS, JORDAN ANGELO\nJanuary 2025",
-        "annotations": [
-            {"start": 0, "end": 171, "label": "TITLE"},
-            {"start": 325, "end": 351, "label": "AUTHOR"},
-            {"start": 352, "end": 380, "label": "AUTHOR"},
-            {"start": 381, "end": 398, "label": "AUTHOR"},
-            {"start": 148, "end": 176, "label": "DEPARTMENT"},
-            {"start": 177, "end": 209, "label": "CAMPUS"},
-            {"start": 399, "end": 413, "label": "DATE"}
+        "text": "RAVIS, JORDAN ANGELO",
+        "entities": [
+            [
+                0,
+                20,
+                "AUTHOR"
+            ]
         ]
     },
     {
-        "text": "DEVELOPMENT OF A VIRTUAL NURSE SYSTEM WITH BASIC HEALTH DETECTION USING GEOLOCATION BASED TECHNOLOGY\n\nUndergraduate Thesis\nSubmitted to the Faculty of the\nDepartment of Computer Studies\nCavite State University - Imus Campus\nCity of Imus, Cavite\n\nof the requirements in the degree\nBachelor of Science in Computer Science\n\nVIRGILIO JR. C. DIAZ\nRODNIE G. GELLA\nSHARINA ACEL V. MACROHON\nJANUARY 2025",
-        "annotations": [
-            {"start": 0, "end": 112, "label": "TITLE"},
-            {"start": 295, "end": 316, "label": "AUTHOR"},
-            {"start": 317, "end": 340, "label": "AUTHOR"},
-            {"start": 341, "end": 370, "label": "AUTHOR"},
-            {"start": 138, "end": 166, "label": "DEPARTMENT"},
-            {"start": 167, "end": 199, "label": "CAMPUS"},
-            {"start": 371, "end": 385, "label": "DATE"}
+        "text": "January 2025",
+        "entities": [
+            [
+                0,
+                12,
+                "DATE"
+            ]
         ]
     },
     {
-        "text": "EMPOWERING SMALL BUSINESSES WITH AN ALDRIVEN SOCIAL MEDIA MANAGEMENT TOOL\n\nAn Undergraduate Thesis\nSubmitted to the Faculty of\nDepartment of Computer Studies\nCavite Stale University\nImus, Cavite\n\nIn partial fulfilment\nof the requirements for the degree of\nBachelor of Science in Computer Science\n\nJOHN ALCHRISTIAN M. BELARMINO\nEDILBERTO P. LUSTERIO JR.\nRINOA JAYNE M. CATANAOAN\nJANUARY 2025",
-        "annotations": [
-            {"start": 0, "end": 76, "label": "TITLE"},
-            {"start": 279, "end": 311, "label": "AUTHOR"},
-            {"start": 312, "end": 341, "label": "AUTHOR"},
-            {"start": 342, "end": 372, "label": "AUTHOR"},
-            {"start": 116, "end": 145, "label": "DEPARTMENT"},
-            {"start": 146, "end": 161, "label": "CAMPUS"},
-            {"start": 373, "end": 387, "label": "DATE"}
+        "text": "DEVELOPMENT OF A VIRTUAL NURSE SYSTEM WITH BASIC HEALTH DETECTION USING GEOLOCATION BASED TECHNOLOGY",
+        "entities": [
+            [
+                0,
+                100,
+                "TITLE"
+            ]
+        ]
+    },
+   
+    {
+        "text": "Department of Computer Studies",
+        "entities": [
+            [
+                0,
+                30,
+                "DEPARTMENT"
+            ]
+        ]
+    },
+    {
+        "text": "Cavite State University - Imus Campus",
+        "entities": [
+            [
+                0,
+                37,
+                "CAMPUS"
+            ]
+        ]
+    },
+    {
+        "text": "VIRGILIO JR. C. DIAZ",
+        "entities": [
+            [
+                0,
+                20,
+                "AUTHOR"
+            ]
+        ]
+    },
+    {
+        "text": "RODNIE G. GELLA",
+        "entities": [
+            [
+                0,
+                15,
+                "AUTHOR"
+            ]
+        ]
+    },
+    {
+        "text": "SHARINA ACEL V. MACROHON",
+        "entities": [
+            [
+                0,
+                24,
+                "AUTHOR"
+            ]
+        ]
+    },
+    {
+        "text": "JANUARY 2025",
+        "entities": [
+            [
+                0,
+                12,
+                "DATE"
+            ]
+        ]
+    },
+
+    {
+        "text": "Department of Computer Studies",
+        "entities": [
+            [
+                0,
+                30,
+                "DEPARTMENT"
+            ]
+        ]
+    },
+    {
+        "text": "Cavite State University",
+        "entities": [
+            [
+                0,
+                23,
+                "CAMPUS"
+            ]
+        ]
+    },
+    {
+        "text": "JOHN ALCHRISTIAN M. BELARMINO.",
+        "entities": [
+            [
+                0,
+                30,
+                "AUTHOR"
+            ]
+        ]
+    },
+    {
+        "text": "EDILBERTO P. LUSTERIO JR.",
+        "entities": [
+            [
+                0,
+                25,
+                "AUTHOR"
+            ]
+        ]
+    },
+    {
+        "text": "RINOA JAYNE M. CATANAOAN",
+        "entities": [
+            [
+                0,
+                24,
+                "AUTHOR"
+            ]
+        ]
+    },
+    {
+        "text": "JANUARY 2025",
+        "entities": [
+            [
+                0,
+                12,
+                "DATE"
+            ]
+        ]
+    },
+    {
+        "text": "SMARTLAND: DEVELOPMENT OF A GIS-BASED AGRICULTURAL LAND ANALYSIS AND MAPPING SYSTEM FOR E-COMMERCE MARKETPLACE INTEGRATION",
+        "entities": [
+            [
+                0,
+                122,
+                "TITLE"
+            ]
+        ]
+    },
+
+    {
+        "text": "of the Department of Computer Studies",
+        "entities": [
+            [
+                7,
+                37,
+                "DEPARTMENT"
+            ]
+        ]
+    },
+    {
+        "text": "Cavite State University - Imus Campus",
+        "entities": [
+            [
+                0,
+                37,
+                "CAMPUS"
+            ]
+        ]
+    },
+    {
+        "text": "IVAN GABRIEL A. PENA",
+        "entities": [
+            [
+                0,
+                20,
+                "AUTHOR"
+            ]
+        ]
+    },
+    {
+        "text": "CARLO P. GERBES",
+        "entities": [
+            [
+                0,
+                20,
+                "AUTHOR"
+            ]
+        ]
+    },
+    {
+        "text": "FRANCO LEMUEL A. GARCIA",
+        "entities": [
+            [
+                0,
+                23,
+                "AUTHOR"
+            ]
+        ]
+    },
+    {
+        "text": "2025",
+        "entities": [
+            [
+                0,
+                4,
+                "DATE"
+            ]
+        ]
+    },
+    {
+        "text": "SIMULATION OF AN IOT-BASED SMART TRAFFIC SYSTEM TO REDUCE EMERGENCY RESPONSE DELAYS FOR AMBULANCES",
+        "entities": [
+     
+            [
+                0,
+                98,
+                "TITLE"
+            ]
+        ]
+    },
+
+    {
+        "text": "of the Department of Computer Studies",
+        "entities": [
+            [
+                7,
+                37,
+                "DEPARTMENT"
+            ]
+        ]
+    },
+    {
+        "text": "Cavite State University - Imus Campus",
+        "entities": [
+            [
+                0,
+                37,
+                "CAMPUS"
+            ]
+        ]
+    },
+    {
+        "text": "SENTIMENT ANALYSIS OF THE SWOTIFY PLATFORM OF CENTRAL STUDENT GOVERNMENT IN CAVITE STATE UNIVERSITY- IMUS CAMPUS",
+        "entities": [
+            
+            [
+                0,
+                112,
+                "TITLE"
+            ]
+        ]
+    },
+
+    {
+        "text": "Department of Computer Studies",
+        "entities": [
+            [
+                0,
+                30,
+                "DEPARTMENT"
+            ]
+        ]
+    },
+    {
+        "text": "Cavite State University",
+        "entities": [
+            [
+                0,
+                23,
+                "CAMPUS"
+            ]
+        ]
+    },
+    {
+        "text": "SVET JAZMINE DIO",
+        "entities": [
+            [
+                0,
+                16,
+                "AUTHOR"
+            ]
+        ]
+    },
+    {
+        "text": "TRISHA GRACE C. GARCIA",
+        "entities": [
+            [
+                0,
+                22,
+                "AUTHOR"
+            ]
+        ]
+    },
+    {
+        "text": "VAN ELLIS V. MERCADO",
+        "entities": [
+            [
+                0,
+                20,
+                "AUTHOR"
+            ]
+        ]
+    },
+    {
+        "text": "2024",
+        "entities": [
+            [
+                0,
+                4,
+                "DATE"
+            ]
+        ]
+    },
+    {
+        "text": "DEVELOPMENT OF A WIFI SECURITY APPLICATION FOR DETECTING AND MITIGATING EVIL TWIN ATTACKS",
+        "entities": [
+            [
+                0,
+                89,
+                "TITLE"
+            ]
+        ]
+    },
+    
+    {
+        "text": "Department of Computer Studies",
+        "entities": [
+            [
+                0,
+                30,
+                "DEPARTMENT"
+            ]
+        ]
+    },
+    {
+        "text": "Cavite State University - Imus Campus",
+        "entities": [
+            [
+                0,
+                37,
+                "CAMPUS"
+            ]
+        ]
+    },
+    {
+        "text": "CZAR JOHN VILLAREAL",
+        "entities": [
+            [
+                0,
+                19,
+                "AUTHOR"
+            ]
+        ]
+    },
+    {
+        "text": "LOUISE MARK BANDOJA",
+        "entities": [
+            [
+                0,
+                19,
+                "AUTHOR"
+            ]
+        ]
+    },
+    {
+        "text": "VON PHILIPPE ACERO",
+        "entities": [
+            [
+                0,
+                18,
+                "AUTHOR"
+            ]
+        ]
+    },
+    {
+        "text": "January 2025",
+        "entities": [
+            [
+                0,
+                12,
+                "DATE"
+            ]
+        ]
+    },
+    {
+        "text": "DEVELOPMENT OF AN INTERNET OF THINGS-BASED WASTE DETECTION SYSTEM FOR DRAINAGE CANALS: CLASSIFICATION AND MONITORING OF WASTE TYPES",
+        "entities": [
+            [
+                0,
+                131,
+                "TITLE"
+            ]
+        ]
+    },
+    {
+        "text": "Department of Computer Studies",
+        "entities": [
+            [
+                0,
+                30,
+                "DEPARTMENT"
+            ]
+        ]
+    },
+    {
+        "text": "VIRGILIO JR. C. DIAZ",
+        "entities": [
+            [
+                0,
+                20,
+                "AUTHOR"
+            ]
+        ]
+    },
+    {
+        "text": "RODNIE G. GELLA",
+        "entities": [
+            [
+                0,
+                15,
+                "AUTHOR"
+            ]
+        ]
+    },
+    {
+        "text": "SHARINA ACEL V. MACROHON",
+        "entities": [
+            [
+                0,
+                24,
+                "AUTHOR"
+            ]
+        ]
+    },
+    {
+        "text": "JANUARY 2025",
+        "entities": [
+            [
+                0,
+                12,
+                "DATE"
+            ]
+        ]
+    },
+    {
+        "text": "VISLIGHT: LEVERAGING INTELLIGENT TRAFFIC LIGHT SENSORS TO MITIGATE URBAN CONGESTION DURING RUSH HOURS",
+        "entities": [
+            [
+                0,
+                101,
+                "TITLE"
+            ]
+        ]
+    },
+  
+    {
+        "text": "Department of Computer Studies",
+        "entities": [
+            [
+                0,
+                30,
+                "DEPARTMENT"
+            ]
+        ]
+    },
+    {
+        "text": "Cavite State University - Imus Campus",
+        "entities": [
+            [
+                0,
+                37,
+                "CAMPUS"
+            ]
+        ]
+    },
+    {
+        "text": "JOSE ANGELO B. BITANGA",
+        "entities": [
+            [
+                0,
+                22,
+                "AUTHOR"
+            ]
+        ]
+    },
+    {
+        "text": "JOHN ROBERT L. OLANO",
+        "entities": [
+            [
+                0,
+                20,
+                "AUTHOR"
+            ]
+        ]
+    },
+    {
+        "text": "GWEN MARINIE C. PACIENTE",
+        "entities": [
+            [
+                0,
+                24,
+                "AUTHOR"
+            ]
+        ]
+    },
+    {
+        "text": "JANUARY 2024",
+        "entities": [
+            [
+                0,
+                12,
+                "DATE"
+            ]
+        ]
+    },
+    {
+        "text": "SYNTAX RECALL: ENHANCING CODING SKILLS THROUGH 2D TEXT-BASED INTERACTIVE COMBAT GAME",
+        "entities": [
+            [
+                0,
+                84,
+                "TITLE"
+            ]
+        ]
+    },
+   
+    {
+        "text": "Department of Computer Studies",
+        "entities": [
+            [
+                0,
+                30,
+                "DEPARTMENT"
+            ]
+        ]
+    },
+    {
+        "text": "Cavite State University - Imus Campus",
+        "entities": [
+            [
+                0,
+                37,
+                "CAMPUS"
+            ]
+        ]
+    },
+    {
+        "text": "RAFAELLA R. BANEZ",
+        "entities": [
+            [
+                0,
+                17,
+                "AUTHOR"
+            ]
+        ]
+    },
+    {
+        "text": "AALIHYA M. RIVERO",
+        "entities": [
+            [
+                0,
+                17,
+                "AUTHOR"
+            ]
+        ]
+    },
+    {
+        "text": "RYAN CHRISTIAN M. ROBLES",
+        "entities": [
+            [
+                0,
+                24,
+                "AUTHOR"
+            ]
+        ]
+    },
+    {
+        "text": "January 2025",
+        "entities": [
+            [
+                0,
+                12,
+                "DATE"
+            ]
         ]
     }
 ]

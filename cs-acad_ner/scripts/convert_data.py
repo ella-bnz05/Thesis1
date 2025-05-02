@@ -29,6 +29,6 @@ def convert_data_format(input_file, output_file):
 
 # Example usage
 if __name__ == "__main__":
-    input_filepath = "data/train_data.json"  # Replace with your input file path
+    input_filepath = "data/converted_label_studio_data1.json"  # Replace with your input file path
     output_filepath = "data/converted_data1.json"  # Replace with your output file path
     convert_data_format(input_filepath, output_filepath)

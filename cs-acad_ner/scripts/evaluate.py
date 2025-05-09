@@ -97,18 +97,23 @@ def evaluate_span_model(model_path, data_path, spans_key="sc"):
         
         try:
             doc = nlp.make_doc(text)
-           # Create spans that are properly aligned with this specific doc
-            validated_spans = []
+
+            # Create aligned spans
+            aligned_spans = []
             for start, end, label in spans:
-              # This ensures the span is properly aligned to tokens
-             span = doc.char_span(start, end, label=label)
-            if span is not None:  # Only keep valid spans
-                validated_spans.append((span.start_char, span.end_char, span.label_))
-            else:
-                print(f"Skipping misaligned span: {text[start:end]} (label: {label})")
-            # Use spans format expected by SpanCategorizer
-            example = Example.from_dict(doc, {"spans": {spans_key: spans}})
+                span = doc.char_span(start, end, label=label)
+                if span is not None:
+                    aligned_spans.append(span)
+                else:
+                    print(f"Skipping misaligned span: {text[start:end]} (label: {label})")
+
+            # Create example using aligned spans only
+            aligned_span_data = {
+                spans_key: [(span.start_char, span.end_char, span.label_) for span in aligned_spans]
+            }
+            example = Example.from_dict(doc, {"spans": aligned_span_data})
             examples.append(example)
+
         except ValueError as e:
             skipped += 1
             print(f"Skipping: {text[:50]}... - Error: {e}")
@@ -138,6 +143,6 @@ def evaluate_span_model(model_path, data_path, spans_key="sc"):
 if __name__ == "__main__":
     evaluate_span_model(
         model_path="models/cs-acad_spancat",  # Path to span-based model
-        data_path="data/converted_span_data.json",     # Test data path
+        data_path="data/converted_span_data1.json",     # Test data path
         spans_key="sc"                       # Span key used in annotations
     )

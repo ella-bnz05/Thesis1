@@ -1,11 +1,21 @@
-{% extends "base.html" %}
+{% extends "admin_base.html" %}
 
 {% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>{{ thesis.title }}</h1>
+    <button id="bookmark-btn" class="btn {% if is_bookmarked %}btn-warning{% else %}btn-outline-secondary{% endif %}">
+        {% if is_bookmarked %}
+            <i class="fas fa-bookmark"></i> Bookmarked
+        {% else %}
+            <i class="far fa-bookmark"></i> Bookmark
+        {% endif %}
+    </button>
+</div>
 <div class="container">
     <div class="card my-4">
         <div class="card-header">
             <h2>{{ thesis.title }}</h2>
-            <a href="{{ url_for('browse_theses') }}" class="btn btn-sm btn-secondary">
+            <a href="{{ url_for('admin_browse_theses') }}" class="btn btn-sm btn-secondary">
                 <i class="fas fa-arrow-left"></i> Back to Theses
             </a>
         </div>
@@ -54,7 +64,6 @@
             {% endif %}
         </div>
         <div class="card-footer">
-            {% if current_user.is_admin() %}
             <div class="d-flex justify-content-between">
                 <a href="{{ url_for('edit_published_thesis', thesis_id=thesis.id) }}" 
                    class="btn btn-primary">
@@ -67,8 +76,32 @@
                     </button>
                 </form>
             </div>
-            {% endif %}
         </div>
     </div>
 </div>
+<script>
+document.getElementById('bookmark-btn').addEventListener('click', function() {
+    fetch("{{ url_for('bookmark_thesis', thesis_id=thesis.id) }}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const btn = document.getElementById('bookmark-btn');
+            if (data.action === 'added') {
+                btn.classList.remove('btn-outline-secondary');
+                btn.classList.add('btn-warning');
+                btn.innerHTML = '<i class="fas fa-bookmark"></i> Bookmarked';
+            } else {
+                btn.classList.remove('btn-warning');
+                btn.classList.add('btn-outline-secondary');
+                btn.innerHTML = '<i class="far fa-bookmark"></i> Bookmark';
+            }
+        }
+    });
+});
+</script>
 {% endblock %}

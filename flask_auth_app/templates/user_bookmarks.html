@@ -1,0 +1,166 @@
+{% extends "user_base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar Column - Using the included sidebar template -->
+        <div class="col-md-3 col-lg-2 d-md-block sidebar">
+            {% include "user_sidebar.html" %}
+        </div>
+
+        <!-- Main Content Column -->
+        <div class="col-md-9 col-lg-10 ms-sm-auto px-md-4 py-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">
+                    <i class="fas fa-bookmark text-primary me-2"></i>Bookmarked Theses
+                </h1>
+            </div>
+
+            {% if bookmarks %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Title</th>
+                                <th scope="col">Authors</th>
+                                <th scope="col">Date</th>
+                                <th scope="col">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for thesis in bookmarks %}
+                            <tr>
+                                <th scope="row">{{ loop.index + ((page - 1) * per_page) }}</th>
+                                <td>
+                                    <a href="{{ url_for('view_thesis', thesis_id=thesis.id) }}" class="text-decoration-none">
+                                        {{ thesis.title }}
+                                    </a>
+                                    <div class="text-muted small mt-1">
+                                        {% for keyword in thesis.keywords.split(',')[:3] %}
+                                            <span class="badge bg-light text-dark me-1">{{ keyword.strip() }}</span>
+                                        {% endfor %}
+                                    </div>
+                                </td>
+                                <td>{{ thesis.authors }}</td>
+                                <td>{{ thesis.published_at.strftime('%b %d, %Y') }}</td>
+                                <td>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a href="{{ url_for('view_thesis', thesis_id=thesis.id) }}" class="btn btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <button class="btn btn-outline-danger remove-bookmark" data-thesis-id="{{ thesis.id }}">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                {% if total_pages > 1 %}
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center mt-4">
+                        {% if page > 1 %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('view_bookmarks', page=page-1) }}" aria-label="Previous">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                        {% endif %}
+                        
+                        {% for p in range(1, total_pages+1) %}
+                            <li class="page-item {% if p == page %}active{% endif %}">
+                                <a class="page-link" href="{{ url_for('view_bookmarks', page=p) }}">{{ p }}</a>
+                            </li>
+                        {% endfor %}
+                        
+                        {% if page < total_pages %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('view_bookmarks', page=page+1) }}" aria-label="Next">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            {% else %}
+                <div class="text-center py-5">
+                    <div class="py-5">
+                        <i class="far fa-bookmark fa-4x text-muted mb-4"></i>
+                        <h3 class="h4 text-muted">No bookmarks yet</h3>
+                        <p class="text-muted">When you bookmark theses, they'll appear here.</p>
+                        <a href="{{ url_for('browse_theses') }}" class="btn btn-primary mt-3">
+                            <i class="fas fa-search me-2"></i>Browse Theses
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Remove Bookmark Modal -->
+<div class="modal fade" id="removeBookmarkModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Remove Bookmark</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to remove this thesis from your bookmarks?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmRemove">Remove</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    let currentThesisId = null;
+    
+    // Get CSRF token from meta tag (make sure your base template includes this)
+    function getCSRFToken() {
+        return $('meta[name="csrf-token"]').attr('content') || '';
+    }
+    
+    $('.remove-bookmark').click(function() {
+        currentThesisId = $(this).data('thesis-id');
+        $('#removeBookmarkModal').modal('show');
+    });
+    
+    $('#confirmRemove').click(function() {
+        if (currentThesisId) {
+            $.ajax({
+                url: "/bookmark/" + currentThesisId,
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken()
+                },
+                success: function(response) {
+                    if (response.success) {
+                        location.reload();
+                    } else {
+                        alert(response.message || "Failed to remove bookmark.");
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error("Error removing bookmark:", error);
+                    alert("Failed to remove bookmark. Please try again.");
+                }
+            });
+        }
+        $('#removeBookmarkModal').modal('hide');
+    });
+});
+</script>
+{% endblock %}

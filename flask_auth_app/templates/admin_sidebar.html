@@ -27,7 +27,7 @@
 </style>
 
 <!-- Admin Sidebar Component -->
-<div class="col-md-3 col-lg-2 d-md-block sidebar collapse bg-primary-custom p-0">
+<div id='sidebar' class="col-md-3 col-lg-2 d-md-block sidebar collapse bg-primary-custom p-0">
     <div class="position-sticky pt-3">
         <div class="text-center py-4">
             <h4 class="text-white"><i class="fas fa-user-shield me-2"></i>Admin Panel</h4>
@@ -39,7 +39,7 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link {% if request.endpoint == 'browse_theses' %}active{% endif %}" href="{{ url_for('browse_theses') }}">
+                <a class="nav-link {% if request.endpoint == 'admin_browse_theses' %}active{% endif %}" href="{{ url_for('admin_browse_theses') }}">
                     <i class="fas fa-fw fa-book me-2"></i>Published Theses
                 </a>
             </li>
@@ -51,6 +51,11 @@
             <li class="nav-item">
                 <a class="nav-link {% if request.endpoint == 'admin_action_history' %}active{% endif %}" href="{{ url_for('admin_action_history') }}">
                     <i class="bi bi-clock-history me-2"></i>Action History
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if request.endpoint == 'manage_users' %}active{% endif %}" href="{{ url_for('manage_users') }}">
+                    <i class="bi bi-clock-history me-2"></i>Users
                 </a>
             </li>
             <li class="nav-item">

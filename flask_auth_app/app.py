@@ -4,15 +4,23 @@ import MySQLdb.cursors
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash 
 from werkzeug.utils import secure_filename
-import pytesseract
 from PIL import Image
-import re
 import spacy
 import os
 import PyPDF2
-from io import BytesIO
-from datetime import datetime
+from datetime import datetime, timedelta
 import shutil
+from email_utils import send_verification_email 
+from email_utils import generate_code, send_verification_email
+import smtplib
+from email.mime.text import MIMEText
+import random
+import string
+import smtplib
+from email.mime.text import MIMEText
+import os
+from markupsafe import Markup
+
 from ocr_ner_utils import (
     extract_text_from_pdf,
     extract_text_from_image,
@@ -21,12 +29,18 @@ from ocr_ner_utils import (
 
 app = Flask(__name__, template_folder='templates')
 app.secret_key = 'your_secret_key'
-
 # MySQL Configuration
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root'  
 app.config['MYSQL_PASSWORD'] = ''  
 app.config['MYSQL_DB'] = 'flask_auth'
+
+# Gmail SMTP Configuration
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True  # For security (TLS encryption)
+app.config['MAIL_USERNAME'] = 'compscithesis@gmail.com'  
+app.config['MAIL_PASSWORD'] = 'yrrl idjh teci uamk'  
 
 # Configure upload folder
 app.config['UPLOAD_FOLDER'] = 'uploads'
@@ -117,52 +131,62 @@ def search():
 def signup():
     if request.method == 'POST':
         username = request.form.get('username', '').strip()
+        email = request.form.get('email', '').strip()
         password = request.form.get('password', '').strip()
+        confirm_password = request.form.get('confirm_password', '').strip()
 
-        if not username:
-            flash('Username is required', 'error')
+        # Basic validations
+        if not username or not email or not password or not confirm_password:
+            flash('All fields are required.', 'error')
             return redirect(url_for('signup'))
-        
-        if not password:
-            flash('Password is required', 'error')
-            return redirect(url_for('signup'))
-            
+
         if len(username) < 4:
-            flash('Username must be at least 4 characters', 'error')
+            flash('Username must be at least 4 characters.', 'error')
             return redirect(url_for('signup'))
-            
+
         if len(password) < 6:
-            flash('Password must be at least 6 characters', 'error')
+            flash('Password must be at least 6 characters.', 'error')
+            return redirect(url_for('signup'))
+
+        if password != confirm_password:
+            flash('Passwords do not match.', 'error')
             return redirect(url_for('signup'))
 
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        
+
         try:
-            cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
+            # Check if username or email already exists
+            cursor.execute("SELECT * FROM users WHERE username = %s OR email = %s", (username, email))
             if cursor.fetchone():
-                flash('Username already taken. Please choose another.', 'error')
+                flash('Username or email already exists.', 'error')
                 return redirect(url_for('signup'))
 
             hashed_password = generate_password_hash(password)
+            verification_code = ''.join(random.choices(string.digits, k=6))
+            code_expires = datetime.now() + timedelta(minutes=10)  # Code expires in 10 minutes
+
+            # Insert user into database (always unverified initially)
             cursor.execute(
-                "INSERT INTO users (username, password, role) VALUES (%s, %s, 'user')",
-                (username, hashed_password)
+                "INSERT INTO users (username, email, password, is_verified, verification_code, code_expires, role) VALUES (%s, %s, %s, %s, %s, %s, 'user')",
+                (username, email, hashed_password, 0, verification_code, code_expires)
             )
             mysql.connection.commit()
-            
-            flash('Account created successfully! Please login.', 'success')
-            return redirect(url_for('login'))
-            
+    
+            send_verification_email(email, verification_code)
+            session['pending_verification'] = username
+            flash('Verification code sent to your email. Please verify.', 'info')
+            return redirect(url_for('verify_email')) 
+
         except Exception as e:
             mysql.connection.rollback()
             flash('An error occurred during registration. Please try again.', 'error')
             return redirect(url_for('signup'))
-    
+
     return render_template('signup.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    next_url = request.args.get('next')  # Save any ?next= parameter from the login redirect
+    next_url = request.args.get('next')
 
     if request.method == 'POST':
         username = request.form.get('username', '').strip()
@@ -175,25 +199,26 @@ def login():
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         try:
             cursor.execute("""
-                SELECT id, username, password, LOWER(TRIM(role)) as role 
+                SELECT id, username, password, LOWER(TRIM(role)) as role, is_verified
                 FROM users 
                 WHERE username = %s
             """, (username,))
             user = cursor.fetchone()
 
             if user and check_password_hash(user['password'], password):
+                if not user['is_verified']:
+                    flash('Please verify your email before logging in.', 'danger')
+                    session['pending_verification'] = username
+                    return redirect(url_for('verify_email'))
+                
                 user_obj = User(
                     id=user['id'],
                     username=user['username'],
                     role=user['role']
                 )
                 
-                print(f"LOGIN SUCCESS: {user_obj.username} as {user_obj.role}")
-                
                 login_user(user_obj)
                 flash('Login successful', 'success')
-
-                # Redirect to next if available, otherwise to role verifier
                 return redirect(next_url or url_for('verify_role'))
 
             flash('Invalid credentials', 'danger')
@@ -205,7 +230,6 @@ def login():
             cursor.close()
 
     return render_template('login.html', next=next_url)
-
 
 @app.route('/verify-role')
 @login_required
@@ -268,45 +292,62 @@ def admin_dashboard():
 @app.route('/user-dashboard')
 @login_required
 def user_dashboard():
-    return render_template('user_dashboard.html')
-
-@app.route('/theses')
-@login_required
-def browse_theses():
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     
-    # Get search query if exists
+    # Get stats
+    cursor.execute("""
+        SELECT COUNT(*) as total_published FROM published_theses
+    """)
+    stats = cursor.fetchone()
+    
+    # Get recent theses
+    cursor.execute("""
+        SELECT * FROM published_theses
+        ORDER BY published_at DESC
+        LIMIT 3
+    """)
+    recent_theses = cursor.fetchall()
+    
+    return render_template('user_dashboard.html', 
+                         stats=stats,
+                         recent_theses=recent_theses)
+
+@app.route('/browse-theses')
+@login_required
+def browse_theses():
+    # Redirect admin users to admin version
+    if current_user.is_admin():
+        return redirect(url_for('admin_browse_theses'))
+    
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     search_query = request.args.get('q', '')
     page = request.args.get('page', 1, type=int)
-    per_page = 10  # Items per page
+    per_page = 10
     
-    # Base query
     query = """
-        SELECT pt.*, u.username as publisher_username
+        SELECT pt.* 
         FROM published_theses pt
-        JOIN users u ON pt.published_by = u.id
+        WHERE 1=1
     """
     
-    # Add search conditions if query exists
     if search_query:
         query += """
-            WHERE pt.title LIKE %s OR pt.authors LIKE %s OR pt.keywords LIKE %s
+            AND (pt.title LIKE %s OR pt.authors LIKE %s OR pt.keywords LIKE %s)
         """
         params = (f'%{search_query}%', f'%{search_query}%', f'%{search_query}%')
     else:
         params = ()
     
-    # Add ordering and pagination
     query += " ORDER BY pt.published_at DESC LIMIT %s OFFSET %s"
     params += (per_page, (page-1)*per_page)
     
     cursor.execute(query, params)
     theses = cursor.fetchall()
     
-    # Get total count for pagination
-    count_query = "SELECT COUNT(*) as total FROM published_theses"
+    # Get total count
+    count_query = "SELECT COUNT(*) as total FROM published_theses WHERE 1=1"
     if search_query:
-        count_query += " WHERE title LIKE %s OR authors LIKE %s OR keywords LIKE %s"
+        count_query += " AND (title LIKE %s OR authors LIKE %s OR keywords LIKE %s)"
         count_params = (f'%{search_query}%', f'%{search_query}%', f'%{search_query}%')
     else:
         count_params = ()
@@ -314,17 +355,129 @@ def browse_theses():
     cursor.execute(count_query, count_params)
     total = cursor.fetchone()['total']
     
-    return render_template('browse_theses.html', 
+    return render_template('user_browse_theses.html', 
                          theses=theses, 
                          search_query=search_query,
                          page=page,
                          per_page=per_page,
                          total=total,
                          total_pages=(total + per_page - 1) // per_page)
+
+@app.route('/admin/browse-theses')
+@login_required
+def admin_browse_theses():
+    if not current_user.is_admin():
+        abort(403)
+    
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    search_query = request.args.get('q', '')
+    page = request.args.get('page', 1, type=int)
+    per_page = 10
+    
+    query = """
+        SELECT pt.*, u.username as publisher_username
+        FROM published_theses pt
+        JOIN users u ON pt.published_by = u.id
+        WHERE 1=1
+    """
+    
+    if search_query:
+        query += """
+            AND (pt.title LIKE %s OR pt.authors LIKE %s OR pt.keywords LIKE %s)
+        """
+        params = (f'%{search_query}%', f'%{search_query}%', f'%{search_query}%')
+    else:
+        params = ()
+    
+    query += " ORDER BY pt.published_at DESC LIMIT %s OFFSET %s"
+    params += (per_page, (page-1)*per_page)
+    
+    cursor.execute(query, params)
+    theses = cursor.fetchall()
+    
+    # Get total count
+    count_query = "SELECT COUNT(*) as total FROM published_theses WHERE 1=1"
+    if search_query:
+        count_query += " AND (title LIKE %s OR authors LIKE %s OR keywords LIKE %s)"
+        count_params = (f'%{search_query}%', f'%{search_query}%', f'%{search_query}%')
+    else:
+        count_params = ()
+    
+    cursor.execute(count_query, count_params)
+    total = cursor.fetchone()['total']
+    
+    return render_template('admin_browse_theses.html', 
+                         theses=theses, 
+                         search_query=search_query,
+                         page=page,
+                         per_page=per_page,
+                         total=total,
+                         total_pages=(total + per_page - 1) // per_page)
+
+@app.route('/process-image-search', methods=['POST'])
+@login_required
+def process_image_search():
+    if 'file' not in request.files:
+        return jsonify({'success': False, 'error': 'No file uploaded'})
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'success': False, 'error': 'No file selected'})
+    
+    if file and allowed_file(file.filename):
+        try:
+            # Save temporary image
+            filename = secure_filename(f"search_{current_user.id}_{datetime.now().timestamp()}.jpg")
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], 'temp_search', filename)
+            os.makedirs(os.path.dirname(filepath), exist_ok=True)
+            file.save(filepath)
+            
+            # Extract text using OCR
+            text = extract_text_from_image(filepath)
+            
+            # Process text to get important keywords (excluding common words)
+            doc = nlp(text.lower())
+            common_words = {'the', 'and', 'of', 'to', 'in', 'a', 'is', 'that', 'for', 'it', 'as', 'was', 'with', 'be', 'by', 'on', 'not', 'he', 'i', 'this', 'are', 'or', 'his', 'from', 'at', 'which', 'but', 'have', 'an', 'had', 'they', 'you', 'were', 'their', 'one', 'all', 'we', 'can', 'her', 'has', 'there', 'been', 'if', 'more', 'when', 'will', 'would', 'who', 'so', 'no'}
+            
+            keywords = []
+            for token in doc:
+                if (token.pos_ in ['NOUN', 'PROPN', 'ADJ'] and 
+                    token.text not in common_words and 
+                    len(token.text) > 3 and 
+                    not token.is_stop):
+                    keywords.append(token.text)
+            
+            # Remove duplicates and limit to 5 most relevant
+            keywords = list(set(keywords))[:5]
+            
+            # Clean up
+            os.remove(filepath)
+            
+            return jsonify({
+                'success': True,
+                'keywords': ' '.join(keywords)
+            })
+            
+        except Exception as e:
+            if 'filepath' in locals() and os.path.exists(filepath):
+                os.remove(filepath)
+            return jsonify({'success': False, 'error': str(e)})
+    
+    return jsonify({'success': False, 'error': 'Invalid file type'})
 @app.route('/thesis/<int:thesis_id>')
 @login_required
 def view_thesis(thesis_id):
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    
+    # Record view history
+    cursor.execute("""
+        INSERT INTO user_view_history (user_id, thesis_id)
+        VALUES (%s, %s)
+        ON DUPLICATE KEY UPDATE viewed_at = CURRENT_TIMESTAMP
+    """, (current_user.id, thesis_id))
+    mysql.connection.commit()
+    
+    # Get thesis details
     cursor.execute("""
         SELECT pt.*, u.username as publisher_username
         FROM published_theses pt
@@ -335,12 +488,55 @@ def view_thesis(thesis_id):
     
     if not thesis:
         abort(404)
-    if not os.path.exists(thesis['file_path']):
-        flash('Thesis document not available for viewing', 'danger')
-        return redirect(url_for('browse_theses'))
     
-    return render_template('thesis_detail.html', thesis=thesis)
-
+    # Check if bookmarked
+    cursor.execute("""
+        SELECT id FROM user_bookmarks
+        WHERE user_id = %s AND thesis_id = %s
+    """, (current_user.id, thesis_id))
+    is_bookmarked = cursor.fetchone() is not None
+    
+    # Get introduction pages only (first 5 pages)
+    cursor.execute("""
+        SELECT page_text FROM thesis_pages
+        WHERE thesis_id = %s AND page_number <= 5
+        ORDER BY page_number
+    """, (thesis_id,))
+    intro_pages = [page['page_text'] for page in cursor.fetchall()]
+    
+    # If search query exists, find matching pages but exclude introduction
+    search_query = request.args.get('q', '')
+    matching_pages = []
+    
+    if search_query:
+        # Get all pages that match the search query (excluding common words)
+        cursor.execute("""
+            SELECT page_number, page_text 
+            FROM thesis_pages
+            WHERE thesis_id = %s 
+            AND MATCH(page_text) AGAINST(%s IN BOOLEAN MODE)
+            AND page_number > 5  # Skip introduction
+            ORDER BY page_number
+        """, (thesis_id, f'+{search_query}*'))
+        
+        matching_pages = cursor.fetchall()
+    
+    # Choose template based on user role
+    if current_user.is_admin():
+        return render_template('thesis_detail.html', 
+                             thesis=thesis,
+                             intro_pages=intro_pages,
+                             matching_pages=matching_pages,
+                             search_query=search_query,
+                             is_bookmarked=is_bookmarked)
+    else:
+        return render_template('user_thesis_detail.html', 
+                             thesis=thesis,
+                             intro_pages=intro_pages,
+                             matching_pages=matching_pages,
+                             search_query=search_query,
+                             is_bookmarked=is_bookmarked)
+    
 @app.route('/thesis-file/<int:thesis_id>')
 @login_required
 def serve_thesis_file(thesis_id):
@@ -1055,8 +1251,325 @@ def admin_action_history():
         total=total,
         total_pages=total_pages  # ✅ Pass it here!
     )
+@app.route('/verify-email', methods=['GET', 'POST'])
+def verify_email():
+    if 'pending_verification' not in session:
+        flash('No verification pending', 'error')
+        return redirect(url_for('signup'))
 
-      
+    username = session['pending_verification']
+    
+    if request.method == 'POST':
+        if 'resend' in request.form:
+            # Resend code logic
+            cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+            cursor.execute(
+                "SELECT email FROM users WHERE username = %s", 
+                (username,)
+            )
+            user = cursor.fetchone()
+            
+            if user:
+                new_code = ''.join(random.choices(string.digits, k=6))
+                new_expires = datetime.now() + timedelta(minutes=10)
+                
+                cursor.execute(
+                    "UPDATE users SET verification_code = %s, code_expires = %s WHERE username = %s",
+                    (new_code, new_expires, username)
+                )
+                mysql.connection.commit()
+                
+                send_verification_email(user['email'], new_code)
+                flash('New verification code sent!', 'success')
+            return redirect(url_for('verify_email'))
+        
+        # Normal verification attempt
+        code_entered = request.form.get('code')
+        
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute(
+            "SELECT verification_code, code_expires FROM users WHERE username = %s", 
+            (username,)
+        )
+        user = cursor.fetchone()
+        
+        if not user or not user['verification_code']:
+            flash('No verification code found. Please request a new one.', 'error')
+            return redirect(url_for('verify_email'))
+        
+        if datetime.now() > user['code_expires']:
+            flash('Verification code has expired. Please request a new one.', 'error')
+            return redirect(url_for('verify_email'))
+        
+        if user['verification_code'] == code_entered:
+            cursor.execute(
+                "UPDATE users SET is_verified = 1, verification_code = NULL, code_expires = NULL "
+                "WHERE username = %s",
+                (username,)
+            )
+            mysql.connection.commit()
+            session.pop('pending_verification')
+            flash('Email verified! You can now login.', 'success')
+            return redirect(url_for('login'))
+        else:
+            flash('Invalid code. Please try again.', 'error')
+
+    return render_template('verify_email.html')
+
+@app.template_filter('highlight')
+def highlight_filter(s, search_query):
+    if not search_query:
+        return s
+    
+    queries = search_query.split()
+    highlighted = s
+    for query in queries:
+        if len(query) > 3:  # Only highlight words longer than 3 characters
+            highlighted = highlighted.replace(query, f'<span class="bg-warning">{query}</span>')
+            highlighted = highlighted.replace(query.title(), f'<span class="bg-warning">{query.title()}</span>')
+    
+    return Markup(highlighted)
+
+@app.route('/profile-settings', methods=['GET', 'POST'])
+@login_required
+def profile_settings():
+    if request.method == 'POST':
+        new_username = request.form.get('username', '').strip()
+        current_password = request.form.get('current_password', '').strip()
+        new_password = request.form.get('new_password', '').strip()
+        confirm_password = request.form.get('confirm_password', '').strip()
+
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        
+        try:
+            # Verify current password if making any changes
+            if new_username != current_user.username or new_password:
+                cursor.execute("SELECT password FROM users WHERE id = %s", (current_user.id,))
+                user = cursor.fetchone()
+                
+                if not user or not check_password_hash(user['password'], current_password):
+                    flash('Current password is incorrect', 'danger')
+                    return redirect(url_for('profile_settings'))
+
+            # Validate username
+            if new_username != current_user.username:
+                if len(new_username) < 4:
+                    flash('Username must be at least 4 characters', 'danger')
+                    return redirect(url_for('profile_settings'))
+                
+                # Check if username is already taken
+                cursor.execute("SELECT id FROM users WHERE username = %s AND id != %s", 
+                             (new_username, current_user.id))
+                if cursor.fetchone():
+                    flash('Username already taken', 'danger')
+                    return redirect(url_for('profile_settings'))
+
+            # Validate password if changing
+            if new_password:
+                if len(new_password) < 6:
+                    flash('Password must be at least 6 characters', 'danger')
+                    return redirect(url_for('profile_settings'))
+                
+                if new_password != confirm_password:
+                    flash('New passwords do not match', 'danger')
+                    return redirect(url_for('profile_settings'))
+
+                hashed_password = generate_password_hash(new_password)
+            
+            # Update database
+            update_query = "UPDATE users SET username = %s"
+            params = [new_username]
+            
+            if new_password:
+                update_query += ", password = %s"
+                params.append(hashed_password)
+            
+            update_query += " WHERE id = %s"
+            params.append(current_user.id)
+            
+            cursor.execute(update_query, tuple(params))
+            mysql.connection.commit()
+            
+            # Update Flask-Login's current_user if username changed
+            if new_username != current_user.username:
+                current_user.username = new_username
+            
+            flash('Profile updated successfully!', 'success')
+            return redirect(url_for('profile_settings'))
+            
+        except Exception as e:
+            mysql.connection.rollback()
+            flash(f'Error updating profile: {str(e)}', 'danger')
+            return redirect(url_for('profile_settings'))
+        finally:
+            cursor.close()
+
+    return render_template('profile_settings.html')
+
+# Bookmark routes
+@app.route('/bookmark/<int:thesis_id>', methods=['POST'])
+@login_required
+def bookmark_thesis(thesis_id):
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    
+    try:
+        # Check if thesis exists
+        cursor.execute("SELECT id FROM published_theses WHERE id = %s", (thesis_id,))
+        if not cursor.fetchone():
+            abort(404)
+            
+        # Check if already bookmarked
+        cursor.execute("""
+            SELECT id FROM user_bookmarks 
+            WHERE user_id = %s AND thesis_id = %s
+        """, (current_user.id, thesis_id))
+        
+        if cursor.fetchone():
+            # Remove bookmark
+            cursor.execute("""
+                DELETE FROM user_bookmarks 
+                WHERE user_id = %s AND thesis_id = %s
+            """, (current_user.id, thesis_id))
+            action = 'removed'
+        else:
+            # Add bookmark
+            cursor.execute("""
+                INSERT INTO user_bookmarks (user_id, thesis_id)
+                VALUES (%s, %s)
+            """, (current_user.id, thesis_id))
+            action = 'added'
+            
+        mysql.connection.commit()
+        return jsonify({'success': True, 'action': action})
+        
+    except Exception as e:
+        mysql.connection.rollback()
+        return jsonify({'success': False, 'error': str(e)})
+    finally:
+        cursor.close()
+
+@app.route('/bookmarks')
+@login_required
+def view_bookmarks():
+    page = request.args.get('page', 1, type=int)
+    per_page = 10
+    
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    
+    # Get bookmarked theses with pagination
+    cursor.execute("""
+        SELECT pt.* 
+        FROM published_theses pt
+        JOIN user_bookmarks ub ON pt.id = ub.thesis_id
+        WHERE ub.user_id = %s
+        ORDER BY ub.created_at DESC
+        LIMIT %s OFFSET %s
+    """, (current_user.id, per_page, (page-1)*per_page))
+    bookmarks = cursor.fetchall()
+    
+    # Get total count
+    cursor.execute("""
+        SELECT COUNT(*) as total 
+        FROM user_bookmarks 
+        WHERE user_id = %s
+    """, (current_user.id,))
+    total = cursor.fetchone()['total']
+    
+    return render_template('user_bookmarks.html',
+                         bookmarks=bookmarks,
+                         page=page,
+                         per_page=per_page,
+                         total=total,
+                         total_pages=(total + per_page - 1) // per_page)
+
+# Viewing history routes
+@app.route('/history')
+@login_required
+def view_history():
+    page = request.args.get('page', 1, type=int)
+    per_page = 10
+    
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    
+    # Get view history with pagination
+    cursor.execute("""
+        SELECT pt.*, uv.viewed_at, uv.id as history_id
+        FROM published_theses pt
+        JOIN user_view_history uv ON pt.id = uv.thesis_id
+        WHERE uv.user_id = %s
+        ORDER BY uv.viewed_at DESC
+        LIMIT %s OFFSET %s
+    """, (current_user.id, per_page, (page-1)*per_page))
+    history = cursor.fetchall()
+    
+    # Get total count
+    cursor.execute("""
+        SELECT COUNT(*) as total 
+        FROM user_view_history 
+        WHERE user_id = %s
+    """, (current_user.id,))
+    total = cursor.fetchone()['total']
+    
+    return render_template('user_history.html',
+                         history=history,
+                         page=page,
+                         per_page=per_page,
+                         total=total,
+                         total_pages=(total + per_page - 1) // per_page)
+@app.route('/delete-history-item/<int:item_id>', methods=['POST'])
+@login_required
+def delete_history_item(item_id):
+    cursor = mysql.connection.cursor()
+    
+    try:
+        # Verify the history item belongs to the current user before deleting
+        cursor.execute("""
+            DELETE FROM user_view_history 
+            WHERE id = (
+                SELECT id FROM (
+                    SELECT uv.id 
+                    FROM user_view_history uv
+                    JOIN published_theses pt ON uv.thesis_id = pt.id
+                    WHERE uv.user_id = %s AND pt.id = %s
+                    LIMIT 1
+                ) AS temp
+            )
+        """, (current_user.id, item_id))
+        
+        affected_rows = cursor.rowcount
+        mysql.connection.commit()
+        
+        if affected_rows == 0:
+            return jsonify({'success': False, 'error': 'Item not found or not authorized'})
+            
+        return jsonify({'success': True})
+        
+    except Exception as e:
+        mysql.connection.rollback()
+        return jsonify({'success': False, 'error': str(e)})
+    finally:
+        cursor.close()
+        
+@app.route('/clear-history', methods=['POST'])
+@login_required
+def clear_history():
+    cursor = mysql.connection.cursor()
+    
+    try:
+        cursor.execute("""
+            DELETE FROM user_view_history 
+            WHERE user_id = %s
+        """, (current_user.id,))
+        mysql.connection.commit()
+        flash('Viewing history cleared successfully', 'success')
+    except Exception as e:
+        mysql.connection.rollback()
+        flash('Error clearing history', 'danger')
+    finally:
+        cursor.close()
+        
+    return redirect(url_for('view_history'))
+
 @app.route('/logout')
 @login_required
 def logout():
@@ -1064,7 +1577,6 @@ def logout():
     logout_user()
     flash(f'{username} has been successfully logged out', 'success')
     return redirect(url_for('index'))
-
 
 if __name__ == '__main__':
     app.run(debug=True)

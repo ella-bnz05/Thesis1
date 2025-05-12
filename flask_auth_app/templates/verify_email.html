@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Email</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .verify-container {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+        .code-input {
+            font-size: 24px;
+            letter-spacing: 5px;
+            text-align: center;
+            width: 200px;
+            margin: 20px auto;
+        }
+        .btn {
+            margin: 10px;
+            padding: 10px 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="verify-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <h3>Verify Your Email</h3>
+        <p>Enter the 6-digit verification code sent to your email address.</p>
+        
+        <form method="POST">
+            <input type="text" name="code" class="code-input" maxlength="6" pattern="\d{6}" 
+                   title="Please enter a 6-digit code" required>
+            <div>
+                <button type="submit" class="btn">Verify</button>
+                <button type="submit" name="resend" value="1" class="btn">Resend Code</button>
+            </div>
+        </form>
+        
+        <p>Didn't receive the code? Check your spam folder or click "Resend Code".</p>
+    </div>
+</body>
+</html>

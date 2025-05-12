@@ -1,0 +1,96 @@
+{% extends "user_base.html" %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row gx-4">  <!-- Added tighter gutter (gx-4) -->
+        <!-- Sidebar -->
+        <div class="col-lg-3 order-lg-1 order-2 mb-4">
+            <div class="position-sticky" style="top: 80px;">
+                {% include "user_sidebar.html" %}
+            </div>
+        </div>
+
+        <!-- Main content -->
+        <div class="col-lg-9 order-lg-2 order-1">
+            <div class="d-flex justify-content-between align-items-center flex-wrap">
+                <h2 class="mb-3">Your Viewing History</h2>
+                <form method="POST" action="{{ url_for('clear_history') }}" onsubmit="return confirm('Are you sure you want to clear your entire history?');">
+                    <button type="submit" class="btn btn-danger btn-sm">Clear All History</button>
+                </form>
+            </div>
+
+            {% if history %}
+                <div class="list-group mt-3">
+                    {% for item in history %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <span class="text-muted me-2">{{ loop.index }}.</span>
+                                    <a href="{{ url_for('view_thesis', thesis_id=item.id) }}" class="text-decoration-none">
+                                        <h5 class="mb-1 d-inline fw-semibold">{{ item.title }}</h5>
+                                    </a>
+                                    <p class="mb-1 text-muted small">By {{ item.authors }}</p>
+                                    <small class="text-muted">Keywords: {{ item.keywords }}</small>
+                                </div>
+                                <div class="text-end ms-3">
+                                    <small class="text-muted d-block mb-2">Viewed {{ item.viewed_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                                    <form method="POST" action="{{ url_for('delete_history_item', item_id=item.id) }}" onsubmit="return confirm('Delete this history item?');">
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary rounded-circle" title="Delete">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Pagination -->
+                {% if total_pages > 1 %}
+                    <nav class="mt-4">
+                        <ul class="pagination">
+                            {% if page > 1 %}
+                                <li class="page-item"><a class="page-link" href="{{ url_for('view_history', page=page-1) }}">Previous</a></li>
+                            {% endif %}
+
+                            {% for p in range(1, total_pages+1) %}
+                                <li class="page-item {% if p == page %}active{% endif %}">
+                                    <a class="page-link" href="{{ url_for('view_history', page=p) }}">{{ p }}</a>
+                                </li>
+                            {% endfor %}
+
+                            {% if page < total_pages %}
+                                <li class="page-item"><a class="page-link" href="{{ url_for('view_history', page=page+1) }}">Next</a></li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
+            {% else %}
+                <div class="alert alert-info mt-3">Your viewing history is empty.</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Optional icon library -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+<style>
+    .list-group-item {
+        transition: background 0.2s ease;
+    }
+    .list-group-item:hover {
+        background-color: #f8f9fa;
+    }
+    .btn-outline-secondary:hover {
+        background-color: #dc3545;
+        color: white;
+        border-color: #dc3545;
+    }
+    @media (max-width: 991.98px) {
+        h2 {
+            font-size: 1.5rem;
+        }
+    }
+</style>
+{% endblock %}

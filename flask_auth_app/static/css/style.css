@@ -309,3 +309,156 @@ body {
     border: 1px solid #ddd;
     border-radius: 4px;
 }
+/* Add these to your existing styles */
+:root {
+    --sidebar-width: 250px;
+    --topbar-height: 60px;
+}
+
+body {
+    font-size: 0.9rem;
+}
+
+/* Responsive sidebar */
+.sidebar {
+    width: var(--sidebar-width);
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 1000;
+    transition: transform 0.3s ease;
+}
+
+/* Main content area */
+main {
+    margin-left: var(--sidebar-width);
+    padding: 1rem;
+    margin-top: var(--topbar-height);
+    transition: margin-left 0.3s ease;
+}
+
+/* Mobile menu toggle */
+.mobile-menu-btn {
+    display: none;
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    z-index: 1100;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+}
+
+/* Responsive table */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Card grid adjustments */
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1rem;
+}
+
+/* Responsive text */
+.responsive-text {
+    font-size: clamp(0.8rem, 2vw, 1rem);
+}
+
+/* Media Queries */
+@media (max-width: 992px) {
+    .sidebar {
+        transform: translateX(-100%);
+    }
+    
+    .sidebar.show {
+        transform: translateX(0);
+    }
+    
+    main {
+        margin-left: 0;
+    }
+    
+    .mobile-menu-btn {
+        display: block;
+    }
+    
+    .card-grid {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    :root {
+        --sidebar-width: 220px;
+    }
+    
+    .card-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .search-bar {
+        width: 100%;
+        margin-bottom: 1rem;
+    }
+    
+    .user-dropdown {
+        width: 100%;
+        text-align: center;
+    }
+}
+
+@media (max-width: 576px) {
+    main {
+        padding: 0.5rem;
+    }
+    
+    .card {
+        margin-bottom: 0.5rem;
+    }
+    
+    .table-responsive {
+        font-size: 0.8rem;
+    }
+}
+/* Sidebar Styles */
+.sidebar {
+    min-height: 100vh;
+    padding: 20px 0 0;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+@media (max-width: 767.98px) {
+    .sidebar {
+        position: fixed;
+        z-index: 1000;
+    }
+    
+    .sidebar.collapse {
+        display: none;
+    }
+    
+    .sidebar.collapse.show {
+        display: block;
+    }
+    
+    main {
+        margin-left: 0 !important;
+    }
+}
+/* static/css/styles.css */
+.profile-settings-form {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.profile-settings-form .form-group {
+    margin-bottom: 1.5rem;
+}

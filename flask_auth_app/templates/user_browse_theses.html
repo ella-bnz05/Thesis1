@@ -1,0 +1,164 @@
+{% extends "user_base.html" %}
+<!-- Mobile Menu Button -->
+<button class="btn btn-primary d-lg-none m-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebar" aria-controls="sidebar">
+    <i class="fas fa-bars"></i>
+</button>
+{% block content %}
+<!-- Bootstrap 5 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<!-- Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        {% include 'user_sidebar.html' %}
+
+        <!-- Main Content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">
+                    <i class="fas fa-book me-2"></i>Browse Theses
+                </h1>
+                
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <div class="dropdown">
+                        <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle me-1"></i> {{ current_user.username }}
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                       <li><a class="dropdown-item" href="{{ url_for('profile_settings') }}">
+                            <i class="fas fa-user me-1"></i> Profile Settings
+                        </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="{{ url_for('logout') }}">
+                                <i class="fas fa-sign-out-alt me-1"></i> Logout
+                            </a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search Section -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form method="GET" action="{{ url_for('browse_theses') }}">
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" name="q" value="{{ search_query }}" placeholder="Search by title, author, or keywords...">
+                            <button class="btn btn-primary" type="submit">
+                                <i class="fas fa-search me-1"></i> Search
+                            </button>
+                        </div>
+                        
+                        <!-- Image Search Option (Mobile Only) -->
+                        <div class="d-block d-md-none">
+                            <p class="text-center text-muted mb-2">- OR -</p>
+                            <div class="text-center">
+                                <label for="image-search" class="btn btn-outline-primary">
+                                    <i class="fas fa-camera me-1"></i> Search with Image
+                                </label>
+                                <input type="file" id="image-search" accept="image/*" capture="camera" style="display: none;">
+                                <small class="d-block text-muted mt-1">Take a photo or upload an image</small>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Thesis List -->
+            {% if theses %}
+            <div class="list-group mb-4">
+                {% for thesis in theses %}
+                <div class="list-group-item">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h5 class="mb-1">
+                            <a href="{{ url_for('view_thesis', thesis_id=thesis.id) }}">{{ thesis.title }}</a>
+                        </h5>
+                        <small class="text-muted">{{ thesis.year_made }}</small>
+                    </div>
+                    <p class="mb-1"><strong>Authors:</strong> {{ thesis.authors }}</p>
+                    <p class="mb-1"><strong>School:</strong> {{ thesis.school }}</p>
+                    <p class="mb-1"><strong>Keywords:</strong> {{ thesis.keywords }}</p>
+                    <small class="text-muted">Uploaded on {{ thesis.published_at.strftime('%Y-%m-%d') }}</small>
+                </div>
+                {% endfor %}
+            </div>
+
+                <!-- Pagination -->
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center">
+                        {% if page > 1 %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('browse_theses', page=page-1, q=search_query) }}">Previous</a>
+                        </li>
+                        {% endif %}
+                        
+                        {% for p in range(1, total_pages + 1) %}
+                            <li class="page-item {% if p == page %}active{% endif %}">
+                                {% if p == page %}
+                                <span class="page-link">{{ p }}</span>
+                                {% else %}
+                                <a class="page-link" href="{{ url_for('browse_theses', page=p, q=search_query) }}">{{ p }}</a>
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                        
+                        {% if page < total_pages %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('browse_theses', page=page+1, q=search_query) }}">Next</a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% else %}
+                <div class="alert alert-info">
+                    No theses found. {% if search_query %}Try a different search term.{% else %}Check back later for new submissions.{% endif %}
+                </div>
+            {% endif %}
+        </main>
+    </div>
+</div>
+
+<!-- JavaScript for Image Search -->
+<script>
+document.getElementById('image-search').addEventListener('change', function(e) {
+    if (e.target.files.length > 0) {
+        const file = e.target.files[0];
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        // Show loading indicator
+        const searchCard = document.querySelector('.card-body');
+        searchCard.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div><p class="mt-2">Processing image...</p></div>';
+        
+        // Send to server for OCR processing
+        fetch('{{ url_for("process_image_search") }}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.keywords) {
+                // Redirect to search with extracted keywords
+                window.location.href = '{{ url_for("browse_theses") }}?q=' + encodeURIComponent(data.keywords);
+            } else {
+                searchCard.innerHTML = `
+                    <div class="alert alert-danger">
+                        Could not extract text from image. Please try again or type your search.
+                        <button class="btn btn-sm btn-outline-secondary mt-2" onclick="window.location.reload()">Try Again</button>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            searchCard.innerHTML = `
+                <div class="alert alert-danger">
+                    Error processing image. Please try again.
+                    <button class="btn btn-sm btn-outline-secondary mt-2" onclick="window.location.reload()">Try Again</button>
+                </div>
+            `;
+        });
+    }
+});
+</script>
+{% endblock %}

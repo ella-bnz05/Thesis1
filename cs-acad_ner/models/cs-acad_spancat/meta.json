@@ -18,11 +18,11 @@
   },
   "labels":{
     "spancat":[
-      "TITLE",
       "AUTHOR",
       "CAMPUS",
+      "DATE",
       "DEPARTMENT",
-      "DATE"
+      "TITLE"
     ]
   },
   "pipeline":[

@@ -1,10 +1,10 @@
 {
   "labels":[
-    "TITLE",
     "AUTHOR",
     "CAMPUS",
+    "DATE",
     "DEPARTMENT",
-    "DATE"
+    "TITLE"
   ],
   "spans_key":"sc",
   "threshold":0.5,

@@ -137,6 +137,7 @@ def evaluate_span_model(model_path, data_path, spans_key="sc"):
             print(f"  Precision: {metrics['p']:.3f}")
             print(f"  Recall: {metrics['r']:.3f}")
             print(f"  F1: {metrics['f']:.3f}\n")
+            
     else:
         print("No per-type metrics available. Check your evaluation data.")
 

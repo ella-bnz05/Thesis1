@@ -39,9 +39,9 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link {% if request.endpoint == 'admin_browse_theses' %}active{% endif %}" href="{{ url_for('admin_browse_theses') }}">
-                    <i class="fas fa-fw fa-book me-2"></i>Published Theses
-                </a>
+            <a class="nav-link {% if request.endpoint == 'admin_browse_theses' %}active{% endif %}" href="{{ url_for('admin_browse_theses') }}">
+                <i class="fas fa-fw fa-book me-2"></i>Published Theses
+            </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link {% if request.endpoint == 'admin_submissions' %}active{% endif %}" href="{{ url_for('admin_submissions') }}">

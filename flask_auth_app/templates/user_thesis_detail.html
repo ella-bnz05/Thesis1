@@ -1,102 +1,153 @@
 {% extends "user_base.html" %}
-<!-- Mobile Menu Button -->
-<button class="mobile-menu-btn" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebar">
+
+{% block content %}
+<!-- Mobile Sidebar Toggle -->
+<button class="mobile-menu-btn d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebar">
     <i class="fas fa-bars"></i>
 </button>
-{% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1>{{ thesis.title }}</h1>
-    <button id="bookmark-btn" class="btn {% if is_bookmarked %}btn-warning{% else %}btn-outline-secondary{% endif %}">
-        {% if is_bookmarked %}
-            <i class="fas fa-bookmark"></i> Bookmarked
-        {% else %}
-            <i class="far fa-bookmark"></i> Bookmark
-        {% endif %}
-    </button>
-</div>
+
 <div class="container-fluid">
     <div class="row">
         <!-- Sidebar -->
         {% include 'user_sidebar.html' %}
 
         <!-- Main Content -->
-        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
-            <!-- Thesis Header Card -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h2 class="mb-0">{{ thesis.title }}</h2>
-                </div>
+        <main class="col-md-9 col-lg-10 ms-sm-auto px-md-4 py-4">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h2 fw-bold">{{ thesis.title }}</h1>
+                <button id="bookmark-btn" class="btn {% if is_bookmarked %}btn-warning{% else %}btn-outline-secondary{% endif %}">
+                    {% if is_bookmarked %}
+                        <i class="fas fa-bookmark"></i> Bookmarked
+                    {% else %}
+                        <i class="far fa-bookmark"></i> Bookmark
+                    {% endif %}
+                </button>
+            </div>
+
+            <!-- Thesis Metadata -->
+            <div class="card mb-4 shadow-sm">
                 <div class="card-body">
-                    <div class="row mb-3">
+                    <div class="row g-3">
                         <div class="col-md-6">
-                            <p><strong>Authors:</strong> {{ thesis.authors }}</p>
-                            <p><strong>School:</strong> {{ thesis.school }}</p>
+                            <div class="mb-3">
+                                <h5 class="text-muted mb-2">Authors</h5>
+                                <p class="mb-0">{{ thesis.authors }}</p>
+                            </div>
+                            <div class="mb-3">
+                                <h5 class="text-muted mb-2">Year</h5>
+                                <p class="mb-0">{{ thesis.year_made }}</p>
+                            </div>
                         </div>
                         <div class="col-md-6">
-                            <p><strong>Year:</strong> {{ thesis.year_made }}</p>
-                            <div class="d-flex flex-wrap gap-2 mt-2">
-                                {% for keyword in thesis.keywords.split(',') %}
-                                    <span class="badge bg-primary">{{ keyword.strip() }}</span>
-                                {% endfor %}
+                            <div class="mb-3">
+                                <h5 class="text-muted mb-2">School</h5>
+                                <p class="mb-0">{{ thesis.school }}</p>
+                            </div>
+                            <div class="mb-3">
+                                <h5 class="text-muted mb-2">Keywords</h5>
+                                <div class="d-flex flex-wrap gap-2">
+                                    {% for keyword in thesis.keywords.split(',') %}
+                                        <span class="badge bg-primary">{{ keyword.strip() }}</span>
+                                    {% endfor %}
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <!-- Title Page -->
-            <div class="card shadow-sm mb-4">
-                <div class="card-body text-center" style="min-height: 60vh; display: flex; flex-direction: column; justify-content: center; background-color: #f8f9fa;">
-                    <h1 style="font-size: 2.5rem;">{{ thesis.title }}</h1>
-                    <h3 class="mt-4" style="font-size: 1.5rem;">{{ thesis.authors }}</h3>
-                    <p class="mt-4">{{ thesis.school }}</p>
-                    <p>{{ thesis.year_made }}</p>
-                </div>
-            </div>
-
-            <!-- Introduction Page -->
-            {% if intro_pages %}
-            <div class="card shadow-sm">
-                <div class="card-header">
-                    <h4>Introduction</h4>
-                </div>
-                <div class="card-body" style="background-color: #f8f9fa;">
-                    {% for page in intro_pages %}
-                        <div class="mt-3">
-                            {{ page }}
+                <!-- Single PDF Viewer for Title and Introduction -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0">Thesis Preview (Title Page and Introduction)</h4>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="pdf-viewer-container">
+                            <embed 
+                                src="{{ url_for('serve_limited_thesis', thesis_id=thesis.id) }}" 
+                                type="application/pdf" 
+                                width="100%" 
+                                height="100%"
+                                id="thesisViewer">
                         </div>
-                        {% if not loop.last %}<hr class="my-4">{% endif %}
-                    {% endfor %}
+                    </div>
                 </div>
-            </div>
-            {% endif %}
 
-            <!-- Document Footer -->
-            <div class="mt-3 text-center text-muted small">
-                <p>This is a preview of the thesis document. For academic use only.</p>
+            <!-- Footer Note -->
+            <div class="alert alert-info mt-4">
+                <i class="fas fa-info-circle me-2"></i>
+                This preview shows only the title page and introduction. Full document access is restricted.
             </div>
         </main>
     </div>
 </div>
 
+<!-- Styles -->
 <style>
-    .card-body p {
-        line-height: 1.6;
-        text-align: justify;
-    }
     .mobile-menu-btn {
         position: fixed;
-        top: 10px;
-        left: 10px;
-        z-index: 1000;
+        top: 15px;
+        left: 15px;
+        z-index: 1050;
         background: white;
         border: none;
-        font-size: 1.5rem;
+        padding: 0.5rem 0.75rem;
+        font-size: 1.25rem;
+        border-radius: 0.25rem;
         color: #0d6efd;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.15);
     }
+    
+    .card {
+        border: none;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    
+    .card-header {
+        font-weight: 600;
+    }
+    
+    /* PDF Viewer Container */
+    .pdf-viewer-container {
+        height: 80vh;
+        overflow-y: auto;
+        background-color: #f8f9fa;
+        position: relative;
+    }
+    
+    /* PDF Embed Styling */
+    #thesisViewer {
+        width: 100%;
+        height: 100%;
+        min-height: 100vh;
+        border: none;
+        display: block;
+    }
+    
+    /* Disable text selection */
+    .disable-selection {
+        user-select: none;
+        -webkit-user-select: none;
+    }
+    .pdf-viewer-container {
+    height: 80vh;
+    background-color: #f8f9fa;
+    position: relative;
+    overflow: hidden; /* prevent internal scrolling */
+}
+
+#thesisViewer {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+}
 </style>
+
+<!-- Bookmark Script -->
 <script>
-document.getElementById('bookmark-btn').addEventListener('click', function() {
+document.getElementById('bookmark-btn')?.addEventListener('click', function () {
     fetch("{{ url_for('bookmark_thesis', thesis_id=thesis.id) }}", {
         method: 'POST',
         headers: {
@@ -105,8 +156,8 @@ document.getElementById('bookmark-btn').addEventListener('click', function() {
     })
     .then(response => response.json())
     .then(data => {
+        const btn = document.getElementById('bookmark-btn');
         if (data.success) {
-            const btn = document.getElementById('bookmark-btn');
             if (data.action === 'added') {
                 btn.classList.remove('btn-outline-secondary');
                 btn.classList.add('btn-warning');
@@ -118,6 +169,31 @@ document.getElementById('bookmark-btn').addEventListener('click', function() {
             }
         }
     });
+});
+
+// Security restrictions for PDF viewer
+document.addEventListener('DOMContentLoaded', function() {
+    const pdfViewer = document.getElementById('thesisViewer');
+    
+    // Prevent right-click
+    pdfViewer.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+        return false;
+    });
+    
+    // Prevent text selection
+    pdfViewer.addEventListener('selectstart', function(e) {
+        e.preventDefault();
+        return false;
+    });
+    
+    // Add class to disable selection
+    pdfViewer.classList.add('disable-selection');
+    
+    // Focus the viewer on load to enable keyboard scrolling
+    setTimeout(() => {
+        pdfViewer.focus();
+    }, 1000);
 });
 </script>
 {% endblock %}

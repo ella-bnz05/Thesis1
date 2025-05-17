@@ -20,6 +20,9 @@ import smtplib
 from email.mime.text import MIMEText
 import os
 from markupsafe import Markup
+from nltk.stem import PorterStemmer
+import re
+import threading
 
 from ocr_ner_utils import (
     extract_text_from_pdf,
@@ -97,35 +100,138 @@ def search():
     if not query:
         return redirect(url_for('browse_theses'))
 
-    # Store query in session so it's available after login if needed
+    # Store query in session
     session['search_query'] = query
-
+    
+    # Expand common abbreviations
+    expanded_query = expand_search_terms(query)
+    
+    # Prepare search terms - remove duplicates while preserving order
+    seen = set()
+    search_terms = []
+    for term in expanded_query.split():
+        if term not in seen:
+            seen.add(term)
+            search_terms.append(term)
+    clean_query = ' '.join(search_terms)
+    
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
 
-    # Search metadata
+    # Search metadata with proper boolean full-text search
     cursor.execute("""
-        SELECT pt.* 
+        SELECT pt.*,
+               CASE 
+                   WHEN MATCH(pt.keywords) AGAINST(%s IN BOOLEAN MODE) THEN 3
+                   WHEN MATCH(pt.title) AGAINST(%s IN BOOLEAN MODE) THEN 2
+                   WHEN MATCH(pt.authors) AGAINST(%s IN BOOLEAN MODE) THEN 1
+                   WHEN pt.year_made = %s THEN 1
+                   ELSE 0
+               END as relevance_boost
         FROM published_theses pt
-        WHERE pt.title LIKE %s OR pt.authors LIKE %s OR pt.keywords LIKE %s
-        ORDER BY pt.published_at DESC
-    """, (f'%{query}%', f'%{query}%', f'%{query}%'))
+        WHERE MATCH(pt.title, pt.authors, pt.keywords) AGAINST(%s IN BOOLEAN MODE)
+           OR pt.year_made = %s
+        ORDER BY relevance_boost DESC, pt.published_at DESC
+    """, (
+        f'+{clean_query}' if len(clean_query.split()) == 1 else f'"{clean_query}"',
+        f'+{clean_query}' if len(clean_query.split()) == 1 else f'"{clean_query}"',
+        f'+{clean_query}' if len(clean_query.split()) == 1 else f'"{clean_query}"',
+        query,  # For year matching
+        f'+{clean_query}' if len(clean_query.split()) == 1 else f'"{clean_query}"',
+        query   # For year matching
+    ))
     metadata_results = cursor.fetchall()
 
-    # Search in full text
+    # Search in full text with context snippets
     cursor.execute("""
-        SELECT pt.*, tp.page_number,
-               MATCH(tp.page_text) AGAINST(%s IN NATURAL LANGUAGE MODE) as relevance
+        SELECT 
+            pt.id as thesis_id,
+            pt.title as thesis_title,
+            pt.authors,
+            pt.year_made,
+            tp.page_number,
+            SUBSTRING_INDEX(
+                SUBSTRING_INDEX(
+                    SUBSTRING(tp.page_text, 
+                        GREATEST(1, LOCATE(%s, LOWER(tp.page_text)) - 100, 
+                        300
+                    ), 
+                    ' ', 
+                    -10
+                ),
+                ' ', 
+                10
+            ) as text_snippet,
+            (LENGTH(tp.page_text) - LENGTH(REPLACE(LOWER(tp.page_text), LOWER(%s), ''))) / LENGTH(%s) as term_frequency,
+            MATCH(tp.page_text) AGAINST(%s IN BOOLEAN MODE) as relevance_score
         FROM thesis_pages tp
         JOIN published_theses pt ON tp.thesis_id = pt.id
-        WHERE MATCH(tp.page_text) AGAINST(%s IN NATURAL LANGUAGE MODE)
-        ORDER BY relevance DESC
-    """, (query, query))
-    page_results = cursor.fetchall()
+        WHERE MATCH(tp.page_text) AGAINST(%s IN BOOLEAN MODE)
+        ORDER BY (relevance_score * term_frequency) DESC
+        LIMIT 50
+    """, (
+        query.lower(), 
+        query.lower(), 
+        query.lower(),
+        f'+{clean_query}' if len(clean_query.split()) == 1 else f'"{clean_query}"',
+        f'+{clean_query}' if len(clean_query.split()) == 1 else f'"{clean_query}"'
+    ))
+    
+    full_text_results = cursor.fetchall()
+
+    # Group full text results by thesis (rest of the function remains the same)
+    grouped_results = {}
+    for result in full_text_results:
+        thesis_id = result['thesis_id']
+        if thesis_id not in grouped_results:
+            grouped_results[thesis_id] = {
+                'thesis_title': result['thesis_title'],
+                'authors': result['authors'],
+                'year_made': result['year_made'],
+                'matches': []
+            }
+        grouped_results[thesis_id]['matches'].append({
+            'page_number': result['page_number'],
+            'text_snippet': result['text_snippet'],
+            'relevance_score': result['relevance_score']
+        })
 
     return render_template('search_results.html',
-                           query=query,
-                           metadata_results=metadata_results,
-                           page_results=page_results)
+                         query=query,
+                         metadata_results=metadata_results,
+                         grouped_results=grouped_results)
+# if want to add more cs abbreviated term add here.
+def expand_search_terms(query):
+    """Expand common abbreviations to their full forms for better search results."""
+    term_mapping = {
+        'ai': 'artificial intelligence',
+        'iot': 'internet of things',
+        'ml': 'machine learning',
+        'nlp': 'natural language processing',
+        'cv': 'computer vision',
+        'vr': 'virtual reality',
+        'ar': 'augmented reality',
+        'db': 'database',
+        'os': 'operating system'
+    }
+    
+    # Split query into terms
+    terms = query.lower().split()
+    expanded_terms = []
+    
+    for term in terms:
+        if term in term_mapping:
+            # Only add the expanded version if the original term is an abbreviation
+            # and the expanded version isn't already in the query
+            expanded = term_mapping[term]
+            if expanded not in query.lower():
+                expanded_terms.append(expanded)
+            else:
+                # If the full term is already in query, just keep it
+                expanded_terms.append(term)
+        else:
+            expanded_terms.append(term)
+    
+    return ' '.join(expanded_terms)
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
@@ -294,11 +400,25 @@ def admin_dashboard():
 def user_dashboard():
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     
-    # Get stats
-    cursor.execute("""
-        SELECT COUNT(*) as total_published FROM published_theses
-    """)
+    # Get total published theses
+    cursor.execute("SELECT COUNT(*) as total_published FROM published_theses")
     stats = cursor.fetchone()
+    
+    # Get user's recent views count
+    cursor.execute("""
+        SELECT COUNT(DISTINCT thesis_id) as recent_views 
+        FROM user_view_history 
+        WHERE user_id = %s
+    """, (current_user.id,))
+    views_stats = cursor.fetchone()
+    
+    # Get user's saved theses count
+    cursor.execute("""
+        SELECT COUNT(*) as saved_theses 
+        FROM user_bookmarks 
+        WHERE user_id = %s
+    """, (current_user.id,))
+    bookmarks_stats = cursor.fetchone()
     
     # Get recent theses
     cursor.execute("""
@@ -309,55 +429,113 @@ def user_dashboard():
     recent_theses = cursor.fetchall()
     
     return render_template('user_dashboard.html', 
-                         stats=stats,
+                         stats={
+                             'total_published': stats['total_published'],
+                             'recent_views': views_stats['recent_views'],
+                             'saved_theses': bookmarks_stats['saved_theses']
+                         },
                          recent_theses=recent_theses)
-
 @app.route('/browse-theses')
 @login_required
 def browse_theses():
-    # Redirect admin users to admin version
     if current_user.is_admin():
         return redirect(url_for('admin_browse_theses'))
     
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     search_query = request.args.get('q', '')
+    year_filter = request.args.get('year', '')
+    keyword_filter = request.args.get('keyword', '')
+    sort_by = request.args.get('sort', 'recent')  # recent, oldest, title
     page = request.args.get('page', 1, type=int)
     per_page = 10
+    
+    # Expand search terms if needed
+    if search_query:
+        search_query = expand_search_terms(search_query)
+    
+    # Common CS keywords for filter (now includes abbreviations)
+    common_cs_keywords = [
+        'artificial intelligence', 'ai', 'machine learning', 'ml', 'data science',
+        'cybersecurity', 'networking', 'database', 'db', 'algorithm',
+        'software engineering', 'web development', 'mobile development',
+        'cloud computing', 'blockchain', 'iot', 'internet of things', 
+        'computer vision', 'cv', 'natural language processing', 'nlp',
+        'big data', 'data mining', 'virtual reality', 'vr', 
+        'augmented reality', 'ar', 'operating system', 'os'
+    ]
     
     query = """
         SELECT pt.* 
         FROM published_theses pt
         WHERE 1=1
     """
+    params = []
     
     if search_query:
         query += """
-            AND (pt.title LIKE %s OR pt.authors LIKE %s OR pt.keywords LIKE %s)
+            AND (LOWER(pt.title) LIKE %s OR LOWER(pt.authors) LIKE %s OR LOWER(pt.keywords) LIKE %s OR pt.year_made = %s)
         """
-        params = (f'%{search_query}%', f'%{search_query}%', f'%{search_query}%')
-    else:
-        params = ()
+        like_pattern = f"%{search_query.lower()}%"
+        params.extend([like_pattern, like_pattern, like_pattern, search_query])
     
-    query += " ORDER BY pt.published_at DESC LIMIT %s OFFSET %s"
-    params += (per_page, (page-1)*per_page)
+    if year_filter:
+        query += " AND pt.year_made = %s"
+        params.append(year_filter)
+    
+    if keyword_filter:
+        # Expand keyword if it's an abbreviation
+        expanded_keyword = expand_search_terms(keyword_filter).split()[-1]  # Take the last expansion
+        query += " AND LOWER(pt.keywords) LIKE %s"
+        params.append(f'%{expanded_keyword.lower()}%')
+    
+    # Sorting
+    if sort_by == 'recent':
+        query += " ORDER BY pt.published_at DESC"
+    elif sort_by == 'oldest':
+        query += " ORDER BY pt.published_at ASC"
+    elif sort_by == 'title':
+        query += " ORDER BY pt.title ASC"
+    
+    # Add pagination
+    query += " LIMIT %s OFFSET %s"
+    params.extend([per_page, (page-1)*per_page])
     
     cursor.execute(query, params)
     theses = cursor.fetchall()
     
     # Get total count
     count_query = "SELECT COUNT(*) as total FROM published_theses WHERE 1=1"
+    count_params = []
+    
     if search_query:
-        count_query += " AND (title LIKE %s OR authors LIKE %s OR keywords LIKE %s)"
-        count_params = (f'%{search_query}%', f'%{search_query}%', f'%{search_query}%')
-    else:
-        count_params = ()
+        count_query += " AND (LOWER(title) LIKE %s OR LOWER(authors) LIKE %s OR LOWER(keywords) LIKE %s OR year_made = %s)"
+        like_pattern = f"%{search_query.lower()}%"
+        count_params.extend([like_pattern, like_pattern, like_pattern, search_query])
+    
+    if year_filter:
+        count_query += " AND year_made = %s"
+        count_params.append(year_filter)
+    
+    if keyword_filter:
+        expanded_keyword = expand_search_terms(keyword_filter).split()[-1]
+        count_query += " AND LOWER(keywords) LIKE %s"
+        count_params.append(f'%{expanded_keyword.lower()}%')
     
     cursor.execute(count_query, count_params)
     total = cursor.fetchone()['total']
     
+    # Get available years for filter
+    cursor.execute("SELECT DISTINCT year_made FROM published_theses ORDER BY year_made DESC")
+    available_years = [str(row['year_made']) for row in cursor.fetchall()]
+    
     return render_template('user_browse_theses.html', 
                          theses=theses, 
                          search_query=search_query,
+                         year_filter=year_filter,
+                         keyword_filter=keyword_filter,
+                         sort_by=sort_by,
+                         common_cs_keywords=common_cs_keywords,
+                         available_years=available_years,
                          page=page,
                          per_page=per_page,
                          total=total,
@@ -426,57 +604,187 @@ def process_image_search():
     
     if file and allowed_file(file.filename):
         try:
-            # Save temporary image
-            filename = secure_filename(f"search_{current_user.id}_{datetime.now().timestamp()}.jpg")
-            filepath = os.path.join(app.config['UPLOAD_FOLDER'], 'temp_search', filename)
-            os.makedirs(os.path.dirname(filepath), exist_ok=True)
+            # Ensure temp directory exists
+            temp_dir = os.path.join(app.config['UPLOAD_FOLDER'], 'temp_search')
+            os.makedirs(temp_dir, exist_ok=True)
+            
+            # Save temporary image with a unique filename
+            timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+            filename = f"search_{current_user.id}_{timestamp}.jpg"
+            filepath = os.path.join(temp_dir, filename)
             file.save(filepath)
+            
+            # Verify the image was saved
+            if not os.path.exists(filepath):
+                return jsonify({'success': False, 'error': 'Failed to save image'})
             
             # Extract text using OCR
             text = extract_text_from_image(filepath)
             
-            # Process text to get important keywords (excluding common words)
-            doc = nlp(text.lower())
-            common_words = {'the', 'and', 'of', 'to', 'in', 'a', 'is', 'that', 'for', 'it', 'as', 'was', 'with', 'be', 'by', 'on', 'not', 'he', 'i', 'this', 'are', 'or', 'his', 'from', 'at', 'which', 'but', 'have', 'an', 'had', 'they', 'you', 'were', 'their', 'one', 'all', 'we', 'can', 'her', 'has', 'there', 'been', 'if', 'more', 'when', 'will', 'would', 'who', 'so', 'no'}
+            if not text or len(text.strip()) == 0:
+                return jsonify({'success': False, 'error': 'No text found in image'})
             
-            keywords = []
-            for token in doc:
-                if (token.pos_ in ['NOUN', 'PROPN', 'ADJ'] and 
-                    token.text not in common_words and 
-                    len(token.text) > 3 and 
-                    not token.is_stop):
-                    keywords.append(token.text)
+            # Improved title extraction focusing on academic titles
+            def extract_thesis_title(text):
+                # Comprehensive list of CS terms to prioritize
+                cs_keywords = [
+                    'artificial intelligence', 'machine learning', 'deep learning', 'neural network',
+                    'computer vision', 'natural language processing', 'data mining', 'big data',
+                    'cybersecurity', 'network security', 'encryption', 'blockchain',
+                    'cloud computing', 'distributed systems', 'parallel computing',
+                    'software engineering', 'agile development', 'devops',
+                    'database', 'sql', 'nosql', 'data warehouse',
+                    'algorithm', 'data structure', 'computational complexity',
+                    'internet of things', 'iot', 'embedded systems',
+                    'computer graphics', 'virtual reality', 'augmented reality',
+                    'human computer interaction', 'hci', 'user interface',
+                    'operating system', 'compiler', 'computer architecture'
+                ]
+                
+                # Common academic phrases to ignore
+                ignore_phrases = [
+                    'thesis', 'dissertation', 'research', 'study', 'paper', 'project',
+                    'submitted', 'university', 'college', 'department', 'faculty', 'school',
+                    'bachelor', 'master', 'phd', 'doctorate', 'towards', 'analysis',
+                    'of', 'in', 'and', 'the', 'a', 'an', 'for', 'on', 'about', 'using',
+                    'with', 'cavite state university', 'city', 'city of imus cavite'
+                ]
+                
+                # Split into lines and find the most likely title line
+                lines = [line.strip() for line in text.split('\n') if line.strip()]
+                
+                # Score each line based on likelihood of being a title
+                scored_lines = []
+                for line in lines:
+                    # Skip lines that are too short or too long
+                    if len(line) < 10 or len(line) > 120:
+                        continue
+                        
+                    # Initialize scores
+                    position_score = 1.0 / (lines.index(line) + 1)  # Earlier lines score higher
+                    length_score = min(1.0, 1.0 - abs(0.5 - (len(line)/100)))  # Medium length preferred
+                    
+                    # Count title-case words
+                    words = line.split()
+                    title_case_words = sum(1 for word in words if word.istitle())
+                    case_score = title_case_words / len(words) if words else 0
+                    
+                    # Penalize ignored phrases
+                    lower_line = line.lower()
+                    ignore_score = sum(-0.5 for phrase in ignore_phrases if phrase in lower_line)
+                    
+                    # Bonus for CS keywords
+                    cs_score = sum(2.0 for term in cs_keywords if term in lower_line)
+                    
+                    total_score = position_score + length_score + case_score + ignore_score + cs_score
+                    scored_lines.append((total_score, line))
+                
+                if not scored_lines:
+                    return None
+                
+                # Get the highest scoring line
+                scored_lines.sort(reverse=True, key=lambda x: x[0])
+                best_line = scored_lines[0][1]
+                
+                # Now extract the most important CS terms from the best line
+                doc = nlp(best_line)
+                
+                # Look for noun phrases that contain CS terms
+                topics = []
+                for chunk in doc.noun_chunks:
+                    chunk_text = chunk.text.lower()
+                    
+                    # Skip short phrases and those with ignored words
+                    if (len(chunk.text.split()) <= 3 or
+                        any(t in chunk_text for t in ignore_phrases)):
+                        continue
+                    
+                    # Score based on:
+                    # 1. Length (longer is better)
+                    # 2. Position in title (earlier is better)
+                    # 3. Contains CS terms (higher score)
+                    # 4. Contains proper nouns (higher score)
+                    score = len(chunk.text.split())  # word count
+                    score += (len(best_line) - best_line.find(chunk.text)) / len(best_line)  # position
+                    
+                    # Bonus for CS terms
+                    if any(term in chunk_text for term in cs_keywords):
+                        score += 3
+                        
+                    # Bonus for proper nouns
+                    if any(t.pos_ == 'PROPN' for t in chunk):
+                        score += 2
+                        
+                    topics.append((score, chunk.text))
+                
+                if not topics:
+                    return best_line  # fallback to entire line
+                
+                # Get the highest scoring topic
+                topics.sort(reverse=True, key=lambda x: x[0])
+                return topics[0][1]
+
             
-            # Remove duplicates and limit to 5 most relevant
-            keywords = list(set(keywords))[:5]
+            # Extract the main topic
+            main_topic = extract_thesis_title(text)
             
             # Clean up
-            os.remove(filepath)
+            try:
+                os.remove(filepath)
+            except:
+                pass
+            
+            if not main_topic or len(main_topic.strip()) == 0:
+                return jsonify({
+                    'success': False,
+                    'error': 'No relevant topic found in extracted text'
+                })
             
             return jsonify({
                 'success': True,
-                'keywords': ' '.join(keywords)
+                'topic': main_topic.strip()
             })
             
         except Exception as e:
             if 'filepath' in locals() and os.path.exists(filepath):
-                os.remove(filepath)
-            return jsonify({'success': False, 'error': str(e)})
+                try:
+                    os.remove(filepath)
+                except:
+                    pass
+            return jsonify({
+                'success': False,
+                'error': f'Error processing image: {str(e)}'
+            })
     
     return jsonify({'success': False, 'error': 'Invalid file type'})
+
 @app.route('/thesis/<int:thesis_id>')
 @login_required
 def view_thesis(thesis_id):
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    
-    # Record view history
+
+    # Record view history (existing code remains the same)
+    today = datetime.now().date()
     cursor.execute("""
-        INSERT INTO user_view_history (user_id, thesis_id)
-        VALUES (%s, %s)
-        ON DUPLICATE KEY UPDATE viewed_at = CURRENT_TIMESTAMP
-    """, (current_user.id, thesis_id))
-    mysql.connection.commit()
+        SELECT id FROM user_view_history 
+        WHERE user_id = %s AND thesis_id = %s AND DATE(viewed_at) = %s
+    """, (current_user.id, thesis_id, today))
     
+    if cursor.fetchone():
+        cursor.execute("""
+            UPDATE user_view_history 
+            SET viewed_at = CURRENT_TIMESTAMP
+            WHERE user_id = %s AND thesis_id = %s AND DATE(viewed_at) = %s
+        """, (current_user.id, thesis_id, today))
+    else:
+        cursor.execute("""
+            INSERT INTO user_view_history (user_id, thesis_id)
+            VALUES (%s, %s)
+            ON DUPLICATE KEY UPDATE viewed_at = CURRENT_TIMESTAMP
+        """, (current_user.id, thesis_id))
+    
+    mysql.connection.commit()
+
     # Get thesis details
     cursor.execute("""
         SELECT pt.*, u.username as publisher_username
@@ -488,54 +796,75 @@ def view_thesis(thesis_id):
     
     if not thesis:
         abort(404)
-    
+
     # Check if bookmarked
     cursor.execute("""
         SELECT id FROM user_bookmarks
         WHERE user_id = %s AND thesis_id = %s
     """, (current_user.id, thesis_id))
     is_bookmarked = cursor.fetchone() is not None
-    
-    # Get introduction pages only (first 5 pages)
+
+    # Get title page (first page only)
     cursor.execute("""
         SELECT page_text FROM thesis_pages
-        WHERE thesis_id = %s AND page_number <= 5
+        WHERE thesis_id = %s AND page_number = 1
+    """, (thesis_id,))
+    title_page = cursor.fetchone()
+    
+    # Get introduction pages only (pages 2-5)
+    cursor.execute("""
+        SELECT page_text FROM thesis_pages
+        WHERE thesis_id = %s AND page_number BETWEEN 2 AND 5
         ORDER BY page_number
     """, (thesis_id,))
     intro_pages = [page['page_text'] for page in cursor.fetchall()]
-    
-    # If search query exists, find matching pages but exclude introduction
+
+    # Search functionality
     search_query = request.args.get('q', '')
-    matching_pages = []
+    matching_snippets = []
     
     if search_query:
-        # Get all pages that match the search query (excluding common words)
         cursor.execute("""
-            SELECT page_number, page_text 
+            SELECT 
+                page_number,
+                SUBSTRING_INDEX(
+                    SUBSTRING_INDEX(
+                        SUBSTRING(page_text, 
+                            GREATEST(1, LOCATE(%s, page_text) - 100), 
+                            300
+                        ), 
+                        ' ', 
+                        -10
+                    ),
+                    ' ', 
+                    10
+                ) as text_snippet
             FROM thesis_pages
             WHERE thesis_id = %s 
             AND MATCH(page_text) AGAINST(%s IN BOOLEAN MODE)
-            AND page_number > 5  # Skip introduction
+            AND page_number > 5  -- Skip introduction pages
             ORDER BY page_number
-        """, (thesis_id, f'+{search_query}*'))
-        
-        matching_pages = cursor.fetchall()
-    
+            LIMIT 10
+        """, (search_query, thesis_id, f'+{search_query}*'))
+        matching_snippets = cursor.fetchall()
+
     # Choose template based on user role
     if current_user.is_admin():
         return render_template('thesis_detail.html', 
-                             thesis=thesis,
-                             intro_pages=intro_pages,
-                             matching_pages=matching_pages,
-                             search_query=search_query,
-                             is_bookmarked=is_bookmarked)
+                               thesis=thesis,
+                               title_page=title_page['page_text'] if title_page else None,
+                               intro_pages=intro_pages,
+                               matching_pages=matching_snippets,
+                               search_query=search_query,
+                               is_bookmarked=is_bookmarked)
     else:
         return render_template('user_thesis_detail.html', 
-                             thesis=thesis,
-                             intro_pages=intro_pages,
-                             matching_pages=matching_pages,
-                             search_query=search_query,
-                             is_bookmarked=is_bookmarked)
+                               thesis=thesis,
+                               title_page=title_page['page_text'] if title_page else None,
+                               intro_pages=intro_pages,
+                               matching_snippets=matching_snippets,
+                               search_query=search_query,
+                               is_bookmarked=is_bookmarked)
     
 @app.route('/thesis-file/<int:thesis_id>')
 @login_required
@@ -842,6 +1171,11 @@ def review_submission(submission_id):
     file_exists = submission['file_path'] and os.path.exists(submission['file_path'])
     file_missing = not file_exists and submission.get('file_persisted', False)
 
+    preview_url = None
+    if file_exists:
+        # Create a route to serve the submission file
+        preview_url = url_for('serve_submission_file', submission_id=submission_id)
+
     if request.method == 'POST':
         action = request.form.get('action')
 
@@ -981,11 +1315,35 @@ def review_submission(submission_id):
             preview_url = url_for('static', filename='uploads/submissions/' + os.path.basename(submission['file_path']))
 
     return render_template('review_submission.html', 
-                           submission=submission,
-                           preview_url=preview_url,
-                           existing_file=os.path.basename(submission['file_path']) if submission['file_path'] else None,
-                           file_missing=file_missing)
+                         submission=submission,
+                         preview_url=preview_url,
+                         existing_file=os.path.basename(submission['file_path']) if submission['file_path'] else None,
+                         file_missing=file_missing)
 
+@app.route('/submission-file/<int:submission_id>')
+@login_required
+def serve_submission_file(submission_id):
+    if not current_user.is_admin():
+        abort(403)
+
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute("SELECT file_path FROM thesis_submissions WHERE id = %s", (submission_id,))
+    result = cursor.fetchone()
+    cursor.close()
+
+    if not result or not result['file_path'] or not os.path.exists(result['file_path']):
+        abort(404)
+
+    # Determine if it's an image or PDF
+    if result['file_path'].lower().endswith(('.png', '.jpg', '.jpeg')):
+        return send_file(result['file_path'], mimetype='image/jpeg')
+    elif result['file_path'].lower().endswith('.pdf'):
+        response = make_response(send_file(result['file_path']))
+        response.headers["Content-Disposition"] = "inline; filename=view.pdf"
+        return response
+    else:
+        abort(404)
+        
 @app.route('/admin/publish/<int:submission_id>', methods=['POST'])
 @login_required
 def publish_thesis(submission_id):
@@ -1491,20 +1849,23 @@ def view_history():
     
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     
-    # Get view history with pagination
+    # Get unique view history with the most recent view for each thesis
     cursor.execute("""
-        SELECT pt.*, uv.viewed_at, uv.id as history_id
+        SELECT pt.*, MAX(uv.viewed_at) as viewed_at, 
+               COUNT(uv.id) as view_count,
+               MIN(uv.id) as history_id
         FROM published_theses pt
         JOIN user_view_history uv ON pt.id = uv.thesis_id
         WHERE uv.user_id = %s
-        ORDER BY uv.viewed_at DESC
+        GROUP BY pt.id
+        ORDER BY MAX(uv.viewed_at) DESC
         LIMIT %s OFFSET %s
     """, (current_user.id, per_page, (page-1)*per_page))
     history = cursor.fetchall()
     
-    # Get total count
+    # Get total count of unique viewed theses
     cursor.execute("""
-        SELECT COUNT(*) as total 
+        SELECT COUNT(DISTINCT thesis_id) as total 
         FROM user_view_history 
         WHERE user_id = %s
     """, (current_user.id,))
@@ -1516,32 +1877,32 @@ def view_history():
                          per_page=per_page,
                          total=total,
                          total_pages=(total + per_page - 1) // per_page)
+
 @app.route('/delete-history-item/<int:item_id>', methods=['POST'])
 @login_required
 def delete_history_item(item_id):
     cursor = mysql.connection.cursor()
     
     try:
-        # Verify the history item belongs to the current user before deleting
+        # First get the thesis_id from the history item
         cursor.execute("""
-            DELETE FROM user_view_history 
-            WHERE id = (
-                SELECT id FROM (
-                    SELECT uv.id 
-                    FROM user_view_history uv
-                    JOIN published_theses pt ON uv.thesis_id = pt.id
-                    WHERE uv.user_id = %s AND pt.id = %s
-                    LIMIT 1
-                ) AS temp
-            )
-        """, (current_user.id, item_id))
+            SELECT thesis_id FROM user_view_history 
+            WHERE id = %s AND user_id = %s
+        """, (item_id, current_user.id))
+        result = cursor.fetchone()
         
-        affected_rows = cursor.rowcount
-        mysql.connection.commit()
-        
-        if affected_rows == 0:
+        if not result:
             return jsonify({'success': False, 'error': 'Item not found or not authorized'})
             
+        thesis_id = result[0]
+        
+        # Delete all history entries for this thesis
+        cursor.execute("""
+            DELETE FROM user_view_history 
+            WHERE user_id = %s AND thesis_id = %s
+        """, (current_user.id, thesis_id))
+        
+        mysql.connection.commit()
         return jsonify({'success': True})
         
     except Exception as e:
@@ -1569,6 +1930,51 @@ def clear_history():
         cursor.close()
         
     return redirect(url_for('view_history'))
+
+@app.route('/limited-thesis/<int:thesis_id>')
+@login_required
+def serve_limited_thesis(thesis_id):
+    """Serve only pages 1-2 of the thesis PDF with scrolling enabled"""
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute("SELECT file_path FROM published_theses WHERE id = %s", (thesis_id,))
+    result = cursor.fetchone()
+    cursor.close()
+
+    if not result:
+        abort(404)
+
+    file_path = result['file_path']
+    
+    # Create a temporary directory if it doesn't exist
+    temp_dir = os.path.join(app.config['UPLOAD_FOLDER'], 'temp_limited')
+    os.makedirs(temp_dir, exist_ok=True)
+    
+    # Generate unique filename
+    temp_path = os.path.join(temp_dir, f"limited_{thesis_id}.pdf")
+    
+    try:
+        # Extract only first 2 pages
+        with open(file_path, 'rb') as infile:
+            reader = PyPDF2.PdfReader(infile)
+            writer = PyPDF2.PdfWriter()
+            
+            # Add only pages 1 and 2 (index 0 and 1)
+            for i in range(min(2, len(reader.pages))):
+                writer.add_page(reader.pages[i])
+            
+            with open(temp_path, 'wb') as outfile:
+                writer.write(outfile)
+        
+        # Create response with headers that allow scrolling
+        response = make_response(send_file(temp_path))
+        response.headers["Content-Disposition"] = "inline; filename=preview.pdf"
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        return response
+        
+    except Exception as e:
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
+        abort(500, description="Error generating limited preview")
 
 @app.route('/logout')
 @login_required

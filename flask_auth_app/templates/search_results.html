@@ -1,0 +1,79 @@
+{% extends "user_base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Search Results for "{{ query }}"</h2>
+    
+    {% if metadata_results or grouped_results %}
+        <div class="row">
+            <div class="col-md-12">
+                <h4 class="mt-4">Matching Theses</h4>
+                {% if metadata_results %}
+                    <div class="list-group">
+                        {% for thesis in metadata_results %}
+                            <a href="{{ url_for('view_thesis', thesis_id=thesis.id) }}?q={{ query }}" 
+                               class="list-group-item list-group-item-action">
+                                <h5>{{ thesis.title }}</h5>
+                                <p class="mb-1">By {{ thesis.authors }} ({{ thesis.year_made }})</p>
+                                <small>Keywords: {{ thesis.keywords }}</small>
+                            </a>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p>No matching theses found in metadata.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <h4>Matching Pages</h4>
+                {% if grouped_results %}
+                    {% for thesis_id, thesis_data in grouped_results.items() %}
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h5>
+                                    <a href="{{ url_for('view_thesis', thesis_id=thesis_id) }}?q={{ query }}">
+                                        {{ thesis_data.thesis_title }}
+                                    </a>
+                                </h5>
+                                <p class="mb-0">By {{ thesis_data.authors }} ({{ thesis_data.year_made }})</p>
+                            </div>
+                            <div class="card-body">
+                                <ul class="list-unstyled">
+                                    {% for match in thesis_data.matches %}
+                                        <li class="mb-3">
+                                            <strong>Page {{ match.page_number }}:</strong>
+                                            <div class="snippet-box p-2 bg-light rounded">
+                                                ...{{ match.text_snippet|highlight(query)|safe }}...
+                                            </div>
+                                            <small class="text-muted">Relevance: {{ "%.2f"|format(match.relevance_score) }}</small>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p>No matching pages found in full text.</p>
+                {% endif %}
+            </div>
+        </div>
+    {% else %}
+        <div class="alert alert-info">
+            No results found for "{{ query }}". Try different keywords.
+        </div>
+    {% endif %}
+</div>
+<style>
+.snippet-box {
+    border-left: 3px solid #ffc107;
+}
+
+.highlight {
+    background-color: #ffc107;
+    padding: 0 2px;
+    border-radius: 3px;
+}
+</style>
+{% endblock %}

@@ -47,29 +47,30 @@
                             </h6>
                         </div>
                         <div class="card-body">
-                            {% if preview_url %}
-                                <div class="text-center mb-4">
-                                    <h5 class="font-weight-bold text-gray-800 mb-3">
-                                        <i class="fas fa-image me-2"></i>Uploaded Image Preview
-                                    </h5>
-                                    <img src="{{ preview_url }}" class="img-fluid rounded shadow-sm" style="max-height: 400px;">
-                                </div>
-                            {% elif existing_file and existing_file.endswith('.pdf') %}
-                                <div class="mb-4">
-                                    <h5 class="font-weight-bold text-gray-800 mb-3">
-                                        <i class="fas fa-file-pdf me-2"></i>Document Preview
-                                    </h5>
-                                    <div class="ratio ratio-16x9 bg-light rounded shadow-sm">
-                                        <iframe src="{{ url_for('serve_thesis_file', thesis_id=submission.id) }}" 
-                                               class="border-0"></iframe>
-                                    </div>
-                                </div>
-                            {% else %}
-                                <div class="alert alert-warning">
-                                    <i class="fas fa-exclamation-triangle me-2"></i>
-                                    No file available for preview
-                                </div>
-                            {% endif %}
+                               {% if preview_url and (submission.file_path.lower().endswith('.png') or 
+                                            submission.file_path.lower().endswith('.jpg') or 
+                                            submission.file_path.lower().endswith('.jpeg')) %}
+                        <div class="text-center mb-4">
+                            <h5 class="font-weight-bold text-gray-800 mb-3">
+                                <i class="fas fa-image me-2"></i>Uploaded Image Preview
+                            </h5>
+                            <img src="{{ preview_url }}" class="img-fluid rounded shadow-sm" style="max-height: 400px;">
+                        </div>
+                        {% elif preview_url and submission.file_path.lower().endswith('.pdf') %}
+                        <div class="mb-4">
+                            <h5 class="font-weight-bold text-gray-800 mb-3">
+                                <i class="fas fa-file-pdf me-2"></i>Document Preview
+                            </h5>
+                            <div class="ratio ratio-16x9 bg-light rounded shadow-sm">
+                                <iframe src="{{ preview_url }}" class="border-0"></iframe>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            No file available for preview
+                        </div>
+                        {% endif %}
 
                             <form method="POST" enctype="multipart/form-data">
                                 <h5 class="font-weight-bold text-gray-800 mb-3">
@@ -135,12 +136,12 @@
                                 <div class="d-flex justify-content-end gap-2 border-top pt-3">
                                     <button type="submit" name="action" value="reject" 
                                             class="btn btn-danger px-4">
-                                        <i class="fas fa-times me-1"></i> Reject
+                                        <i class="fas fa-times me-1"></i> Archive
                                     </button>
                                     <button type="submit" name="action" value="approve" 
                                             class="btn btn-success px-4"
                                             {% if not existing_file %}disabled{% endif %}>
-                                        <i class="fas fa-check me-1"></i> Approve
+                                        <i class="fas fa-check me-1"></i> Upload
                                     </button>
                                 </div>
                             </form>

@@ -14,7 +14,7 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link active text-white" href="{{ url_for('browse_theses') }}">
+                <a class="nav-link text-white {% if request.endpoint == 'browse_theses' %}active{% endif %}" href="{{ url_for('browse_theses') }}">
                     <i class="fas fa-fw fa-search me-2"></i>Browse Theses
                 </a>
             </li>

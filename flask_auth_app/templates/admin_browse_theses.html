@@ -48,7 +48,7 @@ aria-label="Toggle sidebar">
     <!-- Search Form -->
     <div class="card mb-4">
         <div class="card-body">
-            <form method="GET" action="{{ url_for('browse_theses') }}">
+            <form method="GET" action="{{ url_for('admin_browse_theses') }}">
                 <div class="input-group">
                     <input type="text" class="form-control" name="q" value="{{ search_query }}" placeholder="Search theses...">
                     <button class="btn btn-primary" type="submit">Search</button>

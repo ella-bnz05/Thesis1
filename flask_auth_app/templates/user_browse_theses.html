@@ -27,9 +27,9 @@
                             <i class="fas fa-user-circle me-1"></i> {{ current_user.username }}
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end">
-                       <li><a class="dropdown-item" href="{{ url_for('profile_settings') }}">
-                            <i class="fas fa-user me-1"></i> Profile Settings
-                        </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('profile_settings') }}">
+                                <i class="fas fa-user me-1"></i> Profile Settings
+                            </a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item text-danger" href="{{ url_for('logout') }}">
                                 <i class="fas fa-sign-out-alt me-1"></i> Logout
@@ -43,22 +43,55 @@
             <div class="card mb-4">
                 <div class="card-body">
                     <form method="GET" action="{{ url_for('browse_theses') }}">
-                        <div class="input-group mb-3">
-                            <input type="text" class="form-control" name="q" value="{{ search_query }}" placeholder="Search by title, author, or keywords...">
-                            <button class="btn btn-primary" type="submit">
-                                <i class="fas fa-search me-1"></i> Search
-                            </button>
+                        <div class="row">
+                            <!-- Search Bar -->
+                            <div class="col-md-6 mb-3">
+                                <div class="input-group">
+                                    <input type="text" class="form-control" name="q" value="{{ search_query }}" placeholder="Search by title, author, or keywords...">
+                                    <button class="btn btn-primary" type="submit">
+                                        <i class="fas fa-search me-1"></i> Search
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Filters -->
+                            <div class="col-md-6">
+                                <div class="row g-2">
+                                    <div class="col-md-4">
+                                        <select class="form-select" name="year">
+                                            <option value="">All Years</option>
+                                            {% for year in available_years %}
+                                                <option value="{{ year }}" {% if year_filter == year %}selected{% endif %}>{{ year }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <select class="form-select" name="keyword">
+                                            <option value="">All Keywords</option>
+                                            {% for keyword in common_cs_keywords %}
+                                                <option value="{{ keyword }}" {% if keyword_filter == keyword %}selected{% endif %}>{{ keyword|title }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <select class="form-select" name="sort">
+                                            <option value="recent" {% if sort_by == 'recent' %}selected{% endif %}>Newest First</option>
+                                            <option value="oldest" {% if sort_by == 'oldest' %}selected{% endif %}>Oldest First</option>
+                                            <option value="title" {% if sort_by == 'title' %}selected{% endif %}>By Title (A-Z)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         
                         <!-- Image Search Option (Mobile Only) -->
-                        <div class="d-block d-md-none">
+                        <div class="d-block d-md-none mt-3">
                             <p class="text-center text-muted mb-2">- OR -</p>
                             <div class="text-center">
-                                <label for="image-search" class="btn btn-outline-primary">
+                                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#imageSearchModal">
                                     <i class="fas fa-camera me-1"></i> Search with Image
-                                </label>
-                                <input type="file" id="image-search" accept="image/*" capture="camera" style="display: none;">
-                                <small class="d-block text-muted mt-1">Take a photo or upload an image</small>
+                                </button>
+                                <small class="d-block text-muted mt-1">Extract text from an image</small>
                             </div>
                         </div>
                     </form>
@@ -89,7 +122,7 @@
                     <ul class="pagination justify-content-center">
                         {% if page > 1 %}
                         <li class="page-item">
-                            <a class="page-link" href="{{ url_for('browse_theses', page=page-1, q=search_query) }}">Previous</a>
+                            <a class="page-link" href="{{ url_for('browse_theses', page=page-1, q=search_query, year=year_filter, keyword=keyword_filter, sort=sort_by) }}">Previous</a>
                         </li>
                         {% endif %}
                         
@@ -98,67 +131,287 @@
                                 {% if p == page %}
                                 <span class="page-link">{{ p }}</span>
                                 {% else %}
-                                <a class="page-link" href="{{ url_for('browse_theses', page=p, q=search_query) }}">{{ p }}</a>
+                                <a class="page-link" href="{{ url_for('browse_theses', page=p, q=search_query, year=year_filter, keyword=keyword_filter, sort=sort_by) }}">{{ p }}</a>
                                 {% endif %}
                             </li>
                         {% endfor %}
                         
                         {% if page < total_pages %}
                         <li class="page-item">
-                            <a class="page-link" href="{{ url_for('browse_theses', page=page+1, q=search_query) }}">Next</a>
+                            <a class="page-link" href="{{ url_for('browse_theses', page=page+1, q=search_query, year=year_filter, keyword=keyword_filter, sort=sort_by) }}">Next</a>
                         </li>
                         {% endif %}
                     </ul>
                 </nav>
             {% else %}
                 <div class="alert alert-info">
-                    No theses found. {% if search_query %}Try a different search term.{% else %}Check back later for new submissions.{% endif %}
+                    No theses found. {% if search_query or year_filter or keyword_filter %}Try adjusting your filters.{% else %}Check back later for new submissions.{% endif %}
                 </div>
             {% endif %}
         </main>
     </div>
 </div>
 
+<!-- Image Search Modal -->
+<div class="modal fade" id="imageSearchModal" tabindex="-1" aria-labelledby="imageSearchModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="imageSearchModalLabel">Search with Image</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center">
+                    <p class="mb-3">Upload an image of a thesis title page or section to search for similar computer science theses</p>
+                    
+                    <div class="alert alert-info mb-3">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        Best results with images containing:
+                        <ul class="text-start mt-2">
+                            <li>Thesis titles</li>
+                            <li>Technical terms (AI, Machine Learning, etc.)</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <input type="file" id="image-upload" accept="image/*" class="d-none">
+                        <button type="button" class="btn btn-primary me-2" onclick="document.getElementById('image-upload').click()">
+                            <i class="fas fa-upload me-1"></i> Upload Image
+                        </button>
+                        <button type="button" class="btn btn-success" onclick="startCamera()">
+                            <i class="fas fa-camera me-1"></i> Take Photo
+                        </button>
+                    </div>
+                    
+                    <div id="camera-preview" class="d-none mb-3">
+                        <video id="video" width="100%" autoplay playsinline></video>
+                        <button type="button" class="btn btn-primary mt-2" onclick="capturePhoto()">
+                            <i class="fas fa-camera me-1"></i> Capture
+                        </button>
+                    </div>
+                    
+                    <div id="image-preview" class="mb-3 d-none">
+                        <img id="preview" src="#" alt="Preview" class="img-fluid rounded">
+                        <div class="mt-2">
+                            <button type="button" class="btn btn-success me-2" onclick="processImage()">
+                                <i class="fas fa-search me-1"></i> Search Text
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="resetImageSearch()">
+                                <i class="fas fa-redo me-1"></i> Retry
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="processing-indicator" class="d-none">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Processing image...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- JavaScript for Image Search -->
 <script>
-document.getElementById('image-search').addEventListener('change', function(e) {
+// Variables for camera
+let stream = null;
+
+// Handle file upload
+document.getElementById('image-upload').addEventListener('change', function(e) {
     if (e.target.files.length > 0) {
         const file = e.target.files[0];
-        const formData = new FormData();
-        formData.append('file', file);
+        const reader = new FileReader();
         
-        // Show loading indicator
-        const searchCard = document.querySelector('.card-body');
-        searchCard.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div><p class="mt-2">Processing image...</p></div>';
+        reader.onload = function(event) {
+            document.getElementById('preview').src = event.target.result;
+            document.getElementById('camera-preview').classList.add('d-none');
+            document.getElementById('image-preview').classList.remove('d-none');
+        }
         
-        // Send to server for OCR processing
-        fetch('{{ url_for("process_image_search") }}', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success && data.keywords) {
-                // Redirect to search with extracted keywords
-                window.location.href = '{{ url_for("browse_theses") }}?q=' + encodeURIComponent(data.keywords);
-            } else {
-                searchCard.innerHTML = `
-                    <div class="alert alert-danger">
-                        Could not extract text from image. Please try again or type your search.
-                        <button class="btn btn-sm btn-outline-secondary mt-2" onclick="window.location.reload()">Try Again</button>
-                    </div>
-                `;
-            }
+        reader.readAsDataURL(file);
+    }
+});
+
+// Start camera
+function startCamera() {
+    document.getElementById('image-preview').classList.add('d-none');
+    document.getElementById('camera-preview').classList.remove('d-none');
+    
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(function(mediaStream) {
+                stream = mediaStream;
+                document.getElementById('video').srcObject = mediaStream;
+            })
+            .catch(function(error) {
+                alert('Could not access camera: ' + error.message);
+            });
+    } else {
+        alert('Camera access not supported by your browser');
+    }
+}
+
+// Capture photo from camera
+function capturePhoto() {
+    const video = document.getElementById('video');
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    document.getElementById('preview').src = canvas.toDataURL('image/jpeg');
+    document.getElementById('camera-preview').classList.add('d-none');
+    document.getElementById('image-preview').classList.remove('d-none');
+    
+    // Stop camera
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+    }
+}
+
+// Process image for OCR
+function processImage() {
+    const preview = document.getElementById('preview');
+    const formData = new FormData();
+    
+    // Convert data URL to blob
+    fetch(preview.src)
+        .then(res => res.blob())
+        .then(blob => {
+            // Create a file from the blob
+            const file = new File([blob], 'search_image.jpg', { type: 'image/jpeg' });
+            formData.append('file', file);
+            
+            // Show processing indicator
+            document.getElementById('image-preview').classList.add('d-none');
+            document.getElementById('processing-indicator').classList.remove('d-none');
+            
+            // Send to server for OCR processing
+            fetch('{{ url_for("process_image_search") }}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    // Don't set Content-Type, let the browser set it with boundary
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                document.getElementById('processing-indicator').classList.add('d-none');
+                
+                if (data.success && data.topic) {
+                    // Close modal and redirect to search with extracted topic
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('imageSearchModal'));
+                    modal.hide();
+                    window.location.href = '{{ url_for("browse_theses") }}?q=' + encodeURIComponent(data.topic);
+                } else {
+                    showError(data.error || 'Could not extract main topic from image. Please try again.');
+                }
+            })
+            .catch(error => {
+                document.getElementById('processing-indicator').classList.add('d-none');
+                showError('Error processing image: ' + error.message);
+            });
         })
         .catch(error => {
-            searchCard.innerHTML = `
-                <div class="alert alert-danger">
-                    Error processing image. Please try again.
-                    <button class="btn btn-sm btn-outline-secondary mt-2" onclick="window.location.reload()">Try Again</button>
-                </div>
-            `;
+            document.getElementById('processing-indicator').classList.add('d-none');
+            showError('Error preparing image for upload: ' + error.message);
         });
+}
+// Process image for OCR
+function processImage() {
+    const preview = document.getElementById('preview');
+    const formData = new FormData();
+    
+    // Convert data URL to blob
+    fetch(preview.src)
+        .then(res => res.blob())
+        .then(blob => {
+            // Create a file from the blob
+            const file = new File([blob], 'search_image.jpg', { type: 'image/jpeg' });
+            formData.append('file', file);
+            
+            // Show processing indicator
+            document.getElementById('image-preview').classList.add('d-none');
+            document.getElementById('processing-indicator').classList.remove('d-none');
+            
+            // Send to server for OCR processing
+            fetch('{{ url_for("process_image_search") }}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    // Don't set Content-Type, let the browser set it with boundary
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                document.getElementById('processing-indicator').classList.add('d-none');
+                
+                if (data.success && data.topic) {
+                    // Close modal and redirect to search with extracted topic
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('imageSearchModal'));
+                    modal.hide();
+                    window.location.href = '{{ url_for("browse_theses") }}?q=' + encodeURIComponent(data.topic);
+                } else {
+                    showError(data.error || 'Could not extract main topic from image. Please try again.');
+                }
+            })
+            .catch(error => {
+                document.getElementById('processing-indicator').classList.add('d-none');
+                showError('Error processing image: ' + error.message);
+            });
+        })
+        .catch(error => {
+            document.getElementById('processing-indicator').classList.add('d-none');
+            showError('Error preparing image for upload: ' + error.message);
+        });
+}
+
+// Reset image search
+function resetImageSearch() {
+    document.getElementById('image-preview').classList.add('d-none');
+    document.getElementById('processing-indicator').classList.add('d-none');
+    document.getElementById('preview').src = '#';
+    document.getElementById('image-upload').value = '';
+    
+    // Stop camera if active
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        stream = null;
     }
+}
+
+// Show error message
+function showError(message) {
+    document.getElementById('processing-indicator').classList.add('d-none');
+    
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'alert alert-danger mt-3';
+    errorDiv.innerHTML = `
+        ${message}
+        <button class="btn btn-sm btn-outline-secondary mt-2" onclick="resetImageSearch()">
+            Try Again
+        </button>
+    `;
+    
+    document.querySelector('.modal-body').appendChild(errorDiv);
+}
+
+// Clean up camera when modal is closed
+document.getElementById('imageSearchModal').addEventListener('hidden.bs.modal', function() {
+    resetImageSearch();
 });
 </script>
 {% endblock %}

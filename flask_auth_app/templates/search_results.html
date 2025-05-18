@@ -38,6 +38,9 @@
                                     </a>
                                 </h5>
                                 <p class="mb-0">By {{ thesis_data.authors }} ({{ thesis_data.year_made }})</p>
+                                <p class="text-success mb-0">
+                                    Match Accuracy: <strong>{{ thesis_data.average_match }}%</strong>
+                                </p>
                             </div>
                             <div class="card-body">
                                 <ul class="list-unstyled">
@@ -47,7 +50,10 @@
                                             <div class="snippet-box p-2 bg-light rounded">
                                                 ...{{ match.text_snippet|highlight(query)|safe }}...
                                             </div>
-                                            <small class="text-muted">Relevance: {{ "%.2f"|format(match.relevance_score) }}</small>
+                                            <div class="text-muted small">
+                                                Relevance Score: {{ "%.2f"|format(match.relevance_score) }} | 
+                                                Snippet Accuracy: {{ match.match_percentage }}%
+                                            </div>
                                         </li>
                                     {% endfor %}
                                 </ul>

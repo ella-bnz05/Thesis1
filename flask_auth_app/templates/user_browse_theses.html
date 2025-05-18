@@ -23,10 +23,10 @@
                 
                 <div class="btn-toolbar mb-2 mb-md-0">
                     <div class="dropdown">
-                        <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown">
+                        <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-user-circle me-1"></i> {{ current_user.username }}
                         </button>
-                        <ul class="dropdown-menu dropdown-menu-end">
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton">
                             <li><a class="dropdown-item" href="{{ url_for('profile_settings') }}">
                                 <i class="fas fa-user me-1"></i> Profile Settings
                             </a></li>
@@ -46,8 +46,9 @@
                         <div class="row">
                             <!-- Search Bar -->
                             <div class="col-md-6 mb-3">
+                                <label for="searchInput" class="visually-hidden">Search theses</label>
                                 <div class="input-group">
-                                    <input type="text" class="form-control" name="q" value="{{ search_query }}" placeholder="Search by title, author, or keywords...">
+                                    <input type="text" class="form-control" id="searchInput" name="q" value="{{ search_query }}" placeholder="Search by title, author, or keywords..." aria-label="Search theses">
                                     <button class="btn btn-primary" type="submit">
                                         <i class="fas fa-search me-1"></i> Search
                                     </button>
@@ -58,7 +59,8 @@
                             <div class="col-md-6">
                                 <div class="row g-2">
                                     <div class="col-md-4">
-                                        <select class="form-select" name="year">
+                                        <label for="yearFilter" class="visually-hidden">Filter by year</label>
+                                        <select class="form-select" id="yearFilter" name="year" aria-label="Filter by year">
                                             <option value="">All Years</option>
                                             {% for year in available_years %}
                                                 <option value="{{ year }}" {% if year_filter == year %}selected{% endif %}>{{ year }}</option>
@@ -66,7 +68,8 @@
                                         </select>
                                     </div>
                                     <div class="col-md-4">
-                                        <select class="form-select" name="keyword">
+                                        <label for="keywordFilter" class="visually-hidden">Filter by keyword</label>
+                                        <select class="form-select" id="keywordFilter" name="keyword" aria-label="Filter by keyword">
                                             <option value="">All Keywords</option>
                                             {% for keyword in common_cs_keywords %}
                                                 <option value="{{ keyword }}" {% if keyword_filter == keyword %}selected{% endif %}>{{ keyword|title }}</option>
@@ -74,7 +77,8 @@
                                         </select>
                                     </div>
                                     <div class="col-md-4">
-                                        <select class="form-select" name="sort">
+                                        <label for="sortFilter" class="visually-hidden">Sort by</label>
+                                        <select class="form-select" id="sortFilter" name="sort" aria-label="Sort by">
                                             <option value="recent" {% if sort_by == 'recent' %}selected{% endif %}>Newest First</option>
                                             <option value="oldest" {% if sort_by == 'oldest' %}selected{% endif %}>Oldest First</option>
                                             <option value="title" {% if sort_by == 'title' %}selected{% endif %}>By Title (A-Z)</option>
@@ -88,7 +92,7 @@
                         <div class="d-block d-md-none mt-3">
                             <p class="text-center text-muted mb-2">- OR -</p>
                             <div class="text-center">
-                                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#imageSearchModal">
+                                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#imageSearchModal" aria-label="Search with image">
                                     <i class="fas fa-camera me-1"></i> Search with Image
                                 </button>
                                 <small class="d-block text-muted mt-1">Extract text from an image</small>
@@ -98,38 +102,83 @@
                 </div>
             </div>
 
-            <!-- Thesis List -->
-            {% if theses %}
-            <div class="list-group mb-4">
-                {% for thesis in theses %}
-                <div class="list-group-item">
-                    <div class="d-flex w-100 justify-content-between">
-                        <h5 class="mb-1">
-                            <a href="{{ url_for('view_thesis', thesis_id=thesis.id) }}">{{ thesis.title }}</a>
-                        </h5>
-                        <small class="text-muted">{{ thesis.year_made }}</small>
+            <!-- Results Section -->
+            {% if theses or grouped_results %}
+                <!-- Metadata Results -->
+                {% if theses %}
+                <h2 class="h3">Metadata Matches</h2>
+                <div class="list-group mb-4">
+                    {% for thesis in theses %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h3 class="h5 mb-1">
+                                <a href="{{ url_for('view_thesis', thesis_id=thesis.id, q=search_query) }}">
+                                    {{ thesis.title | replace(search_query, "<mark>" ~ search_query ~ "</mark>") | safe }}
+                                </a>
+                            </h3>
+                            <small class="text-muted">{{ thesis.year_made }}</small>
+                        </div>
+                        <p class="mb-1"><strong>Authors:</strong> {{ thesis.authors }}</p>
+                        <p class="mb-1"><strong>School:</strong> {{ thesis.school }}</p>
+                        <p class="mb-1"><strong>Keywords:</strong> {{ thesis.keywords }}</p>
+
+                        {% if thesis.match_percentage is defined %}
+                        <p class="mb-1 text-success">
+                            <strong>Match Accuracy:</strong> {{ thesis.match_percentage }}%
+                        </p>
+                        {% endif %}
+
+                        <small class="text-muted">Uploaded on {{ thesis.published_at.strftime('%Y-%m-%d') }}</small>
                     </div>
-                    <p class="mb-1"><strong>Authors:</strong> {{ thesis.authors }}</p>
-                    <p class="mb-1"><strong>School:</strong> {{ thesis.school }}</p>
-                    <p class="mb-1"><strong>Keywords:</strong> {{ thesis.keywords }}</p>
-                    <small class="text-muted">Uploaded on {{ thesis.published_at.strftime('%Y-%m-%d') }}</small>
+                    {% endfor %}
                 </div>
-                {% endfor %}
-            </div>
+                {% endif %}
+
+                <!-- Content Matches from Introduction/Abstract -->
+                {% if grouped_results %}
+                <h2 class="h3">Introduction/Abstract Content Matches</h2>
+                <div class="list-group mb-4">
+                    {% for thesis_id, thesis in grouped_results.items() %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between">
+                            <h3 class="h5">
+                                <a href="{{ url_for('view_thesis', thesis_id=thesis_id, q=search_query) }}">
+                                    {{ thesis.thesis_title | replace(search_query, "<mark>" ~ search_query ~ "</mark>") | safe }}
+                                </a>
+                            </h3>
+                            <small>{{ thesis.year_made }}</small>
+                        </div>
+                        <p><strong>Authors:</strong> {{ thesis.authors }}</p>
+                        <p class="text-success"><strong>Average Match:</strong> {{ thesis.average_match }}%</p>
+
+                        {% for match in thesis.matches %}
+                        <div class="mt-2">
+                            <small><strong>Page {{ match.page_number }}</strong> — Match: {{ match.match_percentage }}%</small><br>
+                            <span class="text-muted">
+                                {{ match.text_snippet | replace(search_query, "<mark>" ~ search_query ~ "</mark>") | safe }}
+                            </span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
 
                 <!-- Pagination -->
-                <nav aria-label="Page navigation">
+                <nav aria-label="Theses pagination">
                     <ul class="pagination justify-content-center">
                         {% if page > 1 %}
                         <li class="page-item">
-                            <a class="page-link" href="{{ url_for('browse_theses', page=page-1, q=search_query, year=year_filter, keyword=keyword_filter, sort=sort_by) }}">Previous</a>
+                            <a class="page-link" href="{{ url_for('browse_theses', page=page-1, q=search_query, year=year_filter, keyword=keyword_filter, sort=sort_by) }}" aria-label="Previous">
+                                <span aria-hidden="true">Previous</span>
+                            </a>
                         </li>
                         {% endif %}
                         
                         {% for p in range(1, total_pages + 1) %}
                             <li class="page-item {% if p == page %}active{% endif %}">
                                 {% if p == page %}
-                                <span class="page-link">{{ p }}</span>
+                                <span class="page-link" aria-current="page">{{ p }}</span>
                                 {% else %}
                                 <a class="page-link" href="{{ url_for('browse_theses', page=p, q=search_query, year=year_filter, keyword=keyword_filter, sort=sort_by) }}">{{ p }}</a>
                                 {% endif %}
@@ -138,7 +187,9 @@
                         
                         {% if page < total_pages %}
                         <li class="page-item">
-                            <a class="page-link" href="{{ url_for('browse_theses', page=page+1, q=search_query, year=year_filter, keyword=keyword_filter, sort=sort_by) }}">Next</a>
+                            <a class="page-link" href="{{ url_for('browse_theses', page=page+1, q=search_query, year=year_filter, keyword=keyword_filter, sort=sort_by) }}" aria-label="Next">
+                                <span aria-hidden="true">Next</span>
+                            </a>
                         </li>
                         {% endif %}
                     </ul>
@@ -157,7 +208,7 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="imageSearchModalLabel">Search with Image</h5>
+                <h2 class="modal-title h5" id="imageSearchModalLabel">Search with Image</h2>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -175,28 +226,28 @@
                     
                     <div class="mb-3">
                         <input type="file" id="image-upload" accept="image/*" class="d-none">
-                        <button type="button" class="btn btn-primary me-2" onclick="document.getElementById('image-upload').click()">
+                        <button type="button" class="btn btn-primary me-2" onclick="document.getElementById('image-upload').click()" aria-label="Upload image">
                             <i class="fas fa-upload me-1"></i> Upload Image
                         </button>
-                        <button type="button" class="btn btn-success" onclick="startCamera()">
+                        <button type="button" class="btn btn-success" onclick="startCamera()" aria-label="Take photo">
                             <i class="fas fa-camera me-1"></i> Take Photo
                         </button>
                     </div>
                     
                     <div id="camera-preview" class="d-none mb-3">
-                        <video id="video" width="100%" autoplay playsinline></video>
-                        <button type="button" class="btn btn-primary mt-2" onclick="capturePhoto()">
+                        <video id="video" width="100%" autoplay playsinline aria-label="Camera preview"></video>
+                        <button type="button" class="btn btn-primary mt-2" onclick="capturePhoto()" aria-label="Capture photo">
                             <i class="fas fa-camera me-1"></i> Capture
                         </button>
                     </div>
                     
                     <div id="image-preview" class="mb-3 d-none">
-                        <img id="preview" src="#" alt="Preview" class="img-fluid rounded">
+                        <img id="preview" src="#" alt="Preview of uploaded image" class="img-fluid rounded">
                         <div class="mt-2">
-                            <button type="button" class="btn btn-success me-2" onclick="processImage()">
+                            <button type="button" class="btn btn-success me-2" onclick="processImage()" aria-label="Search with this image">
                                 <i class="fas fa-search me-1"></i> Search Text
                             </button>
-                            <button type="button" class="btn btn-outline-secondary" onclick="resetImageSearch()">
+                            <button type="button" class="btn btn-outline-secondary" onclick="resetImageSearch()" aria-label="Retry image capture">
                                 <i class="fas fa-redo me-1"></i> Retry
                             </button>
                         </div>
@@ -223,12 +274,21 @@ let stream = null;
 document.getElementById('image-upload').addEventListener('change', function(e) {
     if (e.target.files.length > 0) {
         const file = e.target.files[0];
+        if (!file.type.match('image.*')) {
+            showError('Please select an image file');
+            return;
+        }
+
         const reader = new FileReader();
         
         reader.onload = function(event) {
             document.getElementById('preview').src = event.target.result;
             document.getElementById('camera-preview').classList.add('d-none');
             document.getElementById('image-preview').classList.remove('d-none');
+        }
+        
+        reader.onerror = function() {
+            showError('Error reading the image file');
         }
         
         reader.readAsDataURL(file);
@@ -241,22 +301,29 @@ function startCamera() {
     document.getElementById('camera-preview').classList.remove('d-none');
     
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        navigator.mediaDevices.getUserMedia({ video: true })
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
             .then(function(mediaStream) {
                 stream = mediaStream;
-                document.getElementById('video').srcObject = mediaStream;
+                const video = document.getElementById('video');
+                video.srcObject = mediaStream;
+                return video.play();
             })
             .catch(function(error) {
-                alert('Could not access camera: ' + error.message);
+                showError('Could not access camera: ' + error.message);
             });
     } else {
-        alert('Camera access not supported by your browser');
+        showError('Camera access not supported by your browser');
     }
 }
 
 // Capture photo from camera
 function capturePhoto() {
     const video = document.getElementById('video');
+    if (!video.videoWidth || !video.videoHeight) {
+        showError('Camera not ready. Please try again.');
+        return;
+    }
+
     const canvas = document.createElement('canvas');
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
@@ -269,18 +336,29 @@ function capturePhoto() {
     // Stop camera
     if (stream) {
         stream.getTracks().forEach(track => track.stop());
+        stream = null;
     }
 }
 
 // Process image for OCR
 function processImage() {
     const preview = document.getElementById('preview');
+    if (!preview.src || preview.src === '#') {
+        showError('No image selected');
+        return;
+    }
+
     const formData = new FormData();
     
     // Convert data URL to blob
     fetch(preview.src)
-        .then(res => res.blob())
+        .then(res => {
+            if (!res.ok) throw new Error('Failed to process image');
+            return res.blob();
+        })
         .then(blob => {
+            if (blob.size === 0) throw new Error('Empty image');
+            
             // Create a file from the blob
             const file = new File([blob], 'search_image.jpg', { type: 'image/jpeg' });
             formData.append('file', file);
@@ -290,92 +368,32 @@ function processImage() {
             document.getElementById('processing-indicator').classList.remove('d-none');
             
             // Send to server for OCR processing
-            fetch('{{ url_for("process_image_search") }}', {
+            return fetch('{{ url_for("process_image_search") }}', {
                 method: 'POST',
-                body: formData,
-                headers: {
-                    // Don't set Content-Type, let the browser set it with boundary
-                }
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
-            .then(data => {
-                document.getElementById('processing-indicator').classList.add('d-none');
-                
-                if (data.success && data.topic) {
-                    // Close modal and redirect to search with extracted topic
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('imageSearchModal'));
-                    modal.hide();
-                    window.location.href = '{{ url_for("browse_theses") }}?q=' + encodeURIComponent(data.topic);
-                } else {
-                    showError(data.error || 'Could not extract main topic from image. Please try again.');
-                }
-            })
-            .catch(error => {
-                document.getElementById('processing-indicator').classList.add('d-none');
-                showError('Error processing image: ' + error.message);
+                body: formData
             });
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            document.getElementById('processing-indicator').classList.add('d-none');
+            
+            if (data.success && data.topic) {
+                // Close modal and redirect to search with extracted topic
+                const modal = bootstrap.Modal.getInstance(document.getElementById('imageSearchModal'));
+                modal.hide();
+                window.location.href = '{{ url_for("browse_theses") }}?q=' + encodeURIComponent(data.topic);
+            } else {
+                throw new Error(data.error || 'Could not extract main topic from image');
+            }
         })
         .catch(error => {
             document.getElementById('processing-indicator').classList.add('d-none');
-            showError('Error preparing image for upload: ' + error.message);
-        });
-}
-// Process image for OCR
-function processImage() {
-    const preview = document.getElementById('preview');
-    const formData = new FormData();
-    
-    // Convert data URL to blob
-    fetch(preview.src)
-        .then(res => res.blob())
-        .then(blob => {
-            // Create a file from the blob
-            const file = new File([blob], 'search_image.jpg', { type: 'image/jpeg' });
-            formData.append('file', file);
-            
-            // Show processing indicator
-            document.getElementById('image-preview').classList.add('d-none');
-            document.getElementById('processing-indicator').classList.remove('d-none');
-            
-            // Send to server for OCR processing
-            fetch('{{ url_for("process_image_search") }}', {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    // Don't set Content-Type, let the browser set it with boundary
-                }
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
-            .then(data => {
-                document.getElementById('processing-indicator').classList.add('d-none');
-                
-                if (data.success && data.topic) {
-                    // Close modal and redirect to search with extracted topic
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('imageSearchModal'));
-                    modal.hide();
-                    window.location.href = '{{ url_for("browse_theses") }}?q=' + encodeURIComponent(data.topic);
-                } else {
-                    showError(data.error || 'Could not extract main topic from image. Please try again.');
-                }
-            })
-            .catch(error => {
-                document.getElementById('processing-indicator').classList.add('d-none');
-                showError('Error processing image: ' + error.message);
-            });
-        })
-        .catch(error => {
-            document.getElementById('processing-indicator').classList.add('d-none');
-            showError('Error preparing image for upload: ' + error.message);
+            showError(error.message || 'Error processing image');
         });
 }
 
@@ -395,11 +413,16 @@ function resetImageSearch() {
 
 // Show error message
 function showError(message) {
+    // Remove any existing error messages
+    const existingErrors = document.querySelectorAll('.alert-danger');
+    existingErrors.forEach(el => el.remove());
+    
     document.getElementById('processing-indicator').classList.add('d-none');
     
     const errorDiv = document.createElement('div');
     errorDiv.className = 'alert alert-danger mt-3';
     errorDiv.innerHTML = `
+        <i class="fas fa-exclamation-circle me-2"></i>
         ${message}
         <button class="btn btn-sm btn-outline-secondary mt-2" onclick="resetImageSearch()">
             Try Again
@@ -412,6 +435,11 @@ function showError(message) {
 // Clean up camera when modal is closed
 document.getElementById('imageSearchModal').addEventListener('hidden.bs.modal', function() {
     resetImageSearch();
+});
+
+// Initialize Bootstrap tooltips if needed
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize any tooltips or popovers here if needed
 });
 </script>
 {% endblock %}

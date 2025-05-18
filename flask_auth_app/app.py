@@ -23,6 +23,8 @@ from markupsafe import Markup
 from nltk.stem import PorterStemmer
 import re
 import threading
+from difflib import SequenceMatcher
+from collections import defaultdict
 
 from ocr_ner_utils import (
     extract_text_from_pdf,
@@ -92,32 +94,28 @@ def index():
         return redirect(url_for('login'))
     return render_template('index.html')
 
+def compute_similarity(a, b):
+    """Compute similarity ratio as percentage."""
+    return round(SequenceMatcher(None, a.lower(), b.lower()).ratio() * 100, 2)
 @app.route('/search')
 @login_required
 def search():
+    from difflib import SequenceMatcher
+
     query = request.args.get('q', '') or session.get('search_query', '')
-    
     if not query:
         return redirect(url_for('browse_theses'))
 
-    # Store query in session
     session['search_query'] = query
-    
-    # Expand common abbreviations
     expanded_query = expand_search_terms(query)
-    
-    # Prepare search terms - remove duplicates while preserving order
-    seen = set()
-    search_terms = []
-    for term in expanded_query.split():
-        if term not in seen:
-            seen.add(term)
-            search_terms.append(term)
-    clean_query = ' '.join(search_terms)
-    
+
+    # Clean the query for BOOLEAN MODE search
+    clean_query = query.strip()
+    clean_query_formatted = f'+{clean_query}' if len(clean_query.split()) == 1 else f'"{clean_query}"'
+
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
 
-    # Search metadata with proper boolean full-text search
+    # Search metadata
     cursor.execute("""
         SELECT pt.*,
                CASE 
@@ -132,16 +130,16 @@ def search():
            OR pt.year_made = %s
         ORDER BY relevance_boost DESC, pt.published_at DESC
     """, (
-        f'+{clean_query}' if len(clean_query.split()) == 1 else f'"{clean_query}"',
-        f'+{clean_query}' if len(clean_query.split()) == 1 else f'"{clean_query}"',
-        f'+{clean_query}' if len(clean_query.split()) == 1 else f'"{clean_query}"',
-        query,  # For year matching
-        f'+{clean_query}' if len(clean_query.split()) == 1 else f'"{clean_query}"',
-        query   # For year matching
+        clean_query_formatted,
+        clean_query_formatted,
+        clean_query_formatted,
+        query,
+        clean_query_formatted,
+        query
     ))
     metadata_results = cursor.fetchall()
 
-    # Search in full text with context snippets
+    # Full-text content search (only intro/abstract pages prioritized)
     cursor.execute("""
         SELECT 
             pt.id as thesis_id,
@@ -149,36 +147,55 @@ def search():
             pt.authors,
             pt.year_made,
             tp.page_number,
+            tp.page_text,
             SUBSTRING_INDEX(
                 SUBSTRING_INDEX(
                     SUBSTRING(tp.page_text, 
-                        GREATEST(1, LOCATE(%s, LOWER(tp.page_text)) - 100, 
+                        GREATEST(1, LOCATE(%s, LOWER(tp.page_text)) - 100), 
                         300
                     ), 
-                    ' ', 
-                    -10
-                ),
-                ' ', 
-                10
-            ) as text_snippet,
+                ' ', -10), 
+            ' ', 10) as text_snippet,
             (LENGTH(tp.page_text) - LENGTH(REPLACE(LOWER(tp.page_text), LOWER(%s), ''))) / LENGTH(%s) as term_frequency,
             MATCH(tp.page_text) AGAINST(%s IN BOOLEAN MODE) as relevance_score
         FROM thesis_pages tp
         JOIN published_theses pt ON tp.thesis_id = pt.id
-        WHERE MATCH(tp.page_text) AGAINST(%s IN BOOLEAN MODE)
-        ORDER BY (relevance_score * term_frequency) DESC
+        WHERE tp.page_number BETWEEN 1 AND 5
+        AND MATCH(tp.page_text) AGAINST(%s IN BOOLEAN MODE)
+        ORDER BY (relevance_score * term_frequency * 1.5) DESC
         LIMIT 50
     """, (
         query.lower(), 
         query.lower(), 
         query.lower(),
-        f'+{clean_query}' if len(clean_query.split()) == 1 else f'"{clean_query}"',
-        f'+{clean_query}' if len(clean_query.split()) == 1 else f'"{clean_query}"'
+        clean_query_formatted,
+        clean_query_formatted
     ))
-    
+
     full_text_results = cursor.fetchall()
 
-    # Group full text results by thesis (rest of the function remains the same)
+    # Function to calculate match %
+    def calculate_match_percentage(query, text):
+        doc1 = nlp(query.lower())
+        doc2 = nlp(text.lower())
+
+        # Jaccard similarity
+        query_terms = set(token.text for token in doc1 if not token.is_stop and token.is_alpha)
+        text_terms = set(token.text for token in doc2 if not token.is_stop and token.is_alpha)
+        jaccard = len(query_terms & text_terms) / len(query_terms | text_terms) if (query_terms | text_terms) else 0
+
+        # Token similarity (cosine-like, uses spaCy vectors)
+        vector_similarity = doc1.similarity(doc2) if doc1.vector_norm and doc2.vector_norm else 0
+
+        # Sequence match (character-level)
+        from difflib import SequenceMatcher
+        sequence = SequenceMatcher(None, query.lower(), text.lower()).ratio()
+
+        # Combine all three with weights
+        return round((jaccard * 0.3 + vector_similarity * 0.4 + sequence * 0.3) * 100, 2)
+
+
+    # Group full text results by thesis
     grouped_results = {}
     for result in full_text_results:
         thesis_id = result['thesis_id']
@@ -187,18 +204,45 @@ def search():
                 'thesis_title': result['thesis_title'],
                 'authors': result['authors'],
                 'year_made': result['year_made'],
-                'matches': []
+                'matches': [],
+                'match_scores': []
             }
+
+        match_score = calculate_match_percentage(query, result['page_text'])
         grouped_results[thesis_id]['matches'].append({
             'page_number': result['page_number'],
             'text_snippet': result['text_snippet'],
-            'relevance_score': result['relevance_score']
+            'relevance_score': result['relevance_score'],
+            'match_percentage': match_score
         })
+        grouped_results[thesis_id]['match_scores'].append(match_score)
+
+    # Average match score per thesis
+    for thesis in grouped_results.values():
+        scores = thesis['match_scores']
+        weighted_sum = sum(
+            score * 1.5 if match['page_number'] <= 5 else score
+            for score, match in zip(scores, thesis['matches'])
+        )
+        weight_count = sum(1.5 if match['page_number'] <= 5 else 1 for match in thesis['matches'])
+        thesis['average_match'] = round(weighted_sum / weight_count, 2) if weight_count else 0
+        del thesis['match_scores']
+
+    # Match percentage for metadata
+    for result in metadata_results:
+        combined_text = ' '.join([
+            result.get('title', ''),
+            result.get('authors', ''),
+            result.get('keywords', ''),
+            result.get('school', '')
+        ])
+        result['match_percentage'] = calculate_match_percentage(query, combined_text)
 
     return render_template('search_results.html',
-                         query=query,
-                         metadata_results=metadata_results,
-                         grouped_results=grouped_results)
+                           query=query,
+                           metadata_results=metadata_results,
+                           grouped_results=grouped_results)
+
 # if want to add more cs abbreviated term add here.
 def expand_search_terms(query):
     """Expand common abbreviations to their full forms for better search results."""
@@ -435,6 +479,8 @@ def user_dashboard():
                              'saved_theses': bookmarks_stats['saved_theses']
                          },
                          recent_theses=recent_theses)
+from difflib import SequenceMatcher
+
 @app.route('/browse-theses')
 @login_required
 def browse_theses():
@@ -448,6 +494,8 @@ def browse_theses():
     sort_by = request.args.get('sort', 'recent')  # recent, oldest, title
     page = request.args.get('page', 1, type=int)
     per_page = 10
+
+    original_query = search_query  # Preserve original for display
     
     # Expand search terms if needed
     if search_query:
@@ -463,31 +511,31 @@ def browse_theses():
         'big data', 'data mining', 'virtual reality', 'vr', 
         'augmented reality', 'ar', 'operating system', 'os'
     ]
-    
+
     query = """
         SELECT pt.* 
         FROM published_theses pt
         WHERE 1=1
     """
     params = []
-    
+
     if search_query:
         query += """
-            AND (LOWER(pt.title) LIKE %s OR LOWER(pt.authors) LIKE %s OR LOWER(pt.keywords) LIKE %s OR pt.year_made = %s)
+            AND (LOWER(pt.title) LIKE %s OR LOWER(pt.authors) LIKE %s 
+                 OR LOWER(pt.keywords) LIKE %s OR pt.year_made = %s)
         """
         like_pattern = f"%{search_query.lower()}%"
         params.extend([like_pattern, like_pattern, like_pattern, search_query])
-    
+
     if year_filter:
         query += " AND pt.year_made = %s"
         params.append(year_filter)
-    
+
     if keyword_filter:
-        # Expand keyword if it's an abbreviation
-        expanded_keyword = expand_search_terms(keyword_filter).split()[-1]  # Take the last expansion
+        expanded_keyword = expand_search_terms(keyword_filter).split()[-1]
         query += " AND LOWER(pt.keywords) LIKE %s"
         params.append(f'%{expanded_keyword.lower()}%')
-    
+
     # Sorting
     if sort_by == 'recent':
         query += " ORDER BY pt.published_at DESC"
@@ -495,51 +543,65 @@ def browse_theses():
         query += " ORDER BY pt.published_at ASC"
     elif sort_by == 'title':
         query += " ORDER BY pt.title ASC"
-    
+
     # Add pagination
     query += " LIMIT %s OFFSET %s"
-    params.extend([per_page, (page-1)*per_page])
-    
+    params.extend([per_page, (page - 1) * per_page])
+
     cursor.execute(query, params)
     theses = cursor.fetchall()
-    
-    # Get total count
+
+    # 🔍 Add match percentage
+    def get_similarity(a, b):
+        return round(SequenceMatcher(None, a.lower(), b.lower()).ratio() * 100, 2)
+
+    if original_query:
+        for thesis in theses:
+            combined_text = ' '.join([
+                thesis.get('title', ''),
+                thesis.get('authors', ''),
+                thesis.get('keywords', ''),
+                thesis.get('school', '')
+            ])
+            thesis['match_percentage'] = get_similarity(original_query, combined_text)
+
+    # 📊 Get total count
     count_query = "SELECT COUNT(*) as total FROM published_theses WHERE 1=1"
     count_params = []
-    
+
     if search_query:
         count_query += " AND (LOWER(title) LIKE %s OR LOWER(authors) LIKE %s OR LOWER(keywords) LIKE %s OR year_made = %s)"
         like_pattern = f"%{search_query.lower()}%"
         count_params.extend([like_pattern, like_pattern, like_pattern, search_query])
-    
+
     if year_filter:
         count_query += " AND year_made = %s"
         count_params.append(year_filter)
-    
+
     if keyword_filter:
         expanded_keyword = expand_search_terms(keyword_filter).split()[-1]
         count_query += " AND LOWER(keywords) LIKE %s"
         count_params.append(f'%{expanded_keyword.lower()}%')
-    
+
     cursor.execute(count_query, count_params)
     total = cursor.fetchone()['total']
-    
-    # Get available years for filter
+
+    # 📅 Get available years
     cursor.execute("SELECT DISTINCT year_made FROM published_theses ORDER BY year_made DESC")
     available_years = [str(row['year_made']) for row in cursor.fetchall()]
-    
-    return render_template('user_browse_theses.html', 
-                         theses=theses, 
-                         search_query=search_query,
-                         year_filter=year_filter,
-                         keyword_filter=keyword_filter,
-                         sort_by=sort_by,
-                         common_cs_keywords=common_cs_keywords,
-                         available_years=available_years,
-                         page=page,
-                         per_page=per_page,
-                         total=total,
-                         total_pages=(total + per_page - 1) // per_page)
+
+    return render_template('user_browse_theses.html',
+                           theses=theses,
+                           search_query=original_query,
+                           year_filter=year_filter,
+                           keyword_filter=keyword_filter,
+                           sort_by=sort_by,
+                           common_cs_keywords=common_cs_keywords,
+                           available_years=available_years,
+                           page=page,
+                           per_page=per_page,
+                           total=total,
+                           total_pages=(total + per_page - 1) // per_page)
 
 @app.route('/admin/browse-theses')
 @login_required

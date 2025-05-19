@@ -28,7 +28,7 @@ from collections import defaultdict
 
 from ocr_ner_utils import (
     extract_text_from_pdf,
-    extract_text_from_image,
+    extract_text_from_image_by_type,
     extract_info
 )
 
@@ -681,7 +681,7 @@ def process_image_search():
                 return jsonify({'success': False, 'error': 'Failed to save image'})
             
             # Extract text using OCR
-            text = extract_text_from_image(filepath)
+            text = extract_text_from_image_by_type(filepath)
             
             if not text or len(text.strip()) == 0:
                 return jsonify({'success': False, 'error': 'No text found in image'})
@@ -984,7 +984,7 @@ def admin_upload():
         if filename.lower().endswith('.pdf'):
             text = extract_text_from_pdf(filepath)
         else:
-            text = extract_text_from_image(filepath)
+            text = extract_text_from_image_by_type(filepath)
         
         # Extract metadata
         thesis_info = extract_info(text)

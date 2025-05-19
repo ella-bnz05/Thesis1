@@ -6,6 +6,8 @@ import re
 import spacy
 import os
 from pathlib import Path
+from PIL import Image
+import tempfile
 
 # Load both models
 nlp_base = spacy.load("en_core_web_lg")
@@ -21,11 +23,17 @@ def preprocess_image_for_ocr(image_path):
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     # Resize to improve OCR accuracy
-    scale_percent = 150  # or 200
+    scale_percent = 70  # or 200
     width = int(gray.shape[1] * scale_percent / 100)
     height = int(gray.shape[0] * scale_percent / 100)
     dim = (width, height)
     resized = cv2.resize(gray, dim, interpolation=cv2.INTER_LINEAR)
+
+#    Apply slight Gaussian blur to reduce noise (avoids CLAHE + adaptive overkill)
+    blurred = cv2.GaussianBlur(gray, (3, 3), 0)
+
+    # Global thresholding instead of adaptive
+    _, binary = cv2.threshold(blurred, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
     # Binarization
     thresh = cv2.threshold(resized, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
@@ -33,12 +41,30 @@ def preprocess_image_for_ocr(image_path):
     # Denoise
     denoised = cv2.fastNlMeansDenoising(thresh, h=30)
 
-    # Save to temporary image file for pytesseract
-    temp_path = "/tmp/preprocessed_ocr.jpg"
-    cv2.imwrite(temp_path, denoised)
+     # Save the result
+    temp_path = os.path.join(tempfile.gettempdir(), "preprocessed_ocr.jpg")
+    cv2.imwrite(temp_path, binary)
+
 
     return temp_path
 
+def extract_text_from_image_by_type(image_path):
+    try:
+        ext = os.path.splitext(image_path)[1].lower()
+
+        if ext == ".png":
+            # Preprocess or handle PNG differently
+            return extract_text_from_png(image_path)
+        elif ext in [".jpg", ".jpeg"]:
+            # Preprocess or handle JPEG differently
+            return extract_text_from_jpeg(image_path)
+        else:
+            print(f"Unsupported image format: {ext}")
+            return ""
+    except Exception as e:
+        print(f"Error in extract_text_from_image_by_type: {str(e)}")
+        return ""
+    
 def extract_text_from_pdf(filepath):
     text = ""
     with open(filepath, 'rb') as f:
@@ -52,16 +78,35 @@ def extract_text_from_pdf(filepath):
     text = re.sub(r'-\n', '', text)         # Fix hyphenated words
     return text.strip()
 
-def extract_text_from_image(image_path):
+def extract_text_from_png(image_path):
+    """
+    Extract text from an image file using Tesseract OCR
+    """
     try:
-        processed_path = preprocess_image_for_ocr(image_path)
-        img = Image.open(processed_path)
+        img = Image.open(image_path)
         text = pytesseract.image_to_string(img)
         return text.strip()
     except Exception as e:
-        print(f"Error in extract_text_from_image: {str(e)}")
+        print(f"Error in extract_text_from_image_by_type: {str(e)}")
         return ""
+    
+def extract_text_from_jpeg(image_path):
+    try:
+        processed_path = preprocess_image_for_ocr(image_path)
+        img = Image.open(processed_path)
+        img.load()
+        img = img.convert('L')
+        img.info['dpi'] = (300, 300)
 
+      
+        config = "--oem 3 --psm 3"  # LSTM neural nets + assume single uniform block
+        text = pytesseract.image_to_string(img, config=config)
+
+        return text.strip()
+    except Exception as e:
+        print(f"Error in extract_text_from_image_by_type: {str(e)}")
+        return ""
+    
 def clean_ocr_text(text):
     replacements = {
         "‘": "'", "’": "'", "“": '"', "”": '"',
@@ -164,14 +209,3 @@ def extract_info(text):
     
     return info
 
-def extract_text_from_image(image_path):
-    """
-    Extract text from an image file using Tesseract OCR
-    """
-    try:
-        img = Image.open(image_path)
-        text = pytesseract.image_to_string(img)
-        return text.strip()
-    except Exception as e:
-        print(f"Error in extract_text_from_image: {str(e)}")
-        return ""

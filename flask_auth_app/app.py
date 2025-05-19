@@ -38,7 +38,7 @@ app.secret_key = 'your_secret_key'
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root'  
 app.config['MYSQL_PASSWORD'] = ''  
-app.config['MYSQL_DB'] = 'flask_auth'
+app.config['MYSQL_DB'] = 'flask_auth (3)'
 
 # Gmail SMTP Configuration
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'

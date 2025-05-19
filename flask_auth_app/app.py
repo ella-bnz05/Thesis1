@@ -38,7 +38,7 @@ app.secret_key = 'your_secret_key'
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root'  
 app.config['MYSQL_PASSWORD'] = ''  
-app.config['MYSQL_DB'] = 'flask_auth (3)'
+app.config['MYSQL_DB'] = 'flask_auth'
 
 # Gmail SMTP Configuration
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
@@ -48,7 +48,7 @@ app.config['MAIL_USERNAME'] = 'compscithesis@gmail.com'
 app.config['MAIL_PASSWORD'] = 'yrrl idjh teci uamk'  
 
 # Configure upload folder
-app.config['UPLOAD_FOLDER'] = 'uploads'
+app.config['UPLOAD_FOLDER'] = os.path.join(app.root_path, 'static', 'uploads')
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'pdf'}
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
@@ -1035,12 +1035,11 @@ def extract_page_count(filepath):
 
 # First, modify the admin_submissions route to handle status filtering
 @app.route('/admin/submissions')
-@login_required
 def admin_submissions():
     if not current_user.is_admin():
         abort(403)
 
-    # Change this line to default to 'pending'
+    # Default to 'pending'
     status_filter = request.args.get('status', 'pending')
 
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
@@ -1062,6 +1061,22 @@ def admin_submissions():
     cursor.execute(query, params)
     submissions = cursor.fetchall()
 
+    # Generate preview URLs for each submission
+    for sub in submissions:
+        if sub['file_path'] and os.path.exists(sub['file_path']):
+            # Check if it's an image file
+            if sub['file_path'].lower().endswith(('.png', '.jpg', '.jpeg', '.webp')):
+                # Create a URL that points to the actual file location
+                sub['preview_image_url'] = url_for(
+                    'serve_submission_file', 
+                    submission_id=sub['id'],
+                    _external=True
+                )
+            else:
+                sub['preview_image_url'] = None
+        else:
+            sub['preview_image_url'] = None
+
     # Get stats
     cursor.execute("""
         SELECT
@@ -1075,7 +1090,6 @@ def admin_submissions():
             (SELECT COUNT(*) FROM published_theses) AS total_published
     """)
     stats = cursor.fetchone()
-
 
     return render_template('admin_submissions.html',
                          submissions=submissions,
@@ -1246,8 +1260,9 @@ def review_submission(submission_id):
         if revised_file and revised_file.filename != '':
             if allowed_file(revised_file.filename):
                 filename = secure_filename(f"{submission_id}_{os.path.splitext(revised_file.filename)[0]}.pdf")
-                current_file = os.path.join(app.config['UPLOAD_FOLDER'], 'submissions', filename)
-                os.makedirs(os.path.dirname(current_file), exist_ok=True)
+                upload_dir = os.path.join(app.config['UPLOAD_FOLDER'], 'submissions')
+                os.makedirs(upload_dir, exist_ok=True)
+                current_file = os.path.join(upload_dir, filename)
                 revised_file.save(current_file)
                 cursor.execute("""
                     UPDATE thesis_submissions 
@@ -1369,11 +1384,10 @@ def review_submission(submission_id):
             flash(f'Error processing submission: {str(e)}', 'danger')
             return redirect(url_for('review_submission', submission_id=submission_id))
 
-    # GET request
+  # GET request
     preview_url = None
     if submission['file_path'] and os.path.exists(submission['file_path']):
-        if submission['file_path'].lower().endswith(('.png', '.jpg', '.jpeg')):
-            preview_url = url_for('static', filename='uploads/submissions/' + os.path.basename(submission['file_path']))
+        preview_url = url_for('static', filename='uploads/submissions/' + os.path.basename(submission['file_path']))
 
     return render_template('review_submission.html', 
                          submission=submission,
@@ -1395,16 +1409,25 @@ def serve_submission_file(submission_id):
     if not result or not result['file_path'] or not os.path.exists(result['file_path']):
         abort(404)
 
-    # Determine if it's an image or PDF
-    if result['file_path'].lower().endswith(('.png', '.jpg', '.jpeg')):
-        return send_file(result['file_path'], mimetype='image/jpeg')
-    elif result['file_path'].lower().endswith('.pdf'):
-        response = make_response(send_file(result['file_path']))
-        response.headers["Content-Disposition"] = "inline; filename=view.pdf"
-        return response
+    # Determine content type based on file extension
+    if result['file_path'].lower().endswith('.png'):
+        mimetype = 'image/png'
+    elif result['file_path'].lower().endswith('.jpg') or result['file_path'].lower().endswith('.jpeg'):
+        mimetype = 'image/jpeg'
+    elif result['file_path'].lower().endswith('.webp'):
+        mimetype = 'image/webp'
     else:
-        abort(404)
+        # For non-image files, we'll just send them as-is
+        mimetype = None
+
+    # Create response with appropriate headers
+    response = make_response(send_file(result['file_path'], mimetype=mimetype))
+    
+    # For images, set caching headers to improve performance
+    if mimetype and mimetype.startswith('image/'):
+        response.headers['Cache-Control'] = 'public, max-age=3600'  # Cache for 1 hour
         
+    return response
 @app.route('/admin/publish/<int:submission_id>', methods=['POST'])
 @login_required
 def publish_thesis(submission_id):

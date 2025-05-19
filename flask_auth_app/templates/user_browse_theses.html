@@ -71,8 +71,8 @@
                                         <label for="keywordFilter" class="visually-hidden">Filter by keyword</label>
                                         <select class="form-select" id="keywordFilter" name="keyword" aria-label="Filter by keyword">
                                             <option value="">All Keywords</option>
-                                            {% for keyword in common_cs_keywords %}
-                                                <option value="{{ keyword }}" {% if keyword_filter == keyword %}selected{% endif %}>{{ keyword|title }}</option>
+                                            {% for key, display in common_cs_keywords.items() %}
+                                                <option value="{{ key }}" {% if keyword_filter == key %}selected{% endif %}>{{ display }}</option>
                                             {% endfor %}
                                         </select>
                                     </div>

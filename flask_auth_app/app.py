@@ -486,55 +486,83 @@ from difflib import SequenceMatcher
 def browse_theses():
     if current_user.is_admin():
         return redirect(url_for('admin_browse_theses'))
-    
+
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    search_query = request.args.get('q', '')
-    year_filter = request.args.get('year', '')
-    keyword_filter = request.args.get('keyword', '')
+    search_query = request.args.get('q', '').strip()
+    year_filter = request.args.get('year', '').strip()
+    keyword_filter = request.args.get('keyword', '').strip()
     sort_by = request.args.get('sort', 'recent')  # recent, oldest, title
     page = request.args.get('page', 1, type=int)
     per_page = 10
 
     original_query = search_query  # Preserve original for display
-    
-    # Expand search terms if needed
+
+    # Expand search query if present
     if search_query:
         search_query = expand_search_terms(search_query)
-    
-    # Common CS keywords for filter (now includes abbreviations)
-    common_cs_keywords = [
-        'artificial intelligence', 'ai', 'machine learning', 'ml', 'data science',
-        'cybersecurity', 'networking', 'database', 'db', 'algorithm',
-        'software engineering', 'web development', 'mobile development',
-        'cloud computing', 'blockchain', 'iot', 'internet of things', 
-        'computer vision', 'cv', 'natural language processing', 'nlp',
-        'big data', 'data mining', 'virtual reality', 'vr', 
-        'augmented reality', 'ar', 'operating system', 'os'
-    ]
 
-    query = """
-        SELECT pt.* 
-        FROM published_theses pt
-        WHERE 1=1
-    """
-    params = []
-
-    if search_query:
-        query += """
-            AND (LOWER(pt.title) LIKE %s OR LOWER(pt.authors) LIKE %s 
-                 OR LOWER(pt.keywords) LIKE %s OR pt.year_made = %s)
-        """
-        like_pattern = f"%{search_query.lower()}%"
-        params.extend([like_pattern, like_pattern, like_pattern, search_query])
-
-    if year_filter:
-        query += " AND pt.year_made = %s"
-        params.append(year_filter)
-
+    # Expand keyword filter if present
     if keyword_filter:
-        expanded_keyword = expand_search_terms(keyword_filter).split()[-1]
-        query += " AND LOWER(pt.keywords) LIKE %s"
-        params.append(f'%{expanded_keyword.lower()}%')
+        keyword_filter_expanded = expand_search_terms(keyword_filter).lower()
+    else:
+        keyword_filter_expanded = ''
+
+    common_cs_keywords = {
+        'ai': 'Artificial Intelligence (AI)',
+        'ml': 'Machine Learning (ML)',
+        'data science': 'Data Science',
+        'cybersecurity': 'Cybersecurity',
+        'networking': 'Networking',
+        'database': 'Database',
+        'db': 'Database (DB)',
+        'algorithm': 'Algorithm',
+        'software engineering': 'Software Engineering',
+        'web development': 'Web Development',
+        'mobile development': 'Mobile Development',
+        'cloud computing': 'Cloud Computing',
+        'blockchain': 'Blockchain',
+        'iot': 'Internet of Things (IoT)',
+        'cv': 'Computer Vision (CV)',
+        'nlp': 'Natural Language Processing (NLP)',
+        'big data': 'Big Data',
+        'data mining': 'Data Mining',
+        'virtual reality': 'Virtual Reality (VR)',
+        'augmented reality': 'Augmented Reality (AR)',
+        'operating system': 'Operating System',
+    }
+
+    # Helper to build WHERE clauses and params
+    def build_filters(base_query="WHERE 1=1"):
+        query = base_query
+        params = []
+
+        if search_query:
+            query += """
+                AND (
+                    LOWER(pt.title) LIKE %s OR
+                    LOWER(pt.authors) LIKE %s OR
+                    LOWER(pt.keywords) LIKE %s OR
+                    pt.year_made = %s
+                )
+            """
+            like_pattern = f"%{search_query.lower()}%"
+            params.extend([like_pattern, like_pattern, like_pattern, search_query])
+
+        if year_filter:
+            query += " AND pt.year_made = %s"
+            params.append(year_filter)
+
+        if keyword_filter_expanded:
+            query += " AND LOWER(pt.keywords) LIKE %s"
+            params.append(f"%{keyword_filter_expanded}%")
+
+        return query, params
+
+    # Build main query
+    base_query = "FROM published_theses pt WHERE 1=1"
+    filters_query, filters_params = build_filters(base_query)
+
+    query = "SELECT pt.* " + filters_query
 
     # Sorting
     if sort_by == 'recent':
@@ -544,14 +572,16 @@ def browse_theses():
     elif sort_by == 'title':
         query += " ORDER BY pt.title ASC"
 
-    # Add pagination
+    # Pagination
     query += " LIMIT %s OFFSET %s"
-    params.extend([per_page, (page - 1) * per_page])
+    filters_params.extend([per_page, (page - 1) * per_page])
 
-    cursor.execute(query, params)
+    cursor.execute(query, filters_params)
     theses = cursor.fetchall()
 
-    # 🔍 Add match percentage
+    # Calculate match percentage
+    from difflib import SequenceMatcher
+
     def get_similarity(a, b):
         return round(SequenceMatcher(None, a.lower(), b.lower()).ratio() * 100, 2)
 
@@ -565,28 +595,12 @@ def browse_theses():
             ])
             thesis['match_percentage'] = get_similarity(original_query, combined_text)
 
-    # 📊 Get total count
-    count_query = "SELECT COUNT(*) as total FROM published_theses WHERE 1=1"
-    count_params = []
-
-    if search_query:
-        count_query += " AND (LOWER(title) LIKE %s OR LOWER(authors) LIKE %s OR LOWER(keywords) LIKE %s OR year_made = %s)"
-        like_pattern = f"%{search_query.lower()}%"
-        count_params.extend([like_pattern, like_pattern, like_pattern, search_query])
-
-    if year_filter:
-        count_query += " AND year_made = %s"
-        count_params.append(year_filter)
-
-    if keyword_filter:
-        expanded_keyword = expand_search_terms(keyword_filter).split()[-1]
-        count_query += " AND LOWER(keywords) LIKE %s"
-        count_params.append(f'%{expanded_keyword.lower()}%')
-
-    cursor.execute(count_query, count_params)
+    # Get total count
+    count_query = "SELECT COUNT(*) as total " + filters_query
+    cursor.execute(count_query, filters_params[:-2])  # Remove LIMIT and OFFSET params
     total = cursor.fetchone()['total']
 
-    # 📅 Get available years
+    # Get available years
     cursor.execute("SELECT DISTINCT year_made FROM published_theses ORDER BY year_made DESC")
     available_years = [str(row['year_made']) for row in cursor.fetchall()]
 
@@ -602,6 +616,7 @@ def browse_theses():
                            per_page=per_page,
                            total=total,
                            total_pages=(total + per_page - 1) // per_page)
+
 
 @app.route('/admin/browse-theses')
 @login_required

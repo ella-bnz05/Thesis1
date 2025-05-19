@@ -15,7 +15,12 @@
         <main class="col-md-9 col-lg-10 ms-sm-auto px-md-4 py-4">
             <!-- Header -->
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1 class="h2 fw-bold">{{ thesis.title }}</h1>
+                <div>
+                    <h1 class="h2 fw-bold d-inline-block">{{ thesis.title }}</h1>
+                         <button onclick="window.history.back()" class="btn btn-outline-secondary me-2">
+                        <i class="fas fa-arrow-left"></i> Back
+                    </button>
+                </div>
                 <button id="bookmark-btn" class="btn {% if is_bookmarked %}btn-warning{% else %}btn-outline-secondary{% endif %}">
                     {% if is_bookmarked %}
                         <i class="fas fa-bookmark"></i> Bookmarked
@@ -56,22 +61,23 @@
                     </div>
                 </div>
             </div>
-                <!-- Single PDF Viewer for Title and Introduction -->
-                <div class="card shadow-sm mb-4">
-                    <div class="card-header bg-primary text-white">
-                        <h4 class="mb-0">Thesis Preview (Title Page and Introduction)</h4>
-                    </div>
-                    <div class="card-body p-0">
-                        <div class="pdf-viewer-container">
-                            <embed 
-                                src="{{ url_for('serve_limited_thesis', thesis_id=thesis.id) }}" 
-                                type="application/pdf" 
-                                width="100%" 
-                                height="100%"
-                                id="thesisViewer">
-                        </div>
+            
+            <!-- Single PDF Viewer for Title and Introduction -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Thesis Preview (Title Page and Introduction)</h4>
+                </div>
+                <div class="card-body p-0">
+                    <div class="pdf-viewer-container">
+                        <embed 
+                            src="{{ url_for('serve_limited_thesis', thesis_id=thesis.id) }}" 
+                            type="application/pdf" 
+                            width="100%" 
+                            height="100%"
+                            id="thesisViewer">
                     </div>
                 </div>
+            </div>
 
             <!-- Footer Note -->
             <div class="alert alert-info mt-4">
@@ -131,18 +137,23 @@
         -webkit-user-select: none;
     }
     .pdf-viewer-container {
-    height: 80vh;
-    background-color: #f8f9fa;
-    position: relative;
-    overflow: hidden; /* prevent internal scrolling */
-}
+        height: 80vh;
+        background-color: #f8f9fa;
+        position: relative;
+        overflow: hidden; /* prevent internal scrolling */
+    }
 
-#thesisViewer {
-    width: 100%;
-    height: 100%;
-    border: none;
-    display: block;
-}
+    #thesisViewer {
+        width: 100%;
+        height: 100%;
+        border: none;
+        display: block;
+    }
+    
+    /* For the underlined title link */
+    .thesis-title-link {
+        text-decoration: underline;
+    }
 </style>
 
 <!-- Bookmark Script -->

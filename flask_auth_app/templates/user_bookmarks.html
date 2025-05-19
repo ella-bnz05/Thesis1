@@ -3,9 +3,11 @@
 {% block content %}
 <div class="container-fluid">
     <div class="row">
-        <!-- Sidebar Column - Using the included sidebar template -->
-        <div class="col-md-3 col-lg-2 d-md-block sidebar">
-            {% include "user_sidebar.html" %}
+        <!-- Sidebar -->
+        <div class="col-lg-3 order-lg-1 order-2 mb-4">
+            <div class="position-sticky" style="top: 80px;">
+                {% include "user_sidebar.html" %}
+            </div>
         </div>
 
         <!-- Main Content Column -->
@@ -123,20 +125,24 @@
     </div>
 </div>
 
+<!-- Required JS -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
 <script>
 $(document).ready(function() {
     let currentThesisId = null;
-    
-    // Get CSRF token from meta tag (make sure your base template includes this)
+
+    // Get CSRF token from meta tag
     function getCSRFToken() {
         return $('meta[name="csrf-token"]').attr('content') || '';
     }
-    
+
     $('.remove-bookmark').click(function() {
         currentThesisId = $(this).data('thesis-id');
         $('#removeBookmarkModal').modal('show');
     });
-    
+
     $('#confirmRemove').click(function() {
         if (currentThesisId) {
             $.ajax({

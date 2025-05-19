@@ -105,34 +105,36 @@
             <!-- Results Section -->
             {% if theses or grouped_results %}
                 <!-- Metadata Results -->
-                {% if theses %}
-                <h2 class="h3">Metadata Matches</h2>
-                <div class="list-group mb-4">
-                    {% for thesis in theses %}
-                    <div class="list-group-item">
-                        <div class="d-flex w-100 justify-content-between">
-                            <h3 class="h5 mb-1">
-                                <a href="{{ url_for('view_thesis', thesis_id=thesis.id, q=search_query) }}">
-                                    {{ thesis.title | replace(search_query, "<mark>" ~ search_query ~ "</mark>") | safe }}
-                                </a>
-                            </h3>
-                            <small class="text-muted">{{ thesis.year_made }}</small>
+                    {% if theses %}
+                        <h2 class="h3">Metadata Matches</h2>
+                        <div class="list-group mb-4">
+                            {% for thesis in theses %}
+                            <div class="list-group-item">
+                                <div class="d-flex w-100 justify-content-between">
+                                <h3 class="h5 mb-1">
+                                    <a href="{{ url_for('view_thesis', thesis_id=thesis.id, q=search_query) }}"
+                                    class="text-dark fw-semibold text-decoration-underline"
+                                    style="letter-spacing: normal;">
+                                        {{ thesis.title }}
+                                    </a>
+                                </h3>
+                                    <small class="text-muted">{{ thesis.year_made }}</small>
+                                </div>
+
+                                <p class="mb-1"><strong>Authors:</strong> {{ thesis.authors }}</p>
+                                <p class="mb-1"><strong>School:</strong> {{ thesis.school }}</p>
+                                <p class="mb-1"><strong>Keywords:</strong> {{ thesis.keywords }}</p>
+
+                                {% if thesis.match_percentage is defined %}
+                                <p class="mb-1 text-success">
+                                    <strong>Match Accuracy:</strong> {{ thesis.match_percentage }}%
+                                </p>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
                         </div>
-                        <p class="mb-1"><strong>Authors:</strong> {{ thesis.authors }}</p>
-                        <p class="mb-1"><strong>School:</strong> {{ thesis.school }}</p>
-                        <p class="mb-1"><strong>Keywords:</strong> {{ thesis.keywords }}</p>
+                    {% endif %}
 
-                        {% if thesis.match_percentage is defined %}
-                        <p class="mb-1 text-success">
-                            <strong>Match Accuracy:</strong> {{ thesis.match_percentage }}%
-                        </p>
-                        {% endif %}
-
-                        <small class="text-muted">Uploaded on {{ thesis.published_at.strftime('%Y-%m-%d') }}</small>
-                    </div>
-                    {% endfor %}
-                </div>
-                {% endif %}
 
                 <!-- Content Matches from Introduction/Abstract -->
                 {% if grouped_results %}

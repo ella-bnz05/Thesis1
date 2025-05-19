@@ -959,20 +959,19 @@ def serve_thesis_file(thesis_id):
 def admin_upload():
     if not current_user.is_admin():
         abort(403)
-    
-    if 'file' not in request.files:
+
+    camera_file = request.files.get('camera_file')
+    upload_file = request.files.get('upload_file')
+    file = camera_file or upload_file
+
+    if not file or file.filename == '':
         flash('No file selected', 'danger')
         return redirect(url_for('admin_dashboard'))
-    
-    file = request.files['file']
-    
-    if file.filename == '':
-        flash('No file selected', 'danger')
-        return redirect(url_for('admin_dashboard'))
-    
-    if not file or not allowed_file(file.filename):
+
+    if not allowed_file(file.filename):
         flash('Invalid file type', 'danger')
         return redirect(url_for('admin_dashboard'))
+
     
     try:
         # Save the original file
@@ -1901,6 +1900,23 @@ def view_bookmarks():
                          per_page=per_page,
                          total=total,
                          total_pages=(total + per_page - 1) // per_page)
+
+@app.route('/bookmark/<int:thesis_id>', methods=['DELETE'])
+@login_required
+def delete_bookmark(thesis_id):
+    cursor = mysql.connection.cursor()
+    try:
+        cursor.execute("""
+            DELETE FROM user_bookmarks 
+            WHERE user_id = %s AND thesis_id = %s
+        """, (current_user.id, thesis_id))
+        mysql.connection.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        mysql.connection.rollback()
+        return jsonify({'success': False, 'error': str(e)})
+    finally:
+        cursor.close()
 
 # Viewing history routes
 @app.route('/history')

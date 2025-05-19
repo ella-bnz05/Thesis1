@@ -50,17 +50,17 @@
             </li>
             <li class="nav-item">
                 <a class="nav-link {% if request.endpoint == 'admin_action_history' %}active{% endif %}" href="{{ url_for('admin_action_history') }}">
-                    <i class="bi bi-clock-history me-2"></i>Action History
+                    <i class="fas fa-history me-2"></i>Action History
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link {% if request.endpoint == 'manage_users' %}active{% endif %}" href="{{ url_for('manage_users') }}">
-                    <i class="bi bi-clock-history me-2"></i>Users
+                    <i class="fas fa-users me-2"></i>Users
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link {% if request.endpoint == 'manage_trash' %}active{% endif %}" href="{{ url_for('manage_trash') }}">
-                    <i class="fas fa-fw fa-trash me-2"></i>Trash
+                    <i class="fas fa-trash me-2"></i>Trash
                 </a>
             </li>
         </ul>

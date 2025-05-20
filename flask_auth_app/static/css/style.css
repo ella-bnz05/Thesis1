@@ -38,13 +38,13 @@ body {
 
 .form-container input:focus {
     outline: none;
-    border-color: #4a90e2;
+    border-color: #247f33;
 }
 
 .form-btn, .form-container button {
     width: 100%;
     padding: 12px;
-    background-color: #4a90e2;
+    background-color: #247f33;
     color: white;
     border: none;
     border-radius: 4px;
@@ -55,7 +55,7 @@ body {
 }
 
 .form-btn:hover, .form-container button:hover {
-    background-color: #3a7bc8;
+    background-color: #247f33;
 }
 
 .form-container p {
@@ -65,13 +65,14 @@ body {
 }
 
 .form-container a {
-    color: #4a90e2;
+    color: #247f33;
     text-decoration: none;
 }
 
 .form-container a:hover {
     text-decoration: underline;
 }
+
 
 /* Flash messages */
 .alert {
@@ -453,6 +454,33 @@ main {
         margin-left: 0 !important;
     }
 }
+
+@media (max-width: 480px) {
+    .form-container {
+        width: 90%;
+        padding: 20px 15px;
+    }
+
+    .form-container h2 {
+        font-size: 1.4rem;
+    }
+
+    .form-container input[type="text"],
+    .form-container input[type="password"] {
+        font-size: 0.9rem;
+        padding: 8px;
+    }
+
+    .form-btn, .form-container button {
+        font-size: 0.95rem;
+        padding: 10px;
+    }
+
+    .form-container p {
+        font-size: 0.85rem;
+    }
+}
+
 /* static/css/styles.css */
 .profile-settings-form {
     max-width: 500px;

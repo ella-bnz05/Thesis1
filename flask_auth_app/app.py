@@ -57,7 +57,7 @@ login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
 # Load NLP model
-nlp = spacy.load("en_core_web_lg")
+nlp = spacy.load("en_core_web_sm")
 
 def allowed_file(filename):
     return '.' in filename and \

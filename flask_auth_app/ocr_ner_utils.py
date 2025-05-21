@@ -10,7 +10,7 @@ from PIL import Image
 import tempfile
 
 # Load both models
-nlp_base = spacy.load("en_core_web_lg")
+nlp_base = spacy.load("en_core_web_sm")
 
 # custom SpanCat model
 custom_model_path = Path(__file__).parent / "cs-acad_ner" / "models" / "cs-acad_spancat"

@@ -577,15 +577,36 @@ def browse_theses():
     filters_params.extend([per_page, (page - 1) * per_page])
 
     cursor.execute(query, filters_params)
-    theses = cursor.fetchall()
-
+    theses = list(cursor.fetchall())
     # Calculate match percentage
     from difflib import SequenceMatcher
+    def get_similarity(query, text):
+        """Compute match percentage using:
+        - Jaccard (token overlap)
+        - spaCy vector similarity
+        - SequenceMatcher (character-level match)
+        """
+        doc1 = nlp(query.lower())
+        doc2 = nlp(text.lower())
 
-    def get_similarity(a, b):
-        return round(SequenceMatcher(None, a.lower(), b.lower()).ratio() * 100, 2)
+        # 1. Jaccard Similarity
+        tokens1 = set(token.text for token in doc1 if not token.is_stop and token.is_alpha)
+        tokens2 = set(token.text for token in doc2 if not token.is_stop and token.is_alpha)
+        jaccard = len(tokens1 & tokens2) / len(tokens1 | tokens2) if tokens1 | tokens2 else 0
 
-    if original_query:
+        # 2. spaCy Vector Similarity
+        vector_score = doc1.similarity(doc2) if doc1.vector_norm and doc2.vector_norm else 0
+
+        # 3. Sequence Match
+        sequence_score = SequenceMatcher(None, query.lower(), text.lower()).ratio()
+
+        # Weighted combination
+        score = (0.3 * jaccard + 0.4 * vector_score + 0.3 * sequence_score) * 100
+        return round(score, 2)
+
+
+    # --- Calculate and sort by match percentage ---
+    if search_query:
         for thesis in theses:
             combined_text = ' '.join([
                 thesis.get('title', ''),
@@ -593,8 +614,10 @@ def browse_theses():
                 thesis.get('keywords', ''),
                 thesis.get('school', '')
             ])
-            thesis['match_percentage'] = get_similarity(original_query, combined_text)
+            thesis['match_percentage'] = get_similarity(search_query, combined_text)
 
+        # Sort theses by match percentage (highest first)
+        theses.sort(key=lambda x: x.get('match_percentage', 0), reverse=True)
     # Get total count
     count_query = "SELECT COUNT(*) as total " + filters_query
     cursor.execute(count_query, filters_params[:-2])  # Remove LIMIT and OFFSET params

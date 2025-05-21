@@ -77,7 +77,6 @@ aria-label="Toggle sidebar">
                             <table class="table table-hover table-striped">
                                 <thead class="table-light">
                                     <tr>
-                                        <th>ID</th>
                                         <th>Title</th>
                                         <th>Authors</th>
                                         <th>Submitted</th>
@@ -88,7 +87,6 @@ aria-label="Toggle sidebar">
                                 <tbody>
                                     {% for sub in submissions %}
                                     <tr>
-                                        <td>{{ sub.id }}</td>
                                         <td>
                                             <strong>{{ sub.title|truncate(40) }}</strong>
                                             {% if sub.keywords %}

@@ -1,0 +1,12 @@
+Flask
+flask-mysqldb
+mysqlclient
+Flask-Login
+Werkzeug
+Pillow
+spacy
+PyPDF2
+nltk
+opencv-python
+pytesseract
+MarkupSafe

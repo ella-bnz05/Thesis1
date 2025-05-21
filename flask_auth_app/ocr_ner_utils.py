@@ -6,7 +6,6 @@ import re
 import spacy
 import os
 from pathlib import Path
-from PIL import Image
 import tempfile
 
 # Load both models

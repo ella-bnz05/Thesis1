@@ -10,28 +10,18 @@ import os
 import PyPDF2
 from datetime import datetime, timedelta
 import shutil
-from email_utils import send_verification_email 
-from email_utils import generate_code, send_verification_email
-import smtplib
-from email.mime.text import MIMEText
-import random
-import string
-import smtplib
-from email.mime.text import MIMEText
-import os
+from email_utils import send_verification_email, generate_code
 from markupsafe import Markup
 from nltk.stem import PorterStemmer
 import re
-import threading
 from difflib import SequenceMatcher
-from collections import defaultdict
-
+import random
+import string
 from ocr_ner_utils import (
     extract_text_from_pdf,
     extract_text_from_image_by_type,
     extract_info
 )
-
 app = Flask(__name__, template_folder='templates')
 app.secret_key = 'your_secret_key'
 # MySQL Configuration

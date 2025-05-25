@@ -2,8 +2,6 @@ import smtplib
 from email.mime.text import MIMEText
 import random
 import string
-import smtplib
-from email.mime.text import MIMEText
 import os
 
 def generate_code(length=6):

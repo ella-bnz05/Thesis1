@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, session, jsonify, f
 from flask_mysqldb import MySQL
 import MySQLdb.cursors
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
-from werkzeug.security import generate_password_hash, check_password_hash 
+from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from PIL import Image
 import spacy
@@ -17,6 +17,7 @@ import re
 from difflib import SequenceMatcher
 import random
 import string
+from difflib import get_close_matches
 from ocr_ner_utils import (
     extract_text_from_pdf,
     extract_text_from_image_by_type,
@@ -58,13 +59,40 @@ class User(UserMixin):
         self.id = id
         self.username = username
         self.role = str(role).lower().strip()
-        
+
     def get_id(self):
         return str(self.id)
-        
+
     def is_admin(self):
         return self.role == 'admin'
+def get_similarity(query, text):
+    """
+    Calculate similarity between search query and thesis text using multiple methods:
+    - Jaccard similarity (token overlap)
+    - spaCy vector similarity (if available)
+    - SequenceMatcher ratio (character-based)
+    """
+    # Token-based similarity (Jaccard)
+    doc1 = nlp(query.lower())
+    doc2 = nlp(text.lower())
     
+    tokens1 = set(token.text for token in doc1 if not token.is_stop and token.is_alpha)
+    tokens2 = set(token.text for token in doc2 if not token.is_stop and token.is_alpha)
+    
+    jaccard = len(tokens1 & tokens2) / len(tokens1 | tokens2) if tokens1 | tokens2 else 0
+    
+    # Vector similarity (if vectors available)
+    try:
+        vector_score = doc1.similarity(doc2) if doc1.vector_norm and doc2.vector_norm else 0
+    except:
+        vector_score = 0
+    
+    # Character-based similarity
+    sequence_score = SequenceMatcher(None, query.lower(), text.lower()).ratio()
+    
+    # Weighted combination of all methods
+    score = (0.3 * jaccard + 0.4 * vector_score + 0.3 * sequence_score) * 100
+    return round(score, 2)
 @login_manager.user_loader
 def load_user(user_id):
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
@@ -90,8 +118,6 @@ def compute_similarity(a, b):
 @app.route('/search')
 @login_required
 def search():
-    from difflib import SequenceMatcher
-
     query = request.args.get('q', '') or session.get('search_query', '')
     if not query:
         return redirect(url_for('browse_theses'))
@@ -104,19 +130,66 @@ def search():
     clean_query_formatted = f'+{clean_query}' if len(clean_query.split()) == 1 else f'"{clean_query}"'
 
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    
+    # Get all unique words from titles, authors, and category names
+    cursor.execute("""
+        SELECT 
+            GROUP_CONCAT(DISTINCT LOWER(title) SEPARATOR ' ') as titles,
+            GROUP_CONCAT(DISTINCT LOWER(authors) SEPARATOR ' ') as authors,
+            GROUP_CONCAT(DISTINCT LOWER(c.name) SEPARATOR ' ') as categories
+        FROM published_theses pt
+        LEFT JOIN thesis_categories tc ON pt.id = tc.thesis_id
+        LEFT JOIN categories c ON tc.category_id = c.id
+    """)
+    text_data = cursor.fetchone()
 
-    # Search metadata
+    all_words = set()
+    for field in ['titles', 'authors', 'categories']:
+        if text_data[field]:
+            words = re.findall(r'\w+', text_data[field])
+            all_words.update(words)
+
+    # Check for possible typos and suggest corrections
+    suggestions = []
+    query_words = re.findall(r'\w+', query.lower())
+    for word in query_words:
+        if len(word) > 3:  # Only check longer words
+            close_matches = get_close_matches(word, all_words, n=1, cutoff=0.7)
+            if close_matches and close_matches[0] != word:
+                suggestions.append((word, close_matches[0]))
+
+    # Create a "Did you mean" suggestion if we found corrections
+    did_you_mean = None
+    if suggestions:
+        corrected_query = query
+        for (original, correction) in suggestions:
+            corrected_query = corrected_query.replace(original, correction)
+        if corrected_query != query:
+            did_you_mean = corrected_query
+
+    # Search metadata with category support
     cursor.execute("""
         SELECT pt.*,
-               CASE 
-                   WHEN MATCH(pt.keywords) AGAINST(%s IN BOOLEAN MODE) THEN 3
+               CASE
+                   WHEN EXISTS (
+                       SELECT 1 FROM thesis_categories tc
+                       JOIN categories c ON tc.category_id = c.id
+                       WHERE tc.thesis_id = pt.id
+                       AND MATCH(c.name) AGAINST(%s IN BOOLEAN MODE)
+                   ) THEN 3
                    WHEN MATCH(pt.title) AGAINST(%s IN BOOLEAN MODE) THEN 2
                    WHEN MATCH(pt.authors) AGAINST(%s IN BOOLEAN MODE) THEN 1
                    WHEN pt.year_made = %s THEN 1
                    ELSE 0
                END as relevance_boost
         FROM published_theses pt
-        WHERE MATCH(pt.title, pt.authors, pt.keywords) AGAINST(%s IN BOOLEAN MODE)
+        WHERE MATCH(pt.title, pt.authors) AGAINST(%s IN BOOLEAN MODE)
+           OR EXISTS (
+               SELECT 1 FROM thesis_categories tc
+               JOIN categories c ON tc.category_id = c.id
+               WHERE tc.thesis_id = pt.id
+               AND MATCH(c.name) AGAINST(%s IN BOOLEAN MODE)
+           )
            OR pt.year_made = %s
         ORDER BY relevance_boost DESC, pt.published_at DESC
     """, (
@@ -125,13 +198,14 @@ def search():
         clean_query_formatted,
         query,
         clean_query_formatted,
+        clean_query_formatted,
         query
     ))
     metadata_results = cursor.fetchall()
 
-    # Full-text content search (only intro/abstract pages prioritized)
+    # Full-text content search remains the same
     cursor.execute("""
-        SELECT 
+        SELECT
             pt.id as thesis_id,
             pt.title as thesis_title,
             pt.authors,
@@ -140,11 +214,11 @@ def search():
             tp.page_text,
             SUBSTRING_INDEX(
                 SUBSTRING_INDEX(
-                    SUBSTRING(tp.page_text, 
-                        GREATEST(1, LOCATE(%s, LOWER(tp.page_text)) - 100), 
+                    SUBSTRING(tp.page_text,
+                        GREATEST(1, LOCATE(%s, LOWER(tp.page_text)) - 100),
                         300
-                    ), 
-                ' ', -10), 
+                    ),
+                ' ', -10),
             ' ', 10) as text_snippet,
             (LENGTH(tp.page_text) - LENGTH(REPLACE(LOWER(tp.page_text), LOWER(%s), ''))) / LENGTH(%s) as term_frequency,
             MATCH(tp.page_text) AGAINST(%s IN BOOLEAN MODE) as relevance_score
@@ -155,8 +229,8 @@ def search():
         ORDER BY (relevance_score * term_frequency * 1.5) DESC
         LIMIT 50
     """, (
-        query.lower(), 
-        query.lower(), 
+        query.lower(),
+        query.lower(),
         query.lower(),
         clean_query_formatted,
         clean_query_formatted
@@ -164,25 +238,67 @@ def search():
 
     full_text_results = cursor.fetchall()
 
+
+    def find_related_concepts(query):
+        # """Find related concepts using the NLP model"""
+        doc = nlp(query)
+        related = set()
+
+        # Find similar words based on word vectors
+        for token in doc:
+            if token.has_vector and token.is_alpha and not token.is_stop:
+                for similar in token.vocab:
+                    if similar.is_lower == token.is_lower and similar.has_vector:
+                        similarity = token.similarity(similar)
+                        if similarity > 0.6 and similar.text != token.text:
+                            related.add(similar.text)
+
+        # Find related entities
+        for ent in doc.ents:
+            if ent.label_ in ['ORG', 'PRODUCT', 'TECH']:
+                for similar in ent.vocab:
+                    if similar.is_lower == ent.text.islower() and similar.has_vector:
+                        similarity = ent.similarity(similar)
+                        if similarity > 0.6 and similar.text != ent.text:
+                            related.add(similar.text)
+
+        return list(related)[:5]  # Return top 5 related terms
     # Function to calculate match %
     def calculate_match_percentage(query, text):
-        doc1 = nlp(query.lower())
-        doc2 = nlp(text.lower())
+        """Enhanced similarity calculation with better partial matching"""
+        query = query.lower().strip()
+        text = text.lower().strip()
 
-        # Jaccard similarity
-        query_terms = set(token.text for token in doc1 if not token.is_stop and token.is_alpha)
-        text_terms = set(token.text for token in doc2 if not token.is_stop and token.is_alpha)
-        jaccard = len(query_terms & text_terms) / len(query_terms | text_terms) if (query_terms | text_terms) else 0
+        if not query or not text:
+            return 0
 
-        # Token similarity (cosine-like, uses spaCy vectors)
-        vector_similarity = doc1.similarity(doc2) if doc1.vector_norm and doc2.vector_norm else 0
+        # 1. Exact match check
+        if query in text:
+            return 100
 
-        # Sequence match (character-level)
-        from difflib import SequenceMatcher
-        sequence = SequenceMatcher(None, query.lower(), text.lower()).ratio()
+        # 2. Split into words and check word-level matches
+        query_words = set(re.findall(r'\w+', query))
+        text_words = set(re.findall(r'\w+', text))
 
-        # Combine all three with weights
-        return round((jaccard * 0.3 + vector_similarity * 0.4 + sequence * 0.3) * 100, 2)
+        # Count exact word matches
+        exact_matches = len(query_words & text_words)
+
+        # Count partial matches (substrings)
+        partial_matches = 0
+        for q_word in query_words:
+            for t_word in text_words:
+                if q_word in t_word or t_word in q_word:
+                    partial_matches += 1
+                    break
+
+        # 3. Sequence matching (character-level)
+        sequence_ratio = SequenceMatcher(None, query, text).ratio()
+
+        # 4. Combine scores with weights
+        word_score = (exact_matches * 0.7 + partial_matches * 0.3) / len(query_words) if query_words else 0
+        combined_score = (word_score * 0.6 + sequence_ratio * 0.4) * 100
+
+        return min(100, round(combined_score, 2))
 
 
     # Group full text results by thesis
@@ -228,11 +344,85 @@ def search():
         ])
         result['match_percentage'] = calculate_match_percentage(query, combined_text)
 
+     # If no results found, try a more lenient search
+    fallback_results = []
+    if not metadata_results and not grouped_results:
+        # Try a fuzzy search on each word
+        fuzzy_query = ' '.join([f'%{word}%' for word in query.split()])
+
+        cursor.execute("""
+            SELECT pt.*,
+                   (CASE
+                       WHEN pt.title LIKE %s THEN 3
+                       WHEN pt.authors LIKE %s THEN 2
+                       WHEN pt.keywords LIKE %s THEN 1
+                       ELSE 0
+                   END) as relevance_score
+            FROM published_theses pt
+            WHERE pt.title LIKE %s OR pt.authors LIKE %s OR pt.keywords LIKE %s
+            ORDER BY relevance_score DESC
+            LIMIT 10
+        """, (fuzzy_query, fuzzy_query, fuzzy_query, fuzzy_query, fuzzy_query, fuzzy_query))
+
+        fallback_results = cursor.fetchall()
+
+        # Calculate match percentages for fallback results
+        for result in fallback_results:
+            combined_text = ' '.join([
+                result.get('title', ''),
+                result.get('authors', ''),
+                result.get('keywords', ''),
+                result.get('school', '')
+            ])
+            result['match_percentage'] = calculate_match_percentage(query, combined_text)
+        related_concepts = []
+    if not metadata_results and not grouped_results and not fallback_results:
+        related_concepts = find_related_concepts(query)
+
     return render_template('search_results.html',
                            query=query,
+                           did_you_mean=did_you_mean,
                            metadata_results=metadata_results,
-                           grouped_results=grouped_results)
+                           grouped_results=grouped_results,
+                           fallback_results=fallback_results,
+                           related_concepts=related_concepts)
 
+@app.route('/search-suggestions')
+def search_suggestions():
+    query = request.args.get('q', '').lower()
+    if not query or len(query) < 2:
+        return jsonify([])
+
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+
+    # Get suggestions from titles
+    cursor.execute("""
+        SELECT DISTINCT title as text FROM published_theses
+        WHERE LOWER(title) LIKE %s
+        LIMIT 5
+    """, (f'%{query}%',))
+    title_suggestions = cursor.fetchall()
+
+    # Get suggestions from categories
+    cursor.execute("""
+        SELECT DISTINCT c.name as text 
+        FROM categories c
+        WHERE LOWER(c.name) LIKE %s
+        LIMIT 5
+    """, (f'%{query}%',))
+    category_suggestions = cursor.fetchall()
+
+    # Combine and deduplicate
+    suggestions = []
+    seen = set()
+
+    for item in title_suggestions + category_suggestions:
+        text = item['text'].strip()
+        if text and text.lower() not in seen:
+            seen.add(text.lower())
+            suggestions.append({'text': text})
+
+    return jsonify(suggestions[:5])  # Return max 5 suggestions
 # if want to add more cs abbreviated term add here.
 def expand_search_terms(query):
     """Expand common abbreviations to their full forms for better search results."""
@@ -247,11 +437,11 @@ def expand_search_terms(query):
         'db': 'database',
         'os': 'operating system'
     }
-    
+
     # Split query into terms
     terms = query.lower().split()
     expanded_terms = []
-    
+
     for term in terms:
         if term in term_mapping:
             # Only add the expanded version if the original term is an abbreviation
@@ -264,7 +454,7 @@ def expand_search_terms(query):
                 expanded_terms.append(term)
         else:
             expanded_terms.append(term)
-    
+
     return ' '.join(expanded_terms)
 
 @app.route('/signup', methods=['GET', 'POST'])
@@ -311,11 +501,11 @@ def signup():
                 (username, email, hashed_password, 0, verification_code, code_expires)
             )
             mysql.connection.commit()
-    
+
             send_verification_email(email, verification_code)
             session['pending_verification'] = username
             flash('Verification code sent to your email. Please verify.', 'info')
-            return redirect(url_for('verify_email')) 
+            return redirect(url_for('verify_email'))
 
         except Exception as e:
             mysql.connection.rollback()
@@ -340,7 +530,7 @@ def login():
         try:
             cursor.execute("""
                 SELECT id, username, password, LOWER(TRIM(role)) as role, is_verified
-                FROM users 
+                FROM users
                 WHERE username = %s
             """, (username,))
             user = cursor.fetchone()
@@ -350,13 +540,13 @@ def login():
                     flash('Please verify your email before logging in.', 'danger')
                     session['pending_verification'] = username
                     return redirect(url_for('verify_email'))
-                
+
                 user_obj = User(
                     id=user['id'],
                     username=user['username'],
                     role=user['role']
                 )
-                
+
                 login_user(user_obj)
                 flash('Login successful', 'success')
                 return redirect(next_url or url_for('verify_role'))
@@ -376,15 +566,15 @@ def login():
 def verify_role():
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     cursor.execute("""
-        SELECT LOWER(TRIM(role)) as role 
-        FROM users 
+        SELECT LOWER(TRIM(role)) as role
+        FROM users
         WHERE id = %s
     """, (current_user.id,))
     actual_role = cursor.fetchone()['role']
     cursor.close()
-    
+
     current_user.role = actual_role
-    
+
     if actual_role == 'admin':
         return redirect(url_for('admin_dashboard'))
     return redirect(url_for('user_dashboard'))
@@ -394,9 +584,9 @@ def verify_role():
 def admin_dashboard():
     if not current_user.is_admin():
         abort(403)
-    
+
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    
+
     # Corrected stats calculation
     cursor.execute("""
         SELECT
@@ -410,59 +600,65 @@ def admin_dashboard():
             (SELECT COUNT(*) FROM published_theses) AS total_published
     """)
     stats = cursor.fetchone()
-    
+
     # Recent submissions (no change)
     cursor.execute("""
-        SELECT 
-            ts.id, 
-            ts.title, 
-            ts.status, 
+        SELECT
+            ts.id,
+            ts.title,
+            ts.status,
             ts.created_at,
             pt.id as published_thesis_id
         FROM thesis_submissions ts
         LEFT JOIN published_theses pt ON ts.id = pt.submission_id
-        ORDER BY ts.created_at DESC 
+        ORDER BY ts.created_at DESC
         LIMIT 5
     """)
     recent_submissions = cursor.fetchall()
-    
-    return render_template('admin_dashboard.html', 
+
+    return render_template('admin_dashboard.html',
                          stats=stats,
                          recent_submissions=recent_submissions)
 @app.route('/user-dashboard')
 @login_required
 def user_dashboard():
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    
+
     # Get total published theses
     cursor.execute("SELECT COUNT(*) as total_published FROM published_theses")
     stats = cursor.fetchone()
-    
+
     # Get user's recent views count
     cursor.execute("""
-        SELECT COUNT(DISTINCT thesis_id) as recent_views 
-        FROM user_view_history 
+        SELECT COUNT(DISTINCT thesis_id) as recent_views
+        FROM user_view_history
         WHERE user_id = %s
     """, (current_user.id,))
     views_stats = cursor.fetchone()
-    
+
     # Get user's saved theses count
     cursor.execute("""
-        SELECT COUNT(*) as saved_theses 
-        FROM user_bookmarks 
+        SELECT COUNT(*) as saved_theses
+        FROM user_bookmarks
         WHERE user_id = %s
     """, (current_user.id,))
     bookmarks_stats = cursor.fetchone()
-    
+
     # Get recent theses
     cursor.execute("""
-        SELECT * FROM published_theses
-        ORDER BY published_at DESC
+        SELECT 
+            pt.*,
+            GROUP_CONCAT(DISTINCT c.name SEPARATOR ', ') AS categories_list
+        FROM published_theses pt
+        LEFT JOIN thesis_categories tc ON pt.id = tc.thesis_id
+        LEFT JOIN categories c ON tc.category_id = c.id
+        GROUP BY pt.id
+        ORDER BY pt.published_at DESC
         LIMIT 3
     """)
     recent_theses = cursor.fetchall()
-    
-    return render_template('user_dashboard.html', 
+
+    return render_template('user_dashboard.html',
                          stats={
                              'total_published': stats['total_published'],
                              'recent_views': views_stats['recent_views'],
@@ -480,18 +676,50 @@ def browse_theses():
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     search_query = request.args.get('q', '').strip()
     year_filter = request.args.get('year', '').strip()
-    keyword_filter = request.args.get('keyword', '').strip()
-    sort_by = request.args.get('sort', 'recent')  # recent, oldest, title
+    category_filter = request.args.get('category', '').strip()
+    keyword_filter = request.args.get('keywords', '').strip()
+    sort_by = request.args.get('sort', 'recent')
     page = request.args.get('page', 1, type=int)
     per_page = 10
-
     original_query = search_query  # Preserve original for display
 
-    # Expand search query if present
-    if search_query:
+    # --- Typo Correction Logic ---
+    cursor.execute("""
+        SELECT GROUP_CONCAT(DISTINCT LOWER(title) SEPARATOR ' ') as titles,
+               GROUP_CONCAT(DISTINCT LOWER(authors) SEPARATOR ' ') as authors,
+               GROUP_CONCAT(DISTINCT LOWER(keywords) SEPARATOR ' ') as keywords
+        FROM published_theses
+    """)
+    text_data = cursor.fetchone()
+
+    all_words = set()
+    for field in ['titles', 'authors', 'keywords']:
+        if text_data[field]:
+            words = re.findall(r'\w+', text_data[field])
+            all_words.update(words)
+
+    suggestions = []
+    query_words = re.findall(r'\w+', search_query.lower())
+    for word in query_words:
+        if len(word) > 3:
+            close_matches = get_close_matches(word, all_words, n=1, cutoff=0.7)
+            if close_matches and close_matches[0] != word:
+                suggestions.append((word, close_matches[0]))
+
+    did_you_mean = None
+    if suggestions:
+        corrected_query = search_query
+        for (original, correction) in suggestions:
+            corrected_query = corrected_query.replace(original, correction)
+        if corrected_query != search_query:
+            did_you_mean = corrected_query
+
+    # --- Expand Search Terms ---
+    if did_you_mean:
+        search_query = expand_search_terms(did_you_mean)
+    else:
         search_query = expand_search_terms(search_query)
 
-    # Expand keyword filter if present
     if keyword_filter:
         keyword_filter_expanded = expand_search_terms(keyword_filter).lower()
     else:
@@ -521,38 +749,52 @@ def browse_theses():
         'operating system': 'Operating System',
     }
 
-    # Helper to build WHERE clauses and params
-    def build_filters(base_query="WHERE 1=1"):
-        query = base_query
-        params = []
+    # --- Build Base Query with Filters ---
+    base_query = """
+        FROM published_theses pt
+        LEFT JOIN thesis_categories tc ON pt.id = tc.thesis_id
+        LEFT JOIN categories c ON tc.category_id = c.id
+        WHERE 1=1
+    """
+    params = []
 
-        if search_query:
-            query += """
-                AND (
-                    LOWER(pt.title) LIKE %s OR
-                    LOWER(pt.authors) LIKE %s OR
-                    LOWER(pt.keywords) LIKE %s OR
-                    pt.year_made = %s
-                )
-            """
-            like_pattern = f"%{search_query.lower()}%"
-            params.extend([like_pattern, like_pattern, like_pattern, search_query])
+    if search_query:
+        base_query += """
+            AND (
+                LOWER(pt.title) LIKE %s OR
+                LOWER(pt.authors) LIKE %s OR
+                LOWER(pt.keywords) LIKE %s OR
+                LOWER(c.name) LIKE %s OR
+                pt.year_made = %s
+            )
+        """
+        like_pattern = f"%{search_query.lower()}%"
+        params.extend([like_pattern, like_pattern, like_pattern, like_pattern, search_query])
 
-        if year_filter:
-            query += " AND pt.year_made = %s"
-            params.append(year_filter)
+    if year_filter:
+        base_query += " AND pt.year_made = %s"
+        params.append(year_filter)
 
-        if keyword_filter_expanded:
-            query += " AND LOWER(pt.keywords) LIKE %s"
-            params.append(f"%{keyword_filter_expanded}%")
+    if keyword_filter_expanded:
+        base_query += " AND LOWER(pt.keywords) LIKE %s"
+        params.append(f"%{keyword_filter_expanded}%")
 
-        return query, params
+    if category_filter:
+        base_query += " AND c.id = %s"
+        params.append(category_filter)
 
-    # Build main query
-    base_query = "FROM published_theses pt WHERE 1=1"
-    filters_query, filters_params = build_filters(base_query)
+    # Get all categories for filter dropdown
+    cursor.execute("SELECT * FROM categories ORDER BY name")
+    all_categories = cursor.fetchall()
 
-    query = "SELECT pt.* " + filters_query
+    # Main query
+    query = """
+        SELECT 
+            pt.*,
+            GROUP_CONCAT(DISTINCT c.name SEPARATOR ', ') AS categories_list
+    """ + base_query + """
+        GROUP BY pt.id
+    """
 
     # Sorting
     if sort_by == 'recent':
@@ -564,38 +806,12 @@ def browse_theses():
 
     # Pagination
     query += " LIMIT %s OFFSET %s"
-    filters_params.extend([per_page, (page - 1) * per_page])
+    params.extend([per_page, (page - 1) * per_page])
 
-    cursor.execute(query, filters_params)
+    cursor.execute(query, params)
     theses = list(cursor.fetchall())
-    # Calculate match percentage
-    from difflib import SequenceMatcher
-    def get_similarity(query, text):
-        """Compute match percentage using:
-        - Jaccard (token overlap)
-        - spaCy vector similarity
-        - SequenceMatcher (character-level match)
-        """
-        doc1 = nlp(query.lower())
-        doc2 = nlp(text.lower())
 
-        # 1. Jaccard Similarity
-        tokens1 = set(token.text for token in doc1 if not token.is_stop and token.is_alpha)
-        tokens2 = set(token.text for token in doc2 if not token.is_stop and token.is_alpha)
-        jaccard = len(tokens1 & tokens2) / len(tokens1 | tokens2) if tokens1 | tokens2 else 0
-
-        # 2. spaCy Vector Similarity
-        vector_score = doc1.similarity(doc2) if doc1.vector_norm and doc2.vector_norm else 0
-
-        # 3. Sequence Match
-        sequence_score = SequenceMatcher(None, query.lower(), text.lower()).ratio()
-
-        # Weighted combination
-        score = (0.3 * jaccard + 0.4 * vector_score + 0.3 * sequence_score) * 100
-        return round(score, 2)
-
-
-    # --- Calculate and sort by match percentage ---
+    # --- Match Percentage Calculation ---
     if search_query:
         for thesis in theses:
             combined_text = ' '.join([
@@ -606,29 +822,53 @@ def browse_theses():
             ])
             thesis['match_percentage'] = get_similarity(search_query, combined_text)
 
-        # Sort theses by match percentage (highest first)
         theses.sort(key=lambda x: x.get('match_percentage', 0), reverse=True)
-    # Get total count
-    count_query = "SELECT COUNT(*) as total " + filters_query
-    cursor.execute(count_query, filters_params[:-2])  # Remove LIMIT and OFFSET params
+
+    # --- Fallback Fuzzy Results ---
+    fallback_results = []
+    if not theses and search_query:
+        fuzzy_query = f"%{search_query}%"
+        cursor.execute("""
+            SELECT * FROM published_theses
+            WHERE title LIKE %s OR authors LIKE %s OR keywords LIKE %s
+            LIMIT 10
+        """, (fuzzy_query, fuzzy_query, fuzzy_query))
+        fallback_results = cursor.fetchall()
+
+        for result in fallback_results:
+            combined_text = ' '.join([
+                result.get('title', ''),
+                result.get('authors', ''),
+                result.get('keywords', ''),
+                result.get('school', '')
+            ])
+            result['match_percentage'] = get_similarity(search_query, combined_text)
+
+    # --- Total Count for Pagination ---
+    count_query = "SELECT COUNT(DISTINCT pt.id) as total " + base_query
+    cursor.execute(count_query, params[:-2])  # exclude LIMIT, OFFSET
     total = cursor.fetchone()['total']
 
-    # Get available years
+    # Available years for filter
     cursor.execute("SELECT DISTINCT year_made FROM published_theses ORDER BY year_made DESC")
     available_years = [str(row['year_made']) for row in cursor.fetchall()]
 
     return render_template('user_browse_theses.html',
-                           theses=theses,
-                           search_query=original_query,
-                           year_filter=year_filter,
-                           keyword_filter=keyword_filter,
-                           sort_by=sort_by,
-                           common_cs_keywords=common_cs_keywords,
-                           available_years=available_years,
-                           page=page,
-                           per_page=per_page,
-                           total=total,
-                           total_pages=(total + per_page - 1) // per_page)
+                         theses=theses,
+                         all_categories=all_categories,
+                         current_category=category_filter,
+                         search_query=original_query,
+                         year_filter=year_filter,
+                         keyword_filter=keyword_filter,
+                         sort_by=sort_by,
+                         common_cs_keywords=common_cs_keywords,
+                         available_years=available_years,
+                         page=page,
+                         per_page=per_page,
+                         total=total,
+                         total_pages=(total + per_page - 1) // per_page,
+                         did_you_mean=did_you_mean,
+                         fallback_results=fallback_results)
 
 
 @app.route('/admin/browse-theses')
@@ -636,84 +876,84 @@ def browse_theses():
 def admin_browse_theses():
     if not current_user.is_admin():
         abort(403)
-    
+
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    search_query = request.args.get('q', '')
+
+    search_query = request.args.get('q', '').strip()
     page = request.args.get('page', 1, type=int)
     per_page = 10
-    
-    query = """
-        SELECT pt.*, u.username as publisher_username
+    offset = (page - 1) * per_page
+
+    base_query = """
         FROM published_theses pt
         JOIN users u ON pt.published_by = u.id
         WHERE 1=1
     """
-    
+    params = []
+
     if search_query:
-        query += """
-            AND (pt.title LIKE %s OR pt.authors LIKE %s OR pt.keywords LIKE %s)
-        """
-        params = (f'%{search_query}%', f'%{search_query}%', f'%{search_query}%')
-    else:
-        params = ()
-    
-    query += " ORDER BY pt.published_at DESC LIMIT %s OFFSET %s"
-    params += (per_page, (page-1)*per_page)
-    
-    cursor.execute(query, params)
-    theses = cursor.fetchall()
-    
-    # Get total count
-    count_query = "SELECT COUNT(*) as total FROM published_theses WHERE 1=1"
-    if search_query:
-        count_query += " AND (title LIKE %s OR authors LIKE %s OR keywords LIKE %s)"
-        count_params = (f'%{search_query}%', f'%{search_query}%', f'%{search_query}%')
-    else:
-        count_params = ()
-    
-    cursor.execute(count_query, count_params)
+        base_query += " AND (pt.title LIKE %s OR pt.authors LIKE %s OR pt.keywords LIKE %s)"
+        like_pattern = f"%{search_query}%"
+        params.extend([like_pattern, like_pattern, like_pattern])
+
+    # Count total results
+    cursor.execute(f"SELECT COUNT(*) as total {base_query}", tuple(params))
     total = cursor.fetchone()['total']
-    
-    return render_template('admin_browse_theses.html', 
-                         theses=theses, 
-                         search_query=search_query,
-                         page=page,
-                         per_page=per_page,
-                         total=total,
-                         total_pages=(total + per_page - 1) // per_page)
+    total_pages = (total + per_page - 1) // per_page
+
+    # Fetch paginated results
+    paginated_query = f"""
+        SELECT pt.*, u.username as publisher_username
+        {base_query}
+        ORDER BY pt.published_at DESC
+        LIMIT %s OFFSET %s
+    """
+    params.extend([per_page, offset])
+    cursor.execute(paginated_query, tuple(params))
+    theses = cursor.fetchall()
+
+    return render_template(
+        'admin_browse_theses.html',
+        theses=theses,
+        search_query=search_query,
+        page=page,
+        total=total,
+        per_page=per_page,
+        total_pages=total_pages
+    )
 
 @app.route('/process-image-search', methods=['POST'])
 @login_required
 def process_image_search():
     if 'file' not in request.files:
         return jsonify({'success': False, 'error': 'No file uploaded'})
-    
+
     file = request.files['file']
     if file.filename == '':
         return jsonify({'success': False, 'error': 'No file selected'})
-    
+
     if file and allowed_file(file.filename):
         try:
             # Ensure temp directory exists
             temp_dir = os.path.join(app.config['UPLOAD_FOLDER'], 'temp_search')
             os.makedirs(temp_dir, exist_ok=True)
-            
+
             # Save temporary image with a unique filename
             timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
             filename = f"search_{current_user.id}_{timestamp}.jpg"
             filepath = os.path.join(temp_dir, filename)
             file.save(filepath)
-            
+
             # Verify the image was saved
             if not os.path.exists(filepath):
                 return jsonify({'success': False, 'error': 'Failed to save image'})
-            
+
             # Extract text using OCR
             text = extract_text_from_image_by_type(filepath)
-            
+
             if not text or len(text.strip()) == 0:
                 return jsonify({'success': False, 'error': 'No text found in image'})
-            
+
             # Improved title extraction focusing on academic titles
             def extract_thesis_title(text):
                 # Comprehensive list of CS terms to prioritize
@@ -730,7 +970,7 @@ def process_image_search():
                     'human computer interaction', 'hci', 'user interface',
                     'operating system', 'compiler', 'computer architecture'
                 ]
-                
+
                 # Common academic phrases to ignore
                 ignore_phrases = [
                     'thesis', 'dissertation', 'research', 'study', 'paper', 'project',
@@ -739,56 +979,56 @@ def process_image_search():
                     'of', 'in', 'and', 'the', 'a', 'an', 'for', 'on', 'about', 'using',
                     'with', 'cavite state university', 'city', 'city of imus cavite'
                 ]
-                
+
                 # Split into lines and find the most likely title line
                 lines = [line.strip() for line in text.split('\n') if line.strip()]
-                
+
                 # Score each line based on likelihood of being a title
                 scored_lines = []
                 for line in lines:
                     # Skip lines that are too short or too long
                     if len(line) < 10 or len(line) > 120:
                         continue
-                        
+
                     # Initialize scores
                     position_score = 1.0 / (lines.index(line) + 1)  # Earlier lines score higher
                     length_score = min(1.0, 1.0 - abs(0.5 - (len(line)/100)))  # Medium length preferred
-                    
+
                     # Count title-case words
                     words = line.split()
                     title_case_words = sum(1 for word in words if word.istitle())
                     case_score = title_case_words / len(words) if words else 0
-                    
+
                     # Penalize ignored phrases
                     lower_line = line.lower()
                     ignore_score = sum(-0.5 for phrase in ignore_phrases if phrase in lower_line)
-                    
+
                     # Bonus for CS keywords
                     cs_score = sum(2.0 for term in cs_keywords if term in lower_line)
-                    
+
                     total_score = position_score + length_score + case_score + ignore_score + cs_score
                     scored_lines.append((total_score, line))
-                
+
                 if not scored_lines:
                     return None
-                
+
                 # Get the highest scoring line
                 scored_lines.sort(reverse=True, key=lambda x: x[0])
                 best_line = scored_lines[0][1]
-                
+
                 # Now extract the most important CS terms from the best line
                 doc = nlp(best_line)
-                
+
                 # Look for noun phrases that contain CS terms
                 topics = []
                 for chunk in doc.noun_chunks:
                     chunk_text = chunk.text.lower()
-                    
+
                     # Skip short phrases and those with ignored words
                     if (len(chunk.text.split()) <= 3 or
                         any(t in chunk_text for t in ignore_phrases)):
                         continue
-                    
+
                     # Score based on:
                     # 1. Length (longer is better)
                     # 2. Position in title (earlier is better)
@@ -796,45 +1036,45 @@ def process_image_search():
                     # 4. Contains proper nouns (higher score)
                     score = len(chunk.text.split())  # word count
                     score += (len(best_line) - best_line.find(chunk.text)) / len(best_line)  # position
-                    
+
                     # Bonus for CS terms
                     if any(term in chunk_text for term in cs_keywords):
                         score += 3
-                        
+
                     # Bonus for proper nouns
                     if any(t.pos_ == 'PROPN' for t in chunk):
                         score += 2
-                        
+
                     topics.append((score, chunk.text))
-                
+
                 if not topics:
                     return best_line  # fallback to entire line
-                
+
                 # Get the highest scoring topic
                 topics.sort(reverse=True, key=lambda x: x[0])
                 return topics[0][1]
 
-            
+
             # Extract the main topic
             main_topic = extract_thesis_title(text)
-            
+
             # Clean up
             try:
                 os.remove(filepath)
             except:
                 pass
-            
+
             if not main_topic or len(main_topic.strip()) == 0:
                 return jsonify({
                     'success': False,
                     'error': 'No relevant topic found in extracted text'
                 })
-            
+
             return jsonify({
                 'success': True,
                 'topic': main_topic.strip()
             })
-            
+
         except Exception as e:
             if 'filepath' in locals() and os.path.exists(filepath):
                 try:
@@ -845,8 +1085,68 @@ def process_image_search():
                 'success': False,
                 'error': f'Error processing image: {str(e)}'
             })
-    
+
     return jsonify({'success': False, 'error': 'Invalid file type'})
+def generate_apa_citation(thesis):
+    """Generate APA 7th edition citation for a thesis using year_made"""
+    if not thesis:
+        return "Citation not available"
+
+    # === Author Formatting ===
+    authors = []
+    for author in thesis.get('authors', '').split(','):
+        author = author.strip()
+        if not author:
+            continue
+
+        name_parts = [part.strip() for part in author.split() if part.strip()]
+        if len(name_parts) >= 2:
+            last_name = name_parts[-1].upper()
+            initials = ' '.join([name[0].upper() + '.' for name in name_parts[:-1]])
+            authors.append(f"{last_name}, {initials}")
+        else:
+            authors.append(author.upper())
+
+    if not authors:
+        authors_str = "[Author(s) not specified]"
+    elif len(authors) == 1:
+        authors_str = authors[0]
+    elif len(authors) == 2:
+        authors_str = f"{authors[0]} & {authors[1]}"
+    else:
+        authors_str = f"{authors[0]} et al."
+
+    # === Year Made ===
+    year = thesis.get('year_made', datetime.now().year)
+    try:
+        year = int(year)
+    except (ValueError, TypeError):
+        year = datetime.now().year
+
+    # === Title (capitalize only first letter) ===
+    title = thesis.get('title', '[Title not specified]').capitalize()
+
+    # === Clean School Name ===
+    school_raw = thesis.get('school', '[Institution not specified]')
+    excluded_phrases = ['department of computer studies', 'imus campus']
+
+    # Remove excluded phrases and commas
+    school = school_raw
+    for phrase in excluded_phrases:
+        school = re.sub(re.escape(phrase), '', school, flags=re.IGNORECASE)
+
+    # Remove double commas, extra spaces, and trailing punctuation
+    school = re.sub(r'\s*,\s*', ', ', school)          # Normalize commas
+    school = re.sub(r',\s*,+', ',', school)            # Remove consecutive commas
+    school = re.sub(r'\s+', ' ', school).strip(', ').strip()  # Remove leading/trailing commas and spaces
+
+    if not school:
+        school = '[Institution not specified]'
+
+    # === Final Citation ===
+    citation = f"{authors_str} ({year}). {title}. {school}."
+
+    return citation
 
 @app.route('/thesis/<int:thesis_id>')
 @login_required
@@ -856,13 +1156,13 @@ def view_thesis(thesis_id):
     # Record view history (existing code remains the same)
     today = datetime.now().date()
     cursor.execute("""
-        SELECT id FROM user_view_history 
+        SELECT id FROM user_view_history
         WHERE user_id = %s AND thesis_id = %s AND DATE(viewed_at) = %s
     """, (current_user.id, thesis_id, today))
-    
+
     if cursor.fetchone():
         cursor.execute("""
-            UPDATE user_view_history 
+            UPDATE user_view_history
             SET viewed_at = CURRENT_TIMESTAMP
             WHERE user_id = %s AND thesis_id = %s AND DATE(viewed_at) = %s
         """, (current_user.id, thesis_id, today))
@@ -872,10 +1172,10 @@ def view_thesis(thesis_id):
             VALUES (%s, %s)
             ON DUPLICATE KEY UPDATE viewed_at = CURRENT_TIMESTAMP
         """, (current_user.id, thesis_id))
-    
+
     mysql.connection.commit()
 
-    # Get thesis details
+       # Get thesis details with categories
     cursor.execute("""
         SELECT pt.*, u.username as publisher_username
         FROM published_theses pt
@@ -883,10 +1183,21 @@ def view_thesis(thesis_id):
         WHERE pt.id = %s
     """, (thesis_id,))
     thesis = cursor.fetchone()
-    
+
+    # Attach categories
+    cursor.execute("""
+        SELECT c.name
+        FROM thesis_categories tc
+        JOIN categories c ON tc.category_id = c.id
+        WHERE tc.thesis_id = %s
+    """, (thesis_id,))
+    category_rows = cursor.fetchall()
+    thesis['categories'] = ', '.join([row['name'] for row in category_rows])
+
     if not thesis:
         abort(404)
-
+      # Generate APA citation
+    apa_citation = generate_apa_citation(thesis)
     # Check if bookmarked
     cursor.execute("""
         SELECT id FROM user_bookmarks
@@ -900,7 +1211,7 @@ def view_thesis(thesis_id):
         WHERE thesis_id = %s AND page_number = 1
     """, (thesis_id,))
     title_page = cursor.fetchone()
-    
+
     # Get introduction pages only (pages 2-5)
     cursor.execute("""
         SELECT page_text FROM thesis_pages
@@ -912,25 +1223,25 @@ def view_thesis(thesis_id):
     # Search functionality
     search_query = request.args.get('q', '')
     matching_snippets = []
-    
+
     if search_query:
         cursor.execute("""
-            SELECT 
+            SELECT
                 page_number,
                 SUBSTRING_INDEX(
                     SUBSTRING_INDEX(
-                        SUBSTRING(page_text, 
-                            GREATEST(1, LOCATE(%s, page_text) - 100), 
+                        SUBSTRING(page_text,
+                            GREATEST(1, LOCATE(%s, page_text) - 100),
                             300
-                        ), 
-                        ' ', 
+                        ),
+                        ' ',
                         -10
                     ),
-                    ' ', 
+                    ' ',
                     10
                 ) as text_snippet
             FROM thesis_pages
-            WHERE thesis_id = %s 
+            WHERE thesis_id = %s
             AND MATCH(page_text) AGAINST(%s IN BOOLEAN MODE)
             AND page_number > 5  -- Skip introduction pages
             ORDER BY page_number
@@ -940,22 +1251,65 @@ def view_thesis(thesis_id):
 
     # Choose template based on user role
     if current_user.is_admin():
-        return render_template('thesis_detail.html', 
+        return render_template('thesis_detail.html',
                                thesis=thesis,
                                title_page=title_page['page_text'] if title_page else None,
                                intro_pages=intro_pages,
                                matching_pages=matching_snippets,
                                search_query=search_query,
-                               is_bookmarked=is_bookmarked)
+                               is_bookmarked=is_bookmarked,
+                               apa_citation=apa_citation)
     else:
-        return render_template('user_thesis_detail.html', 
+        return render_template('user_thesis_detail.html',
                                thesis=thesis,
                                title_page=title_page['page_text'] if title_page else None,
                                intro_pages=intro_pages,
                                matching_snippets=matching_snippets,
                                search_query=search_query,
-                               is_bookmarked=is_bookmarked)
-    
+                               is_bookmarked=is_bookmarked,
+                               apa_citation=apa_citation)
+@app.route('/admin/categories', methods=['GET', 'POST'])
+@login_required
+def manage_categories():
+    if not current_user.is_admin():
+        abort(403)
+
+    if request.method == 'POST':
+        action = request.form.get('action')
+
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+
+        try:
+            if action == 'add':
+                name = request.form.get('name', '').strip()
+                description = request.form.get('description', '').strip()
+
+                if not name:
+                    flash('Category name is required', 'danger')
+                else:
+                    cursor.execute(
+                        "INSERT INTO categories (name, description) VALUES (%s, %s)",
+                        (name, description)
+                    )
+                    mysql.connection.commit()
+                    flash('Category added successfully', 'success')
+
+            elif action == 'delete':
+                category_id = request.form.get('category_id')
+                cursor.execute("DELETE FROM categories WHERE id = %s", (category_id,))
+                mysql.connection.commit()
+                flash('Category deleted successfully', 'success')
+
+        except Exception as e:
+            mysql.connection.rollback()
+            flash(f'Error: {str(e)}', 'danger')
+
+    # Get all categories
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute("SELECT * FROM categories ORDER BY name")
+    categories = cursor.fetchall()
+
+    return render_template('manage_categories.html', categories=categories)
 @app.route('/thesis-file/<int:thesis_id>')
 @login_required
 def serve_thesis_file(thesis_id):
@@ -971,10 +1325,10 @@ def serve_thesis_file(thesis_id):
     file_path = result['file_path']
 
     response = make_response(send_file(file_path))
-    
+
     # Prevent download via Content-Disposition
     response.headers["Content-Disposition"] = "inline; filename=view.pdf"
-    
+
     # Additional headers to discourage saving/downloading
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["Cache-Control"] = "no-store"
@@ -1000,29 +1354,29 @@ def admin_upload():
         flash('Invalid file type', 'danger')
         return redirect(url_for('admin_dashboard'))
 
-    
+
     try:
         # Save the original file
         filename = secure_filename(file.filename)
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], 'submissions', filename)
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
         file.save(filepath)
-        
+
         # Extract text
         if filename.lower().endswith('.pdf'):
             text = extract_text_from_pdf(filepath)
         else:
             text = extract_text_from_image_by_type(filepath)
-        
+
         # Extract metadata
         thesis_info = extract_info(text)
-        
+
         # Store in database
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         cursor.execute("""
-            INSERT INTO thesis_submissions 
-            (admin_id, file_path, original_filename, title, authors, school, year_made, keywords, extracted_text)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO thesis_submissions
+            (admin_id, file_path, original_filename, title, authors, school, year_made, extracted_text)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
         """, (
             current_user.id,
             filepath,
@@ -1031,12 +1385,23 @@ def admin_upload():
             thesis_info['Author'],
             thesis_info['School'],
             thesis_info['Year Made'],
-            thesis_info['Keywords'],
             text
         ))
         submission_id = cursor.lastrowid
+        published_id = cursor.lastrowid
+        # ✅ Copy categories from submission thesis_id
+        cursor.execute("""
+            SELECT category_id FROM thesis_categories WHERE thesis_id = %s
+        """, (submission_id,))
+        existing_cats = cursor.fetchall()
+
+        for cat in existing_cats:
+            cursor.execute("""
+                INSERT INTO thesis_categories (thesis_id, category_id)
+                VALUES (%s, %s)
+            """, (published_id, cat['category_id']))
         mysql.connection.commit()
-        
+
         # Immediately redirect to review page
         log_admin_action(
             'thesis_upload',
@@ -1046,14 +1411,14 @@ def admin_upload():
         )
         flash('Thesis uploaded successfully. Please review the extracted information.', 'success')
         return redirect(url_for('review_submission', submission_id=submission_id))
-        
+
     except Exception as e:
         mysql.connection.rollback()
         if 'filepath' in locals() and os.path.exists(filepath):
             os.remove(filepath)
         flash(f'Error processing file: {str(e)}', 'danger')
         return redirect(url_for('admin_dashboard'))
-    
+
 def extract_page_count(filepath):
     if filepath.lower().endswith('.pdf'):
         with open(filepath, 'rb') as f:
@@ -1073,11 +1438,11 @@ def admin_submissions():
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
 
     query = """
-        SELECT ts.*, u.username as admin_username 
+        SELECT ts.*, u.username as admin_username
         FROM thesis_submissions ts
         JOIN users u ON ts.admin_id = u.id
     """
-    
+
     if status_filter in ['pending', 'approved', 'rejected']:
         query += " WHERE ts.status = %s"
         params = (status_filter,)
@@ -1085,7 +1450,7 @@ def admin_submissions():
         params = ()
 
     query += " ORDER BY ts.created_at DESC"
-    
+
     cursor.execute(query, params)
     submissions = cursor.fetchall()
 
@@ -1096,7 +1461,7 @@ def admin_submissions():
             if sub['file_path'].lower().endswith(('.png', '.jpg', '.jpeg', '.webp')):
                 # Create a URL that points to the actual file location
                 sub['preview_image_url'] = url_for(
-                    'serve_submission_file', 
+                    'serve_submission_file',
                     submission_id=sub['id'],
                     _external=True
                 )
@@ -1140,7 +1505,7 @@ def manage_trash():
         try:
             if action == 'restore':
                 cursor.execute("""
-                    UPDATE thesis_submissions 
+                    UPDATE thesis_submissions
                     SET status = 'pending', deleted_at = NULL
                     WHERE id = %s
                 """, (thesis_id,))
@@ -1154,7 +1519,7 @@ def manage_trash():
                 flash('Thesis restored successfully', 'success')
             elif action == 'delete':
                 cursor.execute("""
-                    DELETE FROM thesis_submissions 
+                    DELETE FROM thesis_submissions
                     WHERE id = %s AND status = 'rejected'
                 """, (thesis_id,))
                 log_admin_action(
@@ -1172,15 +1537,15 @@ def manage_trash():
 
     # Auto-delete old rejected items
     cursor.execute("""
-        SELECT * FROM thesis_submissions 
-        WHERE status = 'rejected' 
+        SELECT * FROM thesis_submissions
+        WHERE status = 'rejected'
         AND deleted_at < DATE_SUB(NOW(), INTERVAL 30 DAY)
     """)
     old_rejected = cursor.fetchall()
     if old_rejected:
         try:
             cursor.executemany("""
-                DELETE FROM thesis_submissions 
+                DELETE FROM thesis_submissions
                 WHERE id = %s
             """, [(item['id'],) for item in old_rejected])
             mysql.connection.commit()
@@ -1190,7 +1555,7 @@ def manage_trash():
 
     # Get all rejected items
     cursor.execute("""
-        SELECT ts.*, u.username as admin_username 
+        SELECT ts.*, u.username as admin_username
         FROM thesis_submissions ts
         JOIN users u ON ts.admin_id = u.id
         WHERE ts.status = 'rejected'
@@ -1209,7 +1574,11 @@ def manage_users():
 
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     search_query = request.args.get('search', '').strip()
+    page = request.args.get('page', 1, type=int)
+    per_page = 10
+    offset = (page - 1) * per_page
 
+    # Handle user actions (delete, change role)
     if request.method == 'POST':
         user_id = request.form.get('user_id')
         action = request.form.get('action')
@@ -1217,7 +1586,7 @@ def manage_users():
             if action == 'delete':
                 cursor.execute("DELETE FROM users WHERE id = %s", (user_id,))
                 log_admin_action(
-                    'user_delete', 
+                    'user_delete',
                     f"Deleted user with ID {user_id}",
                     target_id=user_id,
                     target_type='user'
@@ -1233,24 +1602,34 @@ def manage_users():
                     target_type='user'
                 )
                 flash('User role updated.', 'success')
+            mysql.connection.commit()
         except Exception as e:
             mysql.connection.rollback()
             flash(f'Error: {str(e)}', 'danger')
 
-    # Modified query to include search
-    query = "SELECT id, username, email, role FROM users WHERE id != %s"
+    # Build base query
+    base_query = "FROM users WHERE id != %s"
     params = [current_user.id]
-    
+
     if search_query:
-        query += " AND username LIKE %s"
+        base_query += " AND username LIKE %s"
         params.append(f'%{search_query}%')
 
-    cursor.execute(query, tuple(params))
+    # Get total count for pagination
+    cursor.execute(f"SELECT COUNT(*) as total {base_query}", tuple(params))
+    total = cursor.fetchone()['total']
+    total_pages = (total + per_page - 1) // per_page
+
+    # Get paginated users
+    cursor.execute(f"SELECT id, username, email, role {base_query} ORDER BY username ASC LIMIT %s OFFSET %s",
+                   tuple(params + [per_page, offset]))
     users = cursor.fetchall()
 
-    return render_template('manage_users.html', 
-                         users=users,
-                         search_query=search_query)
+    return render_template('manage_users.html',
+                           users=users,
+                           search_query=search_query,
+                           page=page,
+                           total_pages=total_pages)
 
 
 @app.route('/admin/submission/<int:submission_id>', methods=['GET', 'POST'])
@@ -1260,8 +1639,13 @@ def review_submission(submission_id):
         abort(403)
 
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+
+    # Get all categories
+    cursor.execute("SELECT * FROM categories ORDER BY name")
+    all_categories = cursor.fetchall()
+
     cursor.execute("""
-        SELECT ts.*, u.username as admin_username 
+        SELECT ts.*, u.username as admin_username
         FROM thesis_submissions ts
         JOIN users u ON ts.admin_id = u.id
         WHERE ts.id = %s
@@ -1276,7 +1660,6 @@ def review_submission(submission_id):
 
     preview_url = None
     if file_exists:
-        # Create a route to serve the submission file
         preview_url = url_for('serve_submission_file', submission_id=submission_id)
 
     if request.method == 'POST':
@@ -1284,6 +1667,7 @@ def review_submission(submission_id):
 
         revised_file = request.files.get('revised_file')
         current_file = submission['file_path']
+        selected_categories = request.form.getlist('categories')
 
         if revised_file and revised_file.filename != '':
             if allowed_file(revised_file.filename):
@@ -1293,7 +1677,7 @@ def review_submission(submission_id):
                 current_file = os.path.join(upload_dir, filename)
                 revised_file.save(current_file)
                 cursor.execute("""
-                    UPDATE thesis_submissions 
+                    UPDATE thesis_submissions
                     SET file_path = %s, file_persisted = TRUE, file_reuploaded = TRUE
                     WHERE id = %s
                 """, (current_file, submission_id))
@@ -1327,7 +1711,7 @@ def review_submission(submission_id):
             # Save version
             cursor.execute("""
                 INSERT INTO thesis_versions
-                (thesis_id, edited_title, edited_authors, edited_school, 
+                (thesis_id, edited_title, edited_authors, edited_school,
                  edited_year_made, edited_keywords, notes, edited_by)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """, (
@@ -1353,18 +1737,20 @@ def review_submission(submission_id):
                 return redirect(url_for('admin_submissions'))
 
             elif action == 'approve':
-                # Update thesis_submissions first
+                if not os.path.exists(current_file):
+                    raise Exception("Revised file does not exist. Cannot publish.")
+
+                # Update thesis_submissions
                 cursor.execute("""
                     UPDATE thesis_submissions
-                    SET title = %s, authors = %s, school = %s, year_made = %s, 
-                        keywords = %s, status = 'approved', num_pages = %s
+                    SET title = %s, authors = %s, school = %s, year_made = %s,
+                        status = 'approved', num_pages = %s
                     WHERE id = %s
                 """, (
                     edited_title,
                     edited_authors,
                     edited_school,
                     edited_year,
-                    edited_keywords,
                     num_pages,
                     submission_id
                 ))
@@ -1378,9 +1764,9 @@ def review_submission(submission_id):
 
                 cursor.execute("""
                     INSERT INTO published_theses
-                    (submission_id, file_path, title, authors, school, 
-                     year_made, keywords, published_by, num_pages)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    (submission_id, file_path, title, authors, school,
+                     year_made, published_by, num_pages)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                 """, (
                     submission_id,
                     publish_path,
@@ -1388,11 +1774,19 @@ def review_submission(submission_id):
                     edited_authors,
                     edited_school,
                     edited_year,
-                    edited_keywords,
                     current_user.id,
                     num_pages
                 ))
                 published_id = cursor.lastrowid
+
+                # Insert categories
+                selected_categories = request.form.getlist('categories')
+                for category_id in selected_categories:
+                    cursor.execute(
+                        "INSERT INTO thesis_categories (thesis_id, category_id) VALUES (%s, %s)",
+                        (published_id, category_id)
+                    )
+
 
                 # Insert pages
                 for page in page_texts:
@@ -1412,13 +1806,19 @@ def review_submission(submission_id):
             flash(f'Error processing submission: {str(e)}', 'danger')
             return redirect(url_for('review_submission', submission_id=submission_id))
 
-  # GET request
-    preview_url = None
-    if submission['file_path'] and os.path.exists(submission['file_path']):
-        preview_url = url_for('static', filename='uploads/submissions/' + os.path.basename(submission['file_path']))
+    # GET request
+    selected_category_ids = []
+    if submission and submission.get('id'):
+        cursor.execute("""
+            SELECT category_id FROM thesis_categories
+            WHERE thesis_id = %s
+        """, (submission['id'],))
+        selected_category_ids = [row['category_id'] for row in cursor.fetchall()]
 
-    return render_template('review_submission.html', 
+    return render_template('review_submission.html',
                          submission=submission,
+                         all_categories=all_categories,
+                         selected_category_ids=selected_category_ids,
                          preview_url=preview_url,
                          existing_file=os.path.basename(submission['file_path']) if submission['file_path'] else None,
                          file_missing=file_missing)
@@ -1450,11 +1850,11 @@ def serve_submission_file(submission_id):
 
     # Create response with appropriate headers
     response = make_response(send_file(result['file_path'], mimetype=mimetype))
-    
+
     # For images, set caching headers to improve performance
     if mimetype and mimetype.startswith('image/'):
         response.headers['Cache-Control'] = 'public, max-age=3600'  # Cache for 1 hour
-        
+
     return response
 @app.route('/admin/publish/<int:submission_id>', methods=['POST'])
 @login_required
@@ -1467,7 +1867,7 @@ def publish_thesis(submission_id):
     try:
         # Get the approved submission
         cursor.execute("""
-            SELECT * FROM thesis_submissions 
+            SELECT * FROM thesis_submissions
             WHERE id = %s AND status = 'approved'
         """, (submission_id,))
         submission = cursor.fetchone()
@@ -1505,8 +1905,21 @@ def publish_thesis(submission_id):
             current_user.id
         ))
 
-        mysql.connection.commit()
         published_id = cursor.lastrowid
+
+        # ✅ Copy categories from submission thesis_id
+        cursor.execute("""
+            SELECT category_id FROM thesis_categories WHERE thesis_id = %s
+        """, (submission_id,))
+        existing_cats = cursor.fetchall()
+
+        for cat in existing_cats:
+            cursor.execute("""
+                INSERT INTO thesis_categories (thesis_id, category_id)
+                VALUES (%s, %s)
+            """, (published_id, cat['category_id']))
+
+        mysql.connection.commit()
         log_admin_action('manual_publish', f"Manually published thesis {submission_id} as {published_id}", published_id, 'published_thesis')
 
         flash('Thesis published successfully!', 'success')
@@ -1523,7 +1936,7 @@ def edit_published_thesis(thesis_id):
         abort(403)
 
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    
+
     # Check if thesis exists
     cursor.execute("SELECT * FROM published_theses WHERE id = %s", (thesis_id,))
     thesis = cursor.fetchone()
@@ -1544,7 +1957,7 @@ def edit_published_thesis(thesis_id):
             # Update published thesis
             cursor.execute("""
                 UPDATE published_theses
-                SET title = %s, authors = %s, school = %s, 
+                SET title = %s, authors = %s, school = %s,
                     year_made = %s, keywords = %s
                 WHERE id = %s
             """, (title, authors, school, year_made, keywords, thesis_id))
@@ -1552,8 +1965,8 @@ def edit_published_thesis(thesis_id):
             # Insert into version history
             cursor.execute("""
                 INSERT INTO thesis_versions
-                (thesis_id, edited_title, edited_authors, 
-                 edited_school, edited_year_made, edited_keywords, 
+                (thesis_id, edited_title, edited_authors,
+                 edited_school, edited_year_made, edited_keywords,
                  notes, edited_by)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """, (
@@ -1637,11 +2050,11 @@ def log_admin_action(action_type, description, target_id=None, target_type=None)
     """Log an admin action to the history table."""
     if not current_user.is_authenticated or not current_user.is_admin():
         return  # Only log actions by authenticated admins
-    
+
     cursor = mysql.connection.cursor()
     try:
         cursor.execute("""
-            INSERT INTO admin_action_history 
+            INSERT INTO admin_action_history
             (admin_id, action_type, description, target_id, target_type)
             VALUES (%s, %s, %s, %s, %s)
         """, (
@@ -1728,49 +2141,49 @@ def verify_email():
         return redirect(url_for('signup'))
 
     username = session['pending_verification']
-    
+
     if request.method == 'POST':
         if 'resend' in request.form:
             # Resend code logic
             cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
             cursor.execute(
-                "SELECT email FROM users WHERE username = %s", 
+                "SELECT email FROM users WHERE username = %s",
                 (username,)
             )
             user = cursor.fetchone()
-            
+
             if user:
                 new_code = ''.join(random.choices(string.digits, k=6))
                 new_expires = datetime.now() + timedelta(minutes=10)
-                
+
                 cursor.execute(
                     "UPDATE users SET verification_code = %s, code_expires = %s WHERE username = %s",
                     (new_code, new_expires, username)
                 )
                 mysql.connection.commit()
-                
+
                 send_verification_email(user['email'], new_code)
                 flash('New verification code sent!', 'success')
             return redirect(url_for('verify_email'))
-        
+
         # Normal verification attempt
         code_entered = request.form.get('code')
-        
+
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         cursor.execute(
-            "SELECT verification_code, code_expires FROM users WHERE username = %s", 
+            "SELECT verification_code, code_expires FROM users WHERE username = %s",
             (username,)
         )
         user = cursor.fetchone()
-        
+
         if not user or not user['verification_code']:
             flash('No verification code found. Please request a new one.', 'error')
             return redirect(url_for('verify_email'))
-        
+
         if datetime.now() > user['code_expires']:
             flash('Verification code has expired. Please request a new one.', 'error')
             return redirect(url_for('verify_email'))
-        
+
         if user['verification_code'] == code_entered:
             cursor.execute(
                 "UPDATE users SET is_verified = 1, verification_code = NULL, code_expires = NULL "
@@ -1790,14 +2203,14 @@ def verify_email():
 def highlight_filter(s, search_query):
     if not search_query:
         return s
-    
+
     queries = search_query.split()
     highlighted = s
     for query in queries:
         if len(query) > 3:  # Only highlight words longer than 3 characters
             highlighted = highlighted.replace(query, f'<span class="bg-warning">{query}</span>')
             highlighted = highlighted.replace(query.title(), f'<span class="bg-warning">{query.title()}</span>')
-    
+
     return Markup(highlighted)
 
 @app.route('/profile-settings', methods=['GET', 'POST'])
@@ -1810,13 +2223,13 @@ def profile_settings():
         confirm_password = request.form.get('confirm_password', '').strip()
 
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        
+
         try:
             # Verify current password if making any changes
             if new_username != current_user.username or new_password:
                 cursor.execute("SELECT password FROM users WHERE id = %s", (current_user.id,))
                 user = cursor.fetchone()
-                
+
                 if not user or not check_password_hash(user['password'], current_password):
                     flash('Current password is incorrect', 'danger')
                     return redirect(url_for('profile_settings'))
@@ -1826,9 +2239,9 @@ def profile_settings():
                 if len(new_username) < 4:
                     flash('Username must be at least 4 characters', 'danger')
                     return redirect(url_for('profile_settings'))
-                
+
                 # Check if username is already taken
-                cursor.execute("SELECT id FROM users WHERE username = %s AND id != %s", 
+                cursor.execute("SELECT id FROM users WHERE username = %s AND id != %s",
                              (new_username, current_user.id))
                 if cursor.fetchone():
                     flash('Username already taken', 'danger')
@@ -1839,34 +2252,34 @@ def profile_settings():
                 if len(new_password) < 6:
                     flash('Password must be at least 6 characters', 'danger')
                     return redirect(url_for('profile_settings'))
-                
+
                 if new_password != confirm_password:
                     flash('New passwords do not match', 'danger')
                     return redirect(url_for('profile_settings'))
 
                 hashed_password = generate_password_hash(new_password)
-            
+
             # Update database
             update_query = "UPDATE users SET username = %s"
             params = [new_username]
-            
+
             if new_password:
                 update_query += ", password = %s"
                 params.append(hashed_password)
-            
+
             update_query += " WHERE id = %s"
             params.append(current_user.id)
-            
+
             cursor.execute(update_query, tuple(params))
             mysql.connection.commit()
-            
+
             # Update Flask-Login's current_user if username changed
             if new_username != current_user.username:
                 current_user.username = new_username
-            
+
             flash('Profile updated successfully!', 'success')
             return redirect(url_for('profile_settings'))
-            
+
         except Exception as e:
             mysql.connection.rollback()
             flash(f'Error updating profile: {str(e)}', 'danger')
@@ -1881,23 +2294,23 @@ def profile_settings():
 @login_required
 def bookmark_thesis(thesis_id):
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    
+
     try:
         # Check if thesis exists
         cursor.execute("SELECT id FROM published_theses WHERE id = %s", (thesis_id,))
         if not cursor.fetchone():
             abort(404)
-            
+
         # Check if already bookmarked
         cursor.execute("""
-            SELECT id FROM user_bookmarks 
+            SELECT id FROM user_bookmarks
             WHERE user_id = %s AND thesis_id = %s
         """, (current_user.id, thesis_id))
-        
+
         if cursor.fetchone():
             # Remove bookmark
             cursor.execute("""
-                DELETE FROM user_bookmarks 
+                DELETE FROM user_bookmarks
                 WHERE user_id = %s AND thesis_id = %s
             """, (current_user.id, thesis_id))
             action = 'removed'
@@ -1908,10 +2321,10 @@ def bookmark_thesis(thesis_id):
                 VALUES (%s, %s)
             """, (current_user.id, thesis_id))
             action = 'added'
-            
+
         mysql.connection.commit()
         return jsonify({'success': True, 'action': action})
-        
+
     except Exception as e:
         mysql.connection.rollback()
         return jsonify({'success': False, 'error': str(e)})
@@ -1923,12 +2336,12 @@ def bookmark_thesis(thesis_id):
 def view_bookmarks():
     page = request.args.get('page', 1, type=int)
     per_page = 10
-    
+
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    
+
     # Get bookmarked theses with pagination
     cursor.execute("""
-        SELECT pt.* 
+        SELECT pt.*
         FROM published_theses pt
         JOIN user_bookmarks ub ON pt.id = ub.thesis_id
         WHERE ub.user_id = %s
@@ -1936,15 +2349,15 @@ def view_bookmarks():
         LIMIT %s OFFSET %s
     """, (current_user.id, per_page, (page-1)*per_page))
     bookmarks = cursor.fetchall()
-    
+
     # Get total count
     cursor.execute("""
-        SELECT COUNT(*) as total 
-        FROM user_bookmarks 
+        SELECT COUNT(*) as total
+        FROM user_bookmarks
         WHERE user_id = %s
     """, (current_user.id,))
     total = cursor.fetchone()['total']
-    
+
     return render_template('user_bookmarks.html',
                          bookmarks=bookmarks,
                          page=page,
@@ -1958,7 +2371,7 @@ def delete_bookmark(thesis_id):
     cursor = mysql.connection.cursor()
     try:
         cursor.execute("""
-            DELETE FROM user_bookmarks 
+            DELETE FROM user_bookmarks
             WHERE user_id = %s AND thesis_id = %s
         """, (current_user.id, thesis_id))
         mysql.connection.commit()
@@ -1975,12 +2388,12 @@ def delete_bookmark(thesis_id):
 def view_history():
     page = request.args.get('page', 1, type=int)
     per_page = 10
-    
+
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    
+
     # Get unique view history with the most recent view for each thesis
     cursor.execute("""
-        SELECT pt.*, MAX(uv.viewed_at) as viewed_at, 
+        SELECT pt.*, MAX(uv.viewed_at) as viewed_at,
                COUNT(uv.id) as view_count,
                MIN(uv.id) as history_id
         FROM published_theses pt
@@ -1991,15 +2404,15 @@ def view_history():
         LIMIT %s OFFSET %s
     """, (current_user.id, per_page, (page-1)*per_page))
     history = cursor.fetchall()
-    
+
     # Get total count of unique viewed theses
     cursor.execute("""
-        SELECT COUNT(DISTINCT thesis_id) as total 
-        FROM user_view_history 
+        SELECT COUNT(DISTINCT thesis_id) as total
+        FROM user_view_history
         WHERE user_id = %s
     """, (current_user.id,))
     total = cursor.fetchone()['total']
-    
+
     return render_template('user_history.html',
                          history=history,
                          page=page,
@@ -2011,43 +2424,43 @@ def view_history():
 @login_required
 def delete_history_item(item_id):
     cursor = mysql.connection.cursor()
-    
+
     try:
         # First get the thesis_id from the history item
         cursor.execute("""
-            SELECT thesis_id FROM user_view_history 
+            SELECT thesis_id FROM user_view_history
             WHERE id = %s AND user_id = %s
         """, (item_id, current_user.id))
         result = cursor.fetchone()
-        
+
         if not result:
             return jsonify({'success': False, 'error': 'Item not found or not authorized'})
-            
+
         thesis_id = result[0]
-        
+
         # Delete all history entries for this thesis
         cursor.execute("""
-            DELETE FROM user_view_history 
+            DELETE FROM user_view_history
             WHERE user_id = %s AND thesis_id = %s
         """, (current_user.id, thesis_id))
-        
+
         mysql.connection.commit()
         return jsonify({'success': True})
-        
+
     except Exception as e:
         mysql.connection.rollback()
         return jsonify({'success': False, 'error': str(e)})
     finally:
         cursor.close()
-        
+
 @app.route('/clear-history', methods=['POST'])
 @login_required
 def clear_history():
     cursor = mysql.connection.cursor()
-    
+
     try:
         cursor.execute("""
-            DELETE FROM user_view_history 
+            DELETE FROM user_view_history
             WHERE user_id = %s
         """, (current_user.id,))
         mysql.connection.commit()
@@ -2057,7 +2470,7 @@ def clear_history():
         flash('Error clearing history', 'danger')
     finally:
         cursor.close()
-        
+
     return redirect(url_for('view_history'))
 
 @app.route('/limited-thesis/<int:thesis_id>')
@@ -2073,33 +2486,33 @@ def serve_limited_thesis(thesis_id):
         abort(404)
 
     file_path = result['file_path']
-    
+
     # Create a temporary directory if it doesn't exist
     temp_dir = os.path.join(app.config['UPLOAD_FOLDER'], 'temp_limited')
     os.makedirs(temp_dir, exist_ok=True)
-    
+
     # Generate unique filename
     temp_path = os.path.join(temp_dir, f"limited_{thesis_id}.pdf")
-    
+
     try:
         # Extract only first 2 pages
         with open(file_path, 'rb') as infile:
             reader = PyPDF2.PdfReader(infile)
             writer = PyPDF2.PdfWriter()
-            
+
             # Add only pages 1 and 2 (index 0 and 1)
             for i in range(min(2, len(reader.pages))):
                 writer.add_page(reader.pages[i])
-            
+
             with open(temp_path, 'wb') as outfile:
                 writer.write(outfile)
-        
+
         # Create response with headers that allow scrolling
         response = make_response(send_file(temp_path))
         response.headers["Content-Disposition"] = "inline; filename=preview.pdf"
         response.headers["X-Content-Type-Options"] = "nosniff"
         return response
-        
+
     except Exception as e:
         if os.path.exists(temp_path):
             os.remove(temp_path)

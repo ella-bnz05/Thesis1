@@ -97,8 +97,14 @@
                                         <h6 class="card-subtitle mb-2 text-muted">{{ thesis.authors }}</h6>
                                         <p class="card-text">
                                             <small>
-                                                <strong>School:</strong> {{ thesis.school }}<br>
-                                                <strong>Year:</strong> {{ thesis.year_made }}
+                                                <strong>Categories:</strong>
+                                                {% if thesis.categories_list %}
+                                                    {% for category in thesis.categories_list.split(',') %}
+                                                        <span class="badge bg-primary">{{ category.strip() }}</span>
+                                                    {% endfor %}
+                                                {% else %}
+                                                    <span class="text-muted">No categories</span>
+                                                {% endif %}
                                             </small>
                                         </p>
                                     </div>

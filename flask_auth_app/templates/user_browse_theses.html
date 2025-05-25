@@ -20,7 +20,7 @@
                 <h1 class="h2">
                     <i class="fas fa-book me-2"></i>Browse Theses
                 </h1>
-                
+
                 <div class="btn-toolbar mb-2 mb-md-0">
                     <div class="dropdown">
                         <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
@@ -54,7 +54,7 @@
                                     </button>
                                 </div>
                             </div>
-                            
+
                             <!-- Filters -->
                             <div class="col-md-6">
                                 <div class="row g-2">
@@ -67,27 +67,29 @@
                                             {% endfor %}
                                         </select>
                                     </div>
-                                    <div class="col-md-4">
-                                        <label for="keywordFilter" class="visually-hidden">Filter by keyword</label>
-                                        <select class="form-select" id="keywordFilter" name="keyword" aria-label="Filter by keyword">
-                                            <option value="">All Keywords</option>
-                                            {% for key, display in common_cs_keywords.items() %}
-                                                <option value="{{ key }}" {% if keyword_filter == key %}selected{% endif %}>{{ display }}</option>
+                                    <div class="col-md-3">
+                                        <select class="form-select" name="category">
+                                            <option value="">All Categories</option>
+                                            {% for category in all_categories %}
+                                                <option value="{{ category.id }}" 
+                                                    {% if current_category == category.id|string %}selected{% endif %}>
+                                                    {{ category.name }}
+                                                </option>
                                             {% endfor %}
                                         </select>
                                     </div>
                                     <div class="col-md-4">
                                         <label for="sortFilter" class="visually-hidden">Sort by</label>
                                         <select class="form-select" id="sortFilter" name="sort" aria-label="Sort by">
-                                            <option value="oldest" {% if sort_by == 'oldest' %}selected{% endif %}>Newest First</option>
-                                            <option value="recent" {% if sort_by == 'recent' %}selected{% endif %}>Oldest First</option>
+                                            <option value="recent" {% if sort_by == 'recent' %}selected{% endif %}>Newest First</option>
+                                            <option value="oldest" {% if sort_by == 'oldest' %}selected{% endif %}>Oldest First</option>
                                             <option value="title" {% if sort_by == 'title' %}selected{% endif %}>By Title (A-Z)</option>
                                         </select>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Image Search Option (Mobile Only) -->
                         <div class="d-block d-md-none mt-3">
                             <p class="text-center text-muted mb-2">- OR -</p>
@@ -104,13 +106,20 @@
 
             <!-- Results Section -->
             {% if theses or grouped_results %}
+                <!-- Did you mean suggestion -->
+                {% if did_you_mean %}
+                <div class="alert alert-info">
+                    Did you mean: <a href="{{ url_for('browse_theses', q=did_you_mean) }}">{{ did_you_mean }}</a>?
+                </div>
+                {% endif %}
+
                 <!-- Metadata Results -->
-                    {% if theses %}
-                        <h2 class="h3">Metadata Matches</h2>
-                        <div class="list-group mb-4">
-                            {% for thesis in theses %}
-                            <div class="list-group-item">
-                                <div class="d-flex w-100 justify-content-between">
+                {% if theses %}
+                    <h2 class="h3">Metadata Matches</h2>
+                    <div class="list-group mb-4">
+                        {% for thesis in theses %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
                                 <h3 class="h5 mb-1">
                                     <a href="{{ url_for('view_thesis', thesis_id=thesis.id, q=search_query) }}"
                                     class="text-dark fw-semibold text-decoration-underline"
@@ -118,52 +127,100 @@
                                         {{ thesis.title }}
                                     </a>
                                 </h3>
-                                    <small class="text-muted">{{ thesis.year_made }}</small>
-                                </div>
-
-                                <p class="mb-1"><strong>Authors:</strong> {{ thesis.authors }}</p>
-                                <p class="mb-1"><strong>School:</strong> {{ thesis.school }}</p>
-                                <p class="mb-1"><strong>Keywords:</strong> {{ thesis.keywords }}</p>
-
-                                {% if thesis.match_percentage is defined %}
-                                <p class="mb-1 text-success">
-                                    <strong>Match Accuracy:</strong> {{ thesis.match_percentage }}%
-                                </p>
-                                {% endif %}
+                                <small class="text-muted">{{ thesis.year_made }}</small>
                             </div>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
 
+                            <p class="mb-1"><strong>Authors:</strong> {{ thesis.authors }}</p>
+                            <p class="mb-1"><strong>School:</strong> {{ thesis.school }}</p>
+                            <div class="mb-1">
+                                <strong>Categories:</strong>
+                                <div class="d-flex flex-wrap gap-2 mt-1">
+                                    {% if thesis.categories_list %}
+                                        {% for category in thesis.categories_list.split(',') %}
+                                            <span class="badge bg-primary">{{ category.strip() }}</span>
+                                        {% endfor %}
+                                    {% else %}
+                                        <span class="text-muted">No categories assigned</span>
+                                    {% endif %}
+                                </div>
+                            </div>
 
-                <!-- Content Matches from Introduction/Abstract -->
-                {% if grouped_results %}
-                <h2 class="h3">Introduction/Abstract Content Matches</h2>
-                <div class="list-group mb-4">
-                    {% for thesis_id, thesis in grouped_results.items() %}
-                    <div class="list-group-item">
-                        <div class="d-flex justify-content-between">
-                            <h3 class="h5">
-                                <a href="{{ url_for('view_thesis', thesis_id=thesis_id, q=search_query) }}">
-                                    {{ thesis.thesis_title | replace(search_query, "<mark>" ~ search_query ~ "</mark>") | safe }}
-                                </a>
-                            </h3>
-                            <small>{{ thesis.year_made }}</small>
-                        </div>
-                        <p><strong>Authors:</strong> {{ thesis.authors }}</p>
-                        <p class="text-success"><strong>Average Match:</strong> {{ thesis.average_match }}%</p>
-
-                        {% for match in thesis.matches %}
-                        <div class="mt-2">
-                            <small><strong>Page {{ match.page_number }}</strong> — Match: {{ match.match_percentage }}%</small><br>
-                            <span class="text-muted">
-                                {{ match.text_snippet | replace(search_query, "<mark>" ~ search_query ~ "</mark>") | safe }}
-                            </span>
+                            {% if thesis.match_percentage is defined %}
+                            <p class="mb-1 text-success">
+                                <strong>Match Accuracy:</strong> {{ thesis.match_percentage }}%
+                            </p>
+                            {% endif %}
                         </div>
                         {% endfor %}
                     </div>
-                    {% endfor %}
+                {% endif %}
+
+                <!-- Content Matches from Introduction/Abstract -->
+                {% if grouped_results %}
+                    <h2 class="h3">Introduction/Abstract Content Matches</h2>
+                    <div class="list-group mb-4">
+                        {% for thesis_id, thesis in grouped_results.items() %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between">
+                                <h3 class="h5">
+                                    <a href="{{ url_for('view_thesis', thesis_id=thesis_id, q=search_query) }}">
+                                        {{ thesis.thesis_title | replace(search_query, "<mark>" ~ search_query ~ "</mark>") | safe }}
+                                    </a>
+                                </h3>
+                                <small>{{ thesis.year_made }}</small>
+                            </div>
+                            <p><strong>Authors:</strong> {{ thesis.authors }}</p>
+                            <p class="text-success"><strong>Average Match:</strong> {{ thesis.average_match }}%</p>
+
+                            {% for match in thesis.matches %}
+                            <div class="mt-2">
+                                <small><strong>Page {{ match.page_number }}</strong> — Match: {{ match.match_percentage }}%</small><br>
+                                <span class="text-muted">
+                                    {{ match.text_snippet | replace(search_query, "<mark>" ~ search_query ~ "</mark>") | safe }}
+                                </span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <!-- Related concepts -->
+                {% if related_concepts %}
+                <div class="alert alert-info mt-3">
+                    <p>Try searching for these related concepts:</p>
+                    <div class="d-flex flex-wrap gap-2">
+                        {% for concept in related_concepts %}
+                            <a href="{{ url_for('browse_theses', q=concept) }}" class="btn btn-sm btn-outline-primary">
+                                {{ concept }}
+                            </a>
+                        {% endfor %}
+                    </div>
                 </div>
+                {% endif %}
+
+                <!-- Fallback results -->
+                {% if fallback_results and not theses and not grouped_results %}
+                    <div class="alert alert-warning">
+                        No exact matches found for "{{ search_query }}". Here are some related theses:
+                    </div>
+                    
+                    <div class="list-group">
+                        {% for thesis in fallback_results %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">
+                                    <a href="{{ url_for('view_thesis', thesis_id=thesis.id) }}">
+                                        {{ thesis.title }}
+                                    </a>
+                                </h5>
+                                <small>{{ thesis.year_made }}</small>
+                            </div>
+                            <p class="mb-1"><strong>Authors:</strong> {{ thesis.authors }}</p>
+                            <p class="mb-1"><strong>Match:</strong> {{ thesis.match_percentage }}%</p>
+                        </div>
+                        {% endfor %}
+                    </div>
                 {% endif %}
 
                 <!-- Pagination -->
@@ -176,7 +233,7 @@
                             </a>
                         </li>
                         {% endif %}
-                        
+
                         {% for p in range(1, total_pages + 1) %}
                             <li class="page-item {% if p == page %}active{% endif %}">
                                 {% if p == page %}
@@ -186,7 +243,7 @@
                                 {% endif %}
                             </li>
                         {% endfor %}
-                        
+
                         {% if page < total_pages %}
                         <li class="page-item">
                             <a class="page-link" href="{{ url_for('browse_theses', page=page+1, q=search_query, year=year_filter, keyword=keyword_filter, sort=sort_by) }}" aria-label="Next">
@@ -196,11 +253,32 @@
                         {% endif %}
                     </ul>
                 </nav>
-            {% else %}
-                <div class="alert alert-info">
-                    No theses found. {% if search_query or year_filter or keyword_filter %}Try adjusting your filters.{% else %}Check back later for new submissions.{% endif %}
-                </div>
-            {% endif %}
+           {% elif fallback_results %}
+    <div class="alert alert-warning">
+        No exact matches found for "{{ search_query }}". Here are some related theses:
+    </div>
+
+    <div class="list-group">
+        {% for thesis in fallback_results %}
+        <div class="list-group-item">
+            <div class="d-flex w-100 justify-content-between">
+                <h5 class="mb-1">
+                    <a href="{{ url_for('view_thesis', thesis_id=thesis.id) }}">
+                        {{ thesis.title }}
+                    </a>
+                </h5>
+                <small>{{ thesis.year_made }}</small>
+            </div>
+            <p class="mb-1"><strong>Authors:</strong> {{ thesis.authors }}</p>
+            <p class="mb-1"><strong>Match:</strong> {{ thesis.match_percentage }}%</p>
+        </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="alert alert-info">
+        No theses found. {% if search_query or year_filter or keyword_filter %}Try adjusting your filters.{% else %}Check back later for new submissions.{% endif %}
+    </div>
+{% endif %}
         </main>
     </div>
 </div>
@@ -216,7 +294,7 @@
             <div class="modal-body">
                 <div class="text-center">
                     <p class="mb-3">Upload an image of a thesis title page or section to search for similar computer science theses</p>
-                    
+
                     <div class="alert alert-info mb-3">
                         <i class="fas fa-lightbulb me-2"></i>
                         Best results with images containing:
@@ -225,7 +303,7 @@
                             <li>Technical terms (AI, Machine Learning, etc.)</li>
                         </ul>
                     </div>
-                    
+
                     <div class="mb-3">
                         <input type="file" id="image-upload" accept="image/*" class="d-none">
                         <button type="button" class="btn btn-primary me-2" onclick="document.getElementById('image-upload').click()" aria-label="Upload image">
@@ -235,14 +313,14 @@
                             <i class="fas fa-camera me-1"></i> Take Photo
                         </button>
                     </div>
-                    
+
                     <div id="camera-preview" class="d-none mb-3">
                         <video id="video" width="100%" autoplay playsinline aria-label="Camera preview"></video>
                         <button type="button" class="btn btn-primary mt-2" onclick="capturePhoto()" aria-label="Capture photo">
                             <i class="fas fa-camera me-1"></i> Capture
                         </button>
                     </div>
-                    
+
                     <div id="image-preview" class="mb-3 d-none">
                         <img id="preview" src="#" alt="Preview of uploaded image" class="img-fluid rounded">
                         <div class="mt-2">
@@ -254,7 +332,7 @@
                             </button>
                         </div>
                     </div>
-                    
+
                     <div id="processing-indicator" class="d-none">
                         <div class="spinner-border text-primary" role="status">
                             <span class="visually-hidden">Loading...</span>
@@ -282,17 +360,17 @@ document.getElementById('image-upload').addEventListener('change', function(e) {
         }
 
         const reader = new FileReader();
-        
+
         reader.onload = function(event) {
             document.getElementById('preview').src = event.target.result;
             document.getElementById('camera-preview').classList.add('d-none');
             document.getElementById('image-preview').classList.remove('d-none');
         }
-        
+
         reader.onerror = function() {
             showError('Error reading the image file');
         }
-        
+
         reader.readAsDataURL(file);
     }
 });
@@ -301,20 +379,25 @@ document.getElementById('image-upload').addEventListener('change', function(e) {
 function startCamera() {
     document.getElementById('image-preview').classList.add('d-none');
     document.getElementById('camera-preview').classList.remove('d-none');
-    
+
+    // Prompt for permissions on user gesture
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
             .then(function(mediaStream) {
                 stream = mediaStream;
                 const video = document.getElementById('video');
                 video.srcObject = mediaStream;
-                return video.play();
+                video.play();
             })
             .catch(function(error) {
-                showError('Could not access camera: ' + error.message);
+                if (error.name === 'NotAllowedError') {
+                    showError('Camera permission denied. Please allow access in your browser settings.');
+                } else {
+                    showError('Could not access camera: ' + error.message);
+                }
             });
     } else {
-        showError('Camera access not supported by your browser');
+        showError('Camera access is not supported on this browser.');
     }
 }
 
@@ -330,11 +413,11 @@ function capturePhoto() {
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-    
+
     document.getElementById('preview').src = canvas.toDataURL('image/jpeg');
     document.getElementById('camera-preview').classList.add('d-none');
     document.getElementById('image-preview').classList.remove('d-none');
-    
+
     // Stop camera
     if (stream) {
         stream.getTracks().forEach(track => track.stop());
@@ -351,7 +434,7 @@ function processImage() {
     }
 
     const formData = new FormData();
-    
+
     // Convert data URL to blob
     fetch(preview.src)
         .then(res => {
@@ -360,15 +443,15 @@ function processImage() {
         })
         .then(blob => {
             if (blob.size === 0) throw new Error('Empty image');
-            
+
             // Create a file from the blob
             const file = new File([blob], 'search_image.jpg', { type: 'image/jpeg' });
             formData.append('file', file);
-            
+
             // Show processing indicator
             document.getElementById('image-preview').classList.add('d-none');
             document.getElementById('processing-indicator').classList.remove('d-none');
-            
+
             // Send to server for OCR processing
             return fetch('{{ url_for("process_image_search") }}', {
                 method: 'POST',
@@ -383,7 +466,7 @@ function processImage() {
         })
         .then(data => {
             document.getElementById('processing-indicator').classList.add('d-none');
-            
+
             if (data.success && data.topic) {
                 // Close modal and redirect to search with extracted topic
                 const modal = bootstrap.Modal.getInstance(document.getElementById('imageSearchModal'));
@@ -405,7 +488,7 @@ function resetImageSearch() {
     document.getElementById('processing-indicator').classList.add('d-none');
     document.getElementById('preview').src = '#';
     document.getElementById('image-upload').value = '';
-    
+
     // Stop camera if active
     if (stream) {
         stream.getTracks().forEach(track => track.stop());
@@ -418,9 +501,9 @@ function showError(message) {
     // Remove any existing error messages
     const existingErrors = document.querySelectorAll('.alert-danger');
     existingErrors.forEach(el => el.remove());
-    
+
     document.getElementById('processing-indicator').classList.add('d-none');
-    
+
     const errorDiv = document.createElement('div');
     errorDiv.className = 'alert alert-danger mt-3';
     errorDiv.innerHTML = `
@@ -430,13 +513,82 @@ function showError(message) {
             Try Again
         </button>
     `;
-    
+
     document.querySelector('.modal-body').appendChild(errorDiv);
 }
 
 // Clean up camera when modal is closed
 document.getElementById('imageSearchModal').addEventListener('hidden.bs.modal', function() {
     resetImageSearch();
+});
+
+// Search suggestions functionality
+document.getElementById('searchInput').addEventListener('input', function(e) {
+    const query = e.target.value.trim();
+    if (query.length < 2) {
+        hideSuggestions();
+        return;
+    }
+    
+    fetch(`/search-suggestions?q=${encodeURIComponent(query)}`)
+        .then(response => response.json())
+        .then(data => {
+            showSuggestions(data);
+        })
+        .catch(error => {
+            console.error('Error fetching suggestions:', error);
+        });
+});
+
+function showSuggestions(suggestions) {
+    let container = document.getElementById('suggestions-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'suggestions-container';
+        container.className = 'list-group position-absolute w-100';
+        container.style.zIndex = '1000';
+        
+        const inputGroup = document.querySelector('.input-group');
+        inputGroup.parentNode.insertBefore(container, inputGroup.nextSibling);
+    }
+    
+    container.innerHTML = '';
+    
+    if (suggestions.length === 0) {
+        container.style.display = 'none';
+        return;
+    }
+    
+    suggestions.forEach(item => {
+        const suggestion = document.createElement('a');
+        suggestion.href = '#';
+        suggestion.className = 'list-group-item list-group-item-action';
+        suggestion.textContent = item.text;
+        suggestion.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.getElementById('searchInput').value = item.text;
+            container.style.display = 'none';
+            document.querySelector('form').submit();
+        });
+        container.appendChild(suggestion);
+    });
+    
+    container.style.display = 'block';
+}
+
+function hideSuggestions() {
+    const container = document.getElementById('suggestions-container');
+    if (container) {
+        container.style.display = 'none';
+    }
+}
+
+// Hide suggestions when clicking outside
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('#suggestions-container') && 
+        !e.target.closest('.input-group')) {
+        hideSuggestions();
+    }
 });
 
 // Initialize Bootstrap tooltips if needed

@@ -116,6 +116,18 @@
                                         <textarea name="keywords" class="form-control" rows="1">{{ submission.keywords }}</textarea>
                                     </div>
                                 </div>
+                                <div class="col-md-12">
+                                    <label class="form-label">Categories</label>
+                                    <select name="categories" class="form-select" multiple>
+                                        {% for category in all_categories %}
+                                            <option value="{{ category.id }}" 
+                                                {% if category.id in selected_category_ids %}selected{% endif %}>
+                                                {{ category.name }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="form-text">Hold Ctrl/Cmd to select multiple categories</div>
+                                </div>
 
                                 <h5 class="font-weight-bold text-gray-800 mb-3">
                                     <i class="fas fa-file-upload me-2"></i>Document Upload

@@ -4,10 +4,178 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
+    <title>Login | CSThesisHub</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .circuit-background {
+            background-image: url('/static/css/circuit2.png');
+            background-repeat: no-repeat;
+            background-position: top center;
+            background-size: cover;
+            position: relative;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .form-container {
+            background: linear-gradient(135deg, #0f2a7b 0%, #1e88e5 100%);
+            padding: 40px;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 450px;
+            text-align: center;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+            color: white;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(5px);
+        }
+        
+        .form-container::before {
+            content: "";
+            position: absolute;
+            top: -50px;
+            right: -50px;
+            width: 150px;
+            height: 150px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            z-index: 0;
+        }
+        
+        .form-container::after {
+            content: "";
+            position: absolute;
+            bottom: -30px;
+            left: -30px;
+            width: 100px;
+            height: 100px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            z-index: 0;
+        }
+        
+        h3 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 28px;
+            font-weight: 600;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .type {
+            color: white;
+        }
+        
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 30px;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 1;
+        }
+        
+        input[type="text"]:focus,
+        input[type="password"]:focus {
+            outline: none;
+            border-color: rgba(255, 255, 255, 0.5);
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .form-btn {
+            width: 100%;
+            padding: 15px;
+            background-color: #247f33;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+            position: relative;
+            z-index: 1;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .form-btn:hover {
+            background-color: #1e6b2d;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .form-footer {
+            margin-top: 25px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        
+        a:hover {
+            color: #7fdada;
+            text-decoration: underline;
+        }
+        
+        .alert {
+            padding: 15px;
+            margin-bottom: 25px;
+            border-radius: 8px;
+            font-weight: 500;
+            position: relative;
+            z-index: 1;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .alert-error {
+            background-color: rgba(211, 47, 47, 0.9);
+            color: white;
+        }
+        
+        .alert-success {
+            background-color: rgba(56, 142, 60, 0.9);
+            color: white;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .form-icon {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: rgba(255, 255, 255, 0.8);
+            position: relative;
+            z-index: 1;
+        }
+    </style>
 </head>
-<body>
+<body class="circuit-background">
     <div class="form-container">
         <!-- Flash messages display -->
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -20,15 +188,23 @@
             {% endif %}
         {% endwith %}
 
+        <div class="form-icon">
+            <i class="fas fa-user-lock"></i>
+        </div>
+        
+        <h3>Welcome Back</h3>
+        
         <form action="{{ url_for('login', next=request.args.get('next')) }}" method="post">
-            <h3>Login Now</h3>
             <!-- Hidden field to keep 'next' parameter -->
             <input type="hidden" name="next" value="{{ request.args.get('next', '') }}">
 
             <input type="text" name="username" required placeholder="Username">
             <input type="password" name="password" required placeholder="Password">
             <input type="submit" value="Login Now" class="form-btn">
-            <p>Don't have an account? <a href="{{ url_for('signup') }}">Register now</a></p>
+            
+            <div class="form-footer">
+                <p class="type">Don't have an account? <a href="{{ url_for('signup') }}">Register now</a></p>
+            </div>
         </form>
     </div>
 </body>

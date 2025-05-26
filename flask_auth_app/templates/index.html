@@ -11,7 +11,6 @@ body, html {
     margin: 0;
     padding: 0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    
 }
 
 /* Center the entire container */
@@ -23,11 +22,16 @@ body, html {
 
 /* Header styling */
 .repository-header {
-     background: linear-gradient(135deg, #0f2a7b, #4f75a4); /* Gradient from #0f2a7b to #4f75a4 */
-    color: #eff1f5;
-    padding: 40px 20px;
+    background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent white */
+    color: #0f2a7b; /* Dark text for contrast */
     text-align: center;
+    padding: 20px 10px;
     border-radius: 8px;
+    width: 100%;
+    max-width: 960px;
+    margin: 10px auto 0;
+    box-sizing: border-box;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 /* Tagline */
@@ -45,48 +49,100 @@ body, html {
     margin-top: 30px;
 }
 
-/* Search section */
+/* Enhanced Search section */
 .search-section {
-    background-color: white;
-    padding: 20px;
-    border-radius: 4px;
+    background: linear-gradient(135deg, #0f2a7b 0%, #1e88e5 100%);
+    padding: 30px;
+    border-radius: 12px;
     width: 100%;
-    max-width: 600px;
+    max-width: 700px;
     text-align: center;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    color: white;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 30px;
+}
+
+.search-section::before {
+    content: "";
+    position: absolute;
+    top: -50px;
+    right: -50px;
+    width: 150px;
+    height: 150px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+}
+
+.search-section::after {
+    content: "";
+    position: absolute;
+    bottom: -30px;
+    left: -30px;
+    width: 100px;
+    height: 100px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
 }
 
 .search-section h2 {
-    margin-bottom: 20px;
-    font-size: 20px;
+    margin-bottom: 25px;
+    font-size: 24px;
     font-weight: 600;
+    position: relative;
+    z-index: 1;
 }
 
 .search-form {
     display: flex;
     justify-content: center;
     gap: 10px;
+    position: relative;
+    z-index: 1;
 }
 
 .search-form input[type="text"] {
-    padding: 10px;
+    padding: 15px 20px;
     width: 70%;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+    border: none;
+    border-radius: 30px;
+    font-size: 16px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.search-form input[type="text"]:focus {
+    outline: none;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    transform: translateY(-2px);
 }
 
 .search-btn {
-    padding: 10px 20px;
+    padding: 15px 30px;
     background-color: #247f33;
-    color: #eff1f5;
+    color: white;
     border: none;
-    border-radius: 4px;
+    border-radius: 30px;
     cursor: pointer;
+    font-weight: bold;
+    font-size: 16px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.search-btn:hover {
+    background-color: #1e6b2d;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
 }
 
 .search-note {
-    margin-top: 10px;
+    margin-top: 15px;
     font-size: 14px;
-    color: gray;
+    color: rgba(255, 255, 255, 0.8);
+    position: relative;
+    z-index: 1;
 }
 
 /* Flash messages */
@@ -94,7 +150,23 @@ body, html {
     margin-top: 20px;
     width: 100%;
     max-width: 600px;
-    background-color: #247f33;
+}
+
+.alert {
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    font-weight: 500;
+}
+
+.alert-success {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.alert-error {
+    background-color: #f8d7da;
+    color: #721c24;
 }
 
 /* Auth buttons */
@@ -105,34 +177,57 @@ body, html {
 }
 
 .auth-actions .btn {
-    padding: 10px 20px;
+    padding: 12px 25px;
     text-decoration: none;
-    border-radius: 4px;
+    border-radius: 30px;
     font-weight: bold;
     text-align: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .btn-primary {
     background-color: #0f2a7b;
-    color: #eff1f5;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #1e88e5;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 
 .btn-secondary {
     background-color: #95a5a6;
-    color: #eff1f5;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background-color: #7f8c8d;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 
 /* Repository Info */
 .repository-info {
     background-color: white;
-    padding: 20px;
-    max-width: 600px;
-    border-radius: 8px;
+    padding: 25px;
+    max-width: 700px;
+    border-radius: 12px;
     text-align: center;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
 }
 
 .repository-info h3 {
-    margin-bottom: 10px;
+    margin-bottom: 15px;
+    color: #0f2a7b;
+    font-size: 20px;
+}
+
+.repository-info p {
+    color: #555;
+    line-height: 1.6;
 }
 
 /* Footer */
@@ -140,36 +235,46 @@ body, html {
     text-align: center;
     margin-top: 50px;
     font-size: 14px;
-    color: gray;
+    color: #777;
+    padding: 20px 0;
 }
 
 .circuit-background {
-    background-image: url('/static/css/circuit.png'); /* Adjust path based on your folder structure */
+    background-image: url('/static/css/circuit2.png');
     background-repeat: no-repeat;
     background-position: top center;
     background-size: cover;
     position: relative;
+    min-height: 100vh;
 }
 
+.responsive-logo {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
 </style>
 </head>
-<body class=" circuit-background">
-    
+<body class="circuit-background">
+
     <div class="container">
         <header class="repository-header">
-            <h1>CSThesisHub</h1>
-            <p class="tagline">Explore Computer Science Theses from Cavite State University - Imus Campus</p>
+            <img src="{{ url_for('static', filename='css/csthlogo.png') }}" class="responsive-logo" alt="CSThesisHub Logo">
         </header>
 
         <main class="repository-content">
-            <!-- Search Section -->
+            <!-- Enhanced Search Section -->
             <section class="search-section">
-                <h2>Search Theses</h2>
+                <h2>Discover Computer Science Theses</h2>
                 <form action="{{ url_for('index') }}" method="POST" class="search-form">
-                    <input type="text" name="search" placeholder="Enter keywords, title, or author..." required>
-                    <button type="submit" class="search-btn">Search</button>
+                    <input type="text" name="search" placeholder="Search by title, author, or keywords..." required>
+                    <button type="submit" class="search-btn">
+                        <i class="fas fa-search" style="margin-right: 8px;"></i> Search
+                    </button>
                 </form>
-                <p class="search-note">You need to be logged in to view search results</p>
+                <p class="search-note">Login required to view full search results</p>
             </section>
 
             <!-- Flash messages -->
@@ -193,11 +298,10 @@ body, html {
 
             <!-- Repository Info -->
             <section class="repository-info">
-                <h4>ABOUT THE REPOSITORY</h4>
-                <p> This digital repository contains the thesis works in Computer Science from the Department of Computer Studies. 
+                <h3>ABOUT THE REPOSITORY</h3>
+                <p>This digital repository contains thesis works in Computer Science from the Department of Computer Studies.
                     <b>Registered users can search for and view authorized parts of research materials in accordance with the Copyright Law (R.A. 8293).</b></p>
             </section>
-            
         </main>
 
         <footer class="repository-footer">

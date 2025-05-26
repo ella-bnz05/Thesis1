@@ -4,31 +4,209 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign Up</title>
+    <title>Sign Up | CSThesisHub</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        .toggle-password {
-            position: absolute;
-            right: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 16px;
-            color: #555;
-            cursor: pointer;
+        .circuit-background {
+            background-image: url('/static/css/circuit2.png');
+            background-repeat: no-repeat;
+            background-position: top center;
+            background-size: cover;
+            position: relative;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
+        
+        .form-container {
+            background: linear-gradient(135deg, #0f2a7b 0%, #1e88e5 100%);
+            padding: 40px;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 450px;
+            text-align: center;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+            color: white;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(5px);
+        }
+        
+        .form-container::before {
+            content: "";
+            position: absolute;
+            top: -50px;
+            right: -50px;
+            width: 150px;
+            height: 150px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            z-index: 0;
+        }
+        
+        .form-container::after {
+            content: "";
+            position: absolute;
+            bottom: -30px;
+            left: -30px;
+            width: 100px;
+            height: 100px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            z-index: 0;
+        }
+        
+        h3 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 28px;
+            font-weight: 600;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .form-icon {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: rgba(255, 255, 255, 0.8);
+            position: relative;
+            z-index: 1;
+        }
+        
+        input[type="text"],
+        input[type="email"],
+        input[type="password"] {
+            width: 100%;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 30px;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 1;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: rgba(255, 255, 255, 0.5);
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
         .password-container {
             position: relative;
         }
-        input[type="password"],
-        input[type="text"],
-        input[type="email"] {
+        
+        .toggle-password {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            z-index: 2;
+        }
+        
+        .form-btn {
             width: 100%;
-            padding: 10px;
-            margin-bottom: 15px;
+            padding: 15px;
+            background-color: #247f33;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+            position: relative;
+            z-index: 1;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .form-btn:hover {
+            background-color: #1e6b2d;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .form-footer {
+            margin-top: 25px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        a {
+            color: #b2e9e9;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        
+        a:hover {
+            color: #7fdada;
+            text-decoration: underline;
+        }
+        
+        .consent-checkbox {
+            display: flex;
+            align-items: flex-start;
+            margin: 20px 0;
+            text-align: left;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .consent-checkbox input {
+            margin-right: 10px;
+            margin-top: 5px;
+        }
+        
+        .consent-text {
+            font-size: 0.9em;
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.5;
+        }
+        
+        .alert {
+            padding: 15px;
+            margin-bottom: 25px;
+            border-radius: 8px;
+            font-weight: 500;
+            position: relative;
+            z-index: 1;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .alert-error {
+            background-color: rgba(211, 47, 47, 0.9);
+            color: white;
+        }
+        
+        .alert-success {
+            background-color: rgba(56, 142, 60, 0.9);
+            color: white;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
-<body>
+<body class="circuit-background">
     <div class="form-container">
         <!-- Flash Messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -41,14 +219,18 @@
             {% endif %}
         {% endwith %}
 
+        <div class="form-icon">
+            <i class="fas fa-user-plus"></i>
+        </div>
+        
+        <h3>Create Your Account</h3>
+        
         <form method="post" action="{{ url_for('signup') }}">
-            <h3>Create Account</h3>
-
-            <input type="text" name="username" placeholder="Username (atleast 4 characters)" required>
+            <input type="text" name="username" placeholder="Username (at least 4 characters)" required>
             <input type="email" name="email" placeholder="Email" required>
 
             <div class="password-container">
-                <input type="password" id="password" name="password" placeholder="Password (atleast 6 characters)" required>
+                <input type="password" id="password" name="password" placeholder="Password (at least 6 characters)" required>
                 <i class="toggle-password fas fa-eye" onclick="togglePassword('password')"></i>
             </div>
 
@@ -57,25 +239,37 @@
                 <i class="toggle-password fas fa-eye" onclick="togglePassword('confirm_password')"></i>
             </div>
 
+            <div class="consent-checkbox">
+                <input type="checkbox" id="consent" name="consent" required>
+                <label for="consent" class="consent-text">
+                    I consent to the collection and processing of my personal data for the purpose of 
+                    account creation and service provision. I understand that my information will be 
+                    handled in accordance with the privacy policy.
+                </label>
+            </div>
+
             <button type="submit" class="form-btn">Sign Up</button>
-            <p>Already have an account? <a href="{{ url_for('login') }}">Login</a></p>
+            
+            <div class="form-footer">
+                <p>Already have an account? <a href="{{ url_for('login') }}">Login</a></p>
+            </div>
         </form>
     </div>
 
-<script>
-function togglePassword(id) {
-    const input = document.getElementById(id);
-    const toggle = input.nextElementSibling;
-    if (input.type === "password") {
-        input.type = "text";
-        toggle.classList.remove("fa-eye");
-        toggle.classList.add("fa-eye-slash");
-    } else {
-        input.type = "password";
-        toggle.classList.remove("fa-eye-slash");
-        toggle.classList.add("fa-eye");
+    <script>
+    function togglePassword(id) {
+        const input = document.getElementById(id);
+        const toggle = input.nextElementSibling;
+        if (input.type === "password") {
+            input.type = "text";
+            toggle.classList.remove("fa-eye");
+            toggle.classList.add("fa-eye-slash");
+        } else {
+            input.type = "password";
+            toggle.classList.remove("fa-eye-slash");
+            toggle.classList.add("fa-eye");
+        }
     }
-}
-</script>
+    </script>
 </body>
 </html>
